@@ -164,6 +164,28 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 .modal-counter{font-size:11px;color:var(--muted);margin-top:3px;}
 
 /* 토스트 */
+/* 캘린더 */
+.cal-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:10px;}
+.cal-head{padding:10px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.cal-head span{font-size:12px;font-weight:700;color:var(--text);}
+.cal-nav{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;transition:all .15s;}
+.cal-nav:hover{color:var(--text);background:var(--bg3);}
+.cal-grid{padding:8px;}
+.cal-dow{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+.cal-dow span{text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px 0;}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-day{text-align:center;font-size:11px;padding:4px 2px;border-radius:5px;cursor:pointer;color:var(--muted2);transition:all .15s;min-height:24px;display:flex;align-items:center;justify-content:center;position:relative;}
+.cal-day:hover{background:var(--bg3);color:var(--text);}
+.cal-day.empty{cursor:default;}
+.cal-day.has-photos{color:var(--orange);font-weight:700;}
+.cal-day.has-photos::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--orange);}
+.cal-day.today{background:var(--bg3);color:var(--text);font-weight:700;}
+.cal-day.selected{background:var(--orange);color:#fff;font-weight:700;}
+.cal-day.selected::after{display:none;}
+.cal-day.sun{color:#f87171;}
+.cal-day.sat{color:#60a5fa;}
+.cal-day.has-photos.sun{color:#fca5a5;}
+.cal-day.has-photos.sat{color:#93c5fd;}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 20px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:all .3s;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
@@ -227,6 +249,19 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
           <button class="btn sm" onclick="refreshTree()" title="새로고침" style="padding:2px 6px;">↺</button>
         </div>
         <div class="tree" id="treeRoot"></div>
+      </div>
+      <div class="cal-card" id="calCard">
+        <div class="cal-head">
+          <button class="cal-nav" onclick="calMove(-1)">‹</button>
+          <span id="calTitle"></span>
+          <button class="cal-nav" onclick="calMove(1)">›</button>
+        </div>
+        <div class="cal-grid">
+          <div class="cal-dow">
+            <span style="color:#f87171">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span style="color:#60a5fa">토</span>
+          </div>
+          <div class="cal-days" id="calDays"></div>
+        </div>
       </div>
     </aside>
     <div class="content" id="content"></div>
@@ -327,6 +362,7 @@ function onAuthSuccess() {
   document.getElementById('editBtn').style.display = '';
   folderPath = [];
   navigateToFolder(rootFolderId, '📁 내 드라이브');
+  setTimeout(() => renderCal(), 1500);
 }
 
 function updateDriveBadge(connected) {
@@ -777,6 +813,96 @@ document.addEventListener('keydown', e => {
   resizer.addEventListener('dblclick',()=>{let maxW=180;document.querySelectorAll('.tree-item').forEach(el=>{maxW=Math.max(maxW,el.scrollWidth+20);});maxW=Math.min(500,maxW);sidebar.style.width=maxW+'px';updateMargin();localStorage.setItem('sidebarWidth',maxW);});
   function updateMargin(){content.style.marginLeft=(sidebar.offsetWidth+20)+'px';}
 })();
+
+// ── 캘린더 ────────────────────────────────────────────────────
+let calYear  = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-based
+let calDateFolders = new Set(); // 날짜 형식 폴더명 캐시
+let calSelected = null;
+
+function calMove(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0)  { calMonth = 11; calYear--; }
+  renderCal();
+}
+
+async function renderCal() {
+  const title = document.getElementById('calTitle');
+  const days  = document.getElementById('calDays');
+  if (!title || !days) return;
+  title.textContent = `${calYear}년 ${calMonth+1}월`;
+  days.innerHTML = '';
+
+  // 날짜 폴더 수집 (현재 보이는 트리에서 수집)
+  await collectDateFolders();
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const lastDate = new Date(calYear, calMonth+1, 0).getDate();
+  const today = new Date();
+
+  // 빈칸
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day empty';
+    days.appendChild(el);
+  }
+
+  for (let d = 1; d <= lastDate; d++) {
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = new Date(calYear, calMonth, d).getDay();
+    const el  = document.createElement('div');
+    let cls = 'cal-day';
+    if (dow === 0) cls += ' sun';
+    if (dow === 6) cls += ' sat';
+    if (today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d) cls += ' today';
+    if (calDateFolders.has(dateStr)) cls += ' has-photos';
+    if (calSelected === dateStr) cls += ' selected';
+    el.className = cls;
+    el.textContent = d;
+    if (calDateFolders.has(dateStr)) {
+      el.title = `${dateStr} 사진 보기`;
+      el.onclick = () => calGoDate(dateStr);
+    }
+    days.appendChild(el);
+  }
+}
+
+async function collectDateFolders() {
+  // 루트부터 재귀적으로 날짜형 폴더 찾기 (캐시 활용)
+  calDateFolders = new Set();
+  await scanForDateFolders(rootFolderId);
+}
+
+async function scanForDateFolders(folderId, depth=0) {
+  if (depth > 6) return; // 너무 깊이 안 들어가도록
+  try {
+    const files = await listFolder(folderId);
+    for (const f of files) {
+      if (f.mimeType !== 'application/vnd.google-apps.folder') continue;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(f.name)) {
+        calDateFolders.add(f.name);
+        // id도 저장
+        calDateFolderMap[f.name] = f.id;
+      } else {
+        await scanForDateFolders(f.id, depth+1);
+      }
+    }
+  } catch {}
+}
+
+const calDateFolderMap = {}; // dateStr → folderId
+
+async function calGoDate(dateStr) {
+  calSelected = dateStr;
+  renderCal();
+  const folderId = calDateFolderMap[dateStr];
+  if (!folderId) { showToast('폴더를 찾을 수 없습니다'); return; }
+  // 폴더로 이동
+  folderPath = [];
+  await navigateToFolder(folderId, dateStr);
+  showToast(`📅 ${dateStr} 사진 보기`);
+}
 
 // ── 토스트 ────────────────────────────────────────────────────
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
