@@ -566,7 +566,7 @@ function renderPhotos(node, container) {
   const pathStr = currentPath.slice(1).map(id => findNode(id)?.name || '').join('/');
 
   // photos.json에서 로드 시도
-  fetch('photos.json')
+  fetch('photos.json?t=' + Date.now())
     .then(r => r.ok ? r.json() : null)
     .then(data => {
       if (!data) { renderPhotoEmpty(container, true); return; }
@@ -851,13 +851,22 @@ async function removeFromPhotosJson(deletedSrcs) {
     const f = await ghFetch('contents/photos.json', 'GET');
     const sha = f.sha;
     let data = JSON.parse(atob(f.content.replace(/\n/g,'')));
-    Object.keys(data).forEach(date => {
-      data[date] = data[date].filter(p => !deletedSrcs.includes(p.src));
-      if (!data[date].length) delete data[date];
+    deletedSrcs.forEach(src => {
+      Object.keys(data).forEach(date => {
+        data[date] = data[date].filter(p => p.src !== src);
+        if (!data[date].length) delete data[date];
+      });
     });
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-    await ghFetch('contents/photos.json', 'PUT', { message: 'photos.json 업데이트 (삭제)', content, sha, branch: BRANCH });
-  } catch {}
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+    await ghFetch('contents/photos.json', 'PUT', {
+      message: 'photos.json 업데이트 (삭제: ' + deletedSrcs.length + '장)',
+      content: encoded, sha, branch: BRANCH
+    });
+    console.log('photos.json 업데이트 완료');
+  } catch(e) {
+    console.error('photos.json 업데이트 실패:', e.message);
+    showToast('⚠ photos.json 업데이트 실패: ' + e.message);
+  }
 }
 
 // ── 토스트 ───────────────────────────────────────────────────
