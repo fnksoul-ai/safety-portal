@@ -635,7 +635,15 @@ function renderPhotos(node, container) {
           : '';
         card.innerHTML = `
           <img src="${p.src}" alt="${p.name}" loading="lazy"
-            onerror="this.closest('.photo-card').remove(); removeBrokenFromJson('${p.src}');">
+            onerror="
+              this.closest('.photo-card').remove();
+              removeBrokenFromJson('${p.src}');
+              const sec = document.querySelector('.sec-cnt');
+              const stat = document.querySelector('.photo-stat b');
+              const cur = parseInt(sec?.textContent)||0;
+              if(sec) sec.textContent=(cur-1)+'장';
+              if(stat) stat.textContent=(parseInt(stat.textContent)||1)-1;
+            ">
           <span class="pc-date">${p.date||''}</span>
           <div class="pc-ov"><div class="pc-nm">${p.name}</div></div>
           ${deleteBtn}${checkbox}
