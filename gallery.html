@@ -432,16 +432,14 @@ function renderContent(){
     content.appendChild(grid);
   }
 
-  // 📤 사진 업로드 패널 (폴더에 ghPath가 있을 때 항상 표시)
-  if(node.ghPath && getToken()){
+  // 📤 사진 업로드 패널 (루트 제외 항상 표시)
+  if(node.ghPath && node.id !== 'root'){
     renderUploadPanel(node, content);
   }
 
   // 사진 섹션 — GitHub API로 직접 로드
-  if(node.ghPath && getToken()){
+  if(node.ghPath){
     renderPhotosFromGitHub(node, content);
-  } else if(!getToken()) {
-    // 토큰 없음 안내
   }
 }
 
@@ -465,7 +463,7 @@ function renderUploadPanel(node, container){
     <div class="upload-prog" id="upProg" style="display:none"><div class="upload-prog-bar" id="upProgBar"></div></div>
     <div class="upload-log" id="upLog"></div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button class="btn primary" id="upBtn" onclick="startUpload_${node.id}()" disabled>📤 업로드</button>
+      <button class="btn primary" id="upBtn" onclick="startUpload_${node.id}()">📤 업로드</button>
       <button class="btn sm" id="upClearBtn" onclick="clearUpload_${node.id}()" style="display:none">초기화</button>
       <span id="upCount" style="font-size:12px;color:var(--muted)"></span>
     </div>`;
@@ -519,7 +517,13 @@ function renderUploadPanel(node, container){
 
   window[`startUpload_${node.id}`] = async function(){
     if(isUploading||!uploadFiles.length) return;
-    if(!getToken()){showToast('토큰을 먼저 설정해주세요');return;}
+    if(!getToken()){
+      showToast('⚠ 토큰을 먼저 설정해주세요');
+      document.getElementById('tokenPanel').style.display='block';
+      document.getElementById('tokenInput').focus();
+      isUploading=false;
+      return;
+    }
     isUploading = true;
     const btn = panel.querySelector('#upBtn');
     btn.disabled=true; btn.textContent='⏳ 업로드 중...';
