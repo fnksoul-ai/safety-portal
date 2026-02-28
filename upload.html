@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>사진 업로드 · Safety Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1117;--bg2:#171b24;--bg3:#1e2330;--bg4:#252a38;
+  --border:#2c3347;--orange:#f97316;--blue:#3b82f6;
+  --green:#22c55e;--red:#ef4444;--yellow:#eab308;
+  --text:#f1f5f9;--muted:#64748b;--muted2:#94a3b8;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;z-index:0;
+  background-image:linear-gradient(rgba(249,115,22,.025) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(249,115,22,.025) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
+  backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
+  padding:0 24px;display:flex;align-items:center;height:52px;gap:16px;}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;
+  letter-spacing:.1em;color:var(--orange);text-decoration:none;}
+.nav-logo span{color:var(--text);}
+.nav-back{font-size:12px;color:var(--muted2);text-decoration:none;
+  display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:6px;transition:all .15s;}
+.nav-back:hover{color:var(--text);background:var(--bg3);}
+.nav-title{font-size:13px;font-weight:600;color:var(--muted2);}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.token-status{font-size:11px;display:flex;align-items:center;gap:5px;}
+.dot{width:7px;height:7px;border-radius:50%;}
+.dot.ok{background:var(--green);box-shadow:0 0 5px var(--green);}
+.dot.no{background:var(--red);box-shadow:0 0 5px var(--red);}
+
+/* LAYOUT */
+.wrap{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:28px 24px 60px;}
+
+/* CARD */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;}
+.card-title{font-size:14px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.card-title .ct-icon{font-size:18px;}
+
+/* 토큰 설정 */
+.token-wrap{display:flex;gap:8px;}
+.token-input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:10px 14px;color:var(--text);font-size:13px;font-family:'Noto Sans KR',sans-serif;}
+.token-input:focus{outline:none;border-color:var(--orange);}
+.token-input::placeholder{color:var(--muted);}
+.btn{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border);background:var(--bg3);color:var(--muted2);
+  transition:all .15s;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;}
+.btn:hover{color:var(--text);border-color:var(--muted);}
+.btn.primary{background:var(--orange);border-color:var(--orange);color:#fff;}
+.btn.primary:hover{background:#ea6c0a;}
+.btn.primary:disabled{background:var(--muted);border-color:var(--muted);cursor:not-allowed;opacity:.6;}
+.btn.sm{padding:6px 12px;font-size:12px;}
+.btn.danger{border-color:var(--red);color:var(--red);}
+.btn.danger:hover{background:var(--red);color:#fff;}
+.token-help{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;}
+.token-help a{color:var(--orange);text-decoration:none;}
+.token-help a:hover{text-decoration:underline;}
+
+/* 업로드 폼 */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.field label{display:block;font-size:12px;color:var(--muted2);margin-bottom:6px;font-weight:500;}
+.field select,.field input{width:100%;background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;padding:9px 12px;color:var(--text);font-size:13px;
+  font-family:'Noto Sans KR',sans-serif;transition:border-color .15s;}
+.field select:focus,.field input:focus{outline:none;border-color:var(--orange);}
+
+/* 드롭존 */
+.dropzone{border:2px dashed var(--border);border-radius:10px;
+  padding:48px 24px;text-align:center;cursor:pointer;
+  transition:all .2s;position:relative;margin-bottom:16px;}
+.dropzone:hover,.dropzone.drag{border-color:var(--orange);background:rgba(249,115,22,.04);}
+.dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.dz-icon{font-size:36px;margin-bottom:10px;}
+.dz-text{font-size:14px;font-weight:600;color:var(--muted2);margin-bottom:4px;}
+.dz-sub{font-size:12px;color:var(--muted);}
+
+/* 미리보기 그리드 */
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;margin-bottom:16px;}
+.preview-item{position:relative;border-radius:7px;overflow:hidden;
+  background:var(--bg3);border:1px solid var(--border);aspect-ratio:4/3;}
+.preview-item img{width:100%;height:100%;object-fit:cover;display:block;}
+.preview-item .pi-name{position:absolute;bottom:0;left:0;right:0;
+  background:rgba(0,0,0,.7);font-size:9px;color:#fff;padding:3px 5px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.preview-item .pi-remove{position:absolute;top:4px;right:4px;width:18px;height:18px;
+  border-radius:50%;background:rgba(239,68,68,.9);color:#fff;font-size:11px;
+  border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.preview-item .pi-status{position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;font-size:20px;background:rgba(0,0,0,.5);}
+
+/* 진행 상황 */
+.progress-wrap{margin-bottom:16px;}
+.progress-bar-bg{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.progress-bar{height:100%;background:var(--orange);border-radius:4px;
+  transition:width .3s;width:0%;}
+.progress-text{font-size:12px;color:var(--muted2);margin-top:6px;text-align:center;}
+
+/* 로그 */
+.log{background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:12px;max-height:200px;overflow-y:auto;font-size:11px;
+  font-family:monospace;line-height:1.7;}
+.log::-webkit-scrollbar{width:3px;}
+.log::-webkit-scrollbar-thumb{background:var(--border);}
+.log .ok{color:var(--green);}
+.log .err{color:var(--red);}
+.log .info{color:var(--muted2);}
+.log .warn{color:var(--yellow);}
+
+/* 결과 배너 */
+.result-banner{display:none;border-radius:8px;padding:14px 18px;
+  font-size:13px;margin-bottom:16px;display:none;align-items:center;gap:10px;}
+.result-banner.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--green);display:flex;}
+.result-banner.err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--red);display:flex;}
+
+/* 안내 */
+.info-box{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);
+  border-radius:8px;padding:14px 16px;font-size:12px;color:var(--muted2);line-height:1.7;}
+.info-box strong{color:var(--blue);}
+
+/* 토스트 */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+  padding:10px 20px;font-size:13px;color:var(--text);z-index:500;
+  opacity:0;transition:all .3s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">⚠ <span>SAFETY</span></a>
+  <a class="nav-back" href="index.html">← 홈</a>
+  <span style="color:var(--border)">|</span>
+  <span class="nav-title">📤 사진 업로드</span>
+  <div class="nav-right">
+    <div class="token-status" id="tokenStatus">
+      <div class="dot no" id="tokenDot"></div>
+      <span id="tokenLabel">토큰 미설정</span>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ① GitHub 토큰 설정 -->
+  <div class="card" id="tokenCard">
+    <div class="card-title"><span class="ct-icon">🔑</span> GitHub 토큰 설정 <span style="font-size:11px;color:var(--muted);font-weight:400;">(최초 1회만)</span></div>
+    <div class="token-wrap">
+      <input class="token-input" type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxx">
+      <button class="btn primary" onclick="saveToken()">저장</button>
+      <button class="btn danger sm" onclick="clearToken()" style="display:none" id="clearBtn">삭제</button>
+    </div>
+    <div class="token-help">
+      토큰이 없으신가요?
+      <a href="https://github.com/settings/tokens/new?scopes=repo&description=SafetyPortal" target="_blank">여기 클릭</a>
+      → <strong>repo</strong> 권한 체크 → Generate token → 복사해서 붙여넣기<br>
+      ⚠ 토큰은 이 브라우저에만 저장되며 외부로 전송되지 않습니다.
+    </div>
+  </div>
+
+  <!-- ② 업로드 폼 -->
+  <div class="card">
+    <div class="card-title"><span class="ct-icon">📁</span> 업로드 위치 설정</div>
+    <div class="form-row">
+      <div class="field">
+        <label>카테고리</label>
+        <select id="categorySelect" onchange="updatePath()">
+          <option value="01_일일점검">01_일일점검</option>
+          <option value="02_정기점검/01_월간점검">02_정기점검/01_월간점검</option>
+          <option value="02_정기점검/02_법정점검">02_정기점검/02_법정점검</option>
+          <option value="02_정기점검/03_협력업체점검">02_정기점검/03_협력업체점검</option>
+          <option value="03_합동점검/01_발주처합동점검">03_합동점검/01_발주처합동점검</option>
+          <option value="03_합동점검/02_감리합동점검">03_합동점검/02_감리합동점검</option>
+          <option value="04_유관기관점검">04_유관기관점검</option>
+          <option value="02.지적&이슈">02.지적&이슈</option>
+          <option value="03.개선조치">03.개선조치</option>
+          <option value="04.교육&회의">04.교육&회의</option>
+          <option value="05.사고사례">05.사고사례</option>
+          <option value="06.기타">06.기타</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>날짜</label>
+        <input type="date" id="dateInput" onchange="updatePath()">
+      </div>
+    </div>
+    <div class="info-box" id="pathPreview">
+      <strong>업로드 경로:</strong> <span id="pathText">photos/01_일일점검/2026-02-28/</span>
+    </div>
+  </div>
+
+  <!-- ③ 드롭존 -->
+  <div class="card">
+    <div class="card-title"><span class="ct-icon">🖼️</span> 사진 선택</div>
+    <div class="dropzone" id="dropzone">
+      <input type="file" id="fileInput" accept="image/*" multiple onchange="handleFiles(this.files)">
+      <div class="dz-icon">📸</div>
+      <div class="dz-text">사진을 끌어다 놓거나 클릭해서 선택</div>
+      <div class="dz-sub">JPG, PNG, BMP, GIF · 한번에 여러장 가능</div>
+    </div>
+
+    <!-- 미리보기 -->
+    <div class="preview-grid" id="previewGrid" style="display:none"></div>
+
+    <!-- 진행 상황 -->
+    <div class="progress-wrap" id="progressWrap" style="display:none">
+      <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
+      <div class="progress-text" id="progressText"></div>
+    </div>
+
+    <!-- 결과 -->
+    <div class="result-banner" id="resultBanner"></div>
+
+    <!-- 업로드 버튼 -->
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn primary" id="uploadBtn" onclick="startUpload()" disabled>
+        📤 업로드 시작
+      </button>
+      <button class="btn sm" onclick="clearFiles()" id="clearFilesBtn" style="display:none">초기화</button>
+      <span id="fileCount" style="font-size:12px;color:var(--muted)"></span>
+    </div>
+  </div>
+
+  <!-- 업로드 로그 -->
+  <div class="card" id="logCard" style="display:none">
+    <div class="card-title"><span class="ct-icon">📋</span> 업로드 로그</div>
+    <div class="log" id="logBox"></div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const OWNER = 'fnksoul-ai';
+const REPO  = 'safety-portal';
+const BRANCH= 'main';
+
+let selectedFiles = [];
+let isUploading   = false;
+
+// ── 초기화 ───────────────────────────────────────────────────
+window.onload = () => {
+  // 오늘 날짜 기본값
+  const today = new Date();
+  document.getElementById('dateInput').value = today.toISOString().split('T')[0];
+  updatePath();
+  checkToken();
+
+  // 드래그앤드롭
+  const dz = document.getElementById('dropzone');
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag');
+    handleFiles(e.dataTransfer.files);
+  });
+};
+
+// ── 경로 미리보기 ────────────────────────────────────────────
+function updatePath() {
+  const cat  = document.getElementById('categorySelect').value;
+  const date = document.getElementById('dateInput').value || '날짜선택';
+  document.getElementById('pathText').textContent = `photos/${cat}/${date}/`;
+}
+
+// ── 토큰 관리 ────────────────────────────────────────────────
+function saveToken() {
+  const val = document.getElementById('tokenInput').value.trim();
+  if (!val) { showToast('토큰을 입력해주세요'); return; }
+  if (!val.startsWith('ghp_') && !val.startsWith('github_pat_')) {
+    showToast('올바른 GitHub 토큰 형식이 아닙니다');
+    return;
+  }
+  localStorage.setItem('gh_token', val);
+  document.getElementById('tokenInput').value = '';
+  checkToken();
+  showToast('✅ 토큰이 저장됐어요!');
+}
+function clearToken() {
+  if (!confirm('토큰을 삭제할까요?')) return;
+  localStorage.removeItem('gh_token');
+  checkToken();
+}
+function getToken() { return localStorage.getItem('gh_token') || ''; }
+function checkToken() {
+  const t = getToken();
+  const dot   = document.getElementById('tokenDot');
+  const label = document.getElementById('tokenLabel');
+  const clearBtn = document.getElementById('clearBtn');
+  const uploadBtn= document.getElementById('uploadBtn');
+  if (t) {
+    dot.className   = 'dot ok';
+    label.textContent = '토큰 설정됨';
+    clearBtn.style.display = '';
+    document.getElementById('tokenInput').placeholder = '토큰이 저장되어 있습니다';
+    if (selectedFiles.length) uploadBtn.disabled = false;
+  } else {
+    dot.className   = 'dot no';
+    label.textContent = '토큰 미설정';
+    clearBtn.style.display = 'none';
+    uploadBtn.disabled = true;
+  }
+}
+
+// ── 파일 선택 ────────────────────────────────────────────────
+function handleFiles(fileList) {
+  const exts = ['jpg','jpeg','png','bmp','gif','tif','tiff','webp'];
+  const newFiles = [...fileList].filter(f => exts.includes(f.name.split('.').pop().toLowerCase()));
+  if (!newFiles.length) { showToast('이미지 파일만 선택 가능합니다'); return; }
+
+  // 중복 제거
+  newFiles.forEach(f => {
+    if (!selectedFiles.find(x => x.name === f.name && x.size === f.size))
+      selectedFiles.push(f);
+  });
+
+  renderPreviews();
+  updateFileCount();
+  if (getToken()) document.getElementById('uploadBtn').disabled = false;
+}
+
+function renderPreviews() {
+  const grid = document.getElementById('previewGrid');
+  grid.style.display = selectedFiles.length ? 'grid' : 'none';
+  grid.innerHTML = '';
+  selectedFiles.forEach((f, i) => {
+    const item = document.createElement('div');
+    item.className = 'preview-item'; item.id = `pi_${i}`;
+    const url = URL.createObjectURL(f);
+    item.innerHTML = `
+      <img src="${url}" alt="${f.name}">
+      <div class="pi-name">${f.name}</div>
+      <button class="pi-remove" onclick="removeFile(${i})">✕</button>
+    `;
+    grid.appendChild(item);
+  });
+  document.getElementById('clearFilesBtn').style.display = selectedFiles.length ? '' : 'none';
+}
+
+function removeFile(i) {
+  selectedFiles.splice(i, 1);
+  renderPreviews(); updateFileCount();
+  if (!selectedFiles.length) document.getElementById('uploadBtn').disabled = true;
+}
+
+function clearFiles() {
+  selectedFiles = []; renderPreviews(); updateFileCount();
+  document.getElementById('uploadBtn').disabled = true;
+  document.getElementById('resultBanner').style.display = 'none';
+  document.getElementById('logCard').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'none';
+}
+
+function updateFileCount() {
+  document.getElementById('fileCount').textContent =
+    selectedFiles.length ? selectedFiles.length + '장 선택됨' : '';
+}
+
+// ── 업로드 ───────────────────────────────────────────────────
+async function startUpload() {
+  if (isUploading) return;
+  const token = getToken();
+  if (!token) { showToast('토큰을 먼저 설정해주세요'); return; }
+  if (!selectedFiles.length) { showToast('사진을 선택해주세요'); return; }
+
+  const cat  = document.getElementById('categorySelect').value;
+  const date = document.getElementById('dateInput').value;
+  if (!date) { showToast('날짜를 선택해주세요'); return; }
+
+  isUploading = true;
+  document.getElementById('uploadBtn').disabled = true;
+  document.getElementById('uploadBtn').textContent = '⏳ 업로드 중...';
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('logCard').style.display = 'block';
+  document.getElementById('resultBanner').style.display = 'none';
+
+  const logBox = document.getElementById('logBox');
+  logBox.innerHTML = '';
+  const log = (msg, cls='info') => {
+    logBox.innerHTML += `<div class="${cls}">${msg}</div>`;
+    logBox.scrollTop = logBox.scrollHeight;
+  };
+
+  let ok = 0, fail = 0;
+  const total = selectedFiles.length;
+
+  log(`📤 업로드 시작 — ${total}장 · 경로: photos/${cat}/${date}/`);
+
+  for (let i = 0; i < total; i++) {
+    const f = selectedFiles[i];
+    const pct = Math.round((i / total) * 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `${i+1} / ${total} — ${f.name}`;
+
+    // 미리보기에 로딩 표시
+    const piEl = document.getElementById(`pi_${i}`);
+    if (piEl) piEl.innerHTML += '<div class="pi-status">⏳</div>';
+
+    try {
+      const b64 = await fileToBase64(f);
+      const path = `photos/${cat}/${date}/${f.name}`;
+
+      // 기존 파일 SHA 확인 (덮어쓰기 위해)
+      let sha = undefined;
+      try {
+        const chk = await ghFetch(`contents/${path}`, 'GET', null, token);
+        if (chk.sha) sha = chk.sha;
+      } catch {}
+
+      const body = {
+        message: `사진 업로드: ${f.name} (${date})`,
+        content: b64,
+        branch: BRANCH,
+      };
+      if (sha) body.sha = sha;
+
+      await ghFetch(`contents/${path}`, 'PUT', body, token);
+      ok++;
+      log(`✅ ${f.name}`, 'ok');
+      if (piEl) { piEl.querySelector('.pi-status').textContent = '✅'; }
+    } catch(e) {
+      fail++;
+      log(`❌ ${f.name} — ${e.message}`, 'err');
+      if (piEl) { piEl.querySelector('.pi-status').textContent = '❌'; }
+    }
+  }
+
+  // photos.json 업데이트
+  log('📋 photos.json 업데이트 중...', 'warn');
+  try {
+    await updatePhotosJson(token, cat, date);
+    log('✅ photos.json 업데이트 완료', 'ok');
+  } catch(e) {
+    log(`⚠ photos.json 업데이트 실패: ${e.message}`, 'warn');
+  }
+
+  document.getElementById('progressBar').style.width = '100%';
+  document.getElementById('progressText').textContent = `완료! 성공 ${ok}장 / 실패 ${fail}장`;
+
+  const banner = document.getElementById('resultBanner');
+  if (fail === 0) {
+    banner.className = 'result-banner ok';
+    banner.innerHTML = `✅ ${ok}장 업로드 완료! <a href="gallery.html" style="color:inherit;margin-left:12px;text-decoration:underline">갤러리 확인하기 →</a>`;
+  } else {
+    banner.className = 'result-banner err';
+    banner.innerHTML = `⚠ 성공 ${ok}장 / 실패 ${fail}장. 실패 항목은 로그를 확인해주세요.`;
+  }
+  banner.style.display = 'flex';
+
+  log(`\n🏁 완료 — 성공 ${ok} / 실패 ${fail}`);
+  isUploading = false;
+  document.getElementById('uploadBtn').disabled = false;
+  document.getElementById('uploadBtn').textContent = '📤 업로드 시작';
+}
+
+// ── GitHub API ───────────────────────────────────────────────
+async function ghFetch(endpoint, method, body, token) {
+  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/${endpoint}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github+json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || res.statusText);
+  return data;
+}
+
+async function fileToBase64(file) {
+  return new Promise((res, rej) => {
+    const reader = new FileReader();
+    reader.onload  = () => res(reader.result.split(',')[1]);
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── photos.json 자동 업데이트 ────────────────────────────────
+async function updatePhotosJson(token, cat, date) {
+  let existing = {};
+  let sha = undefined;
+
+  try {
+    const f = await ghFetch('contents/photos.json', 'GET', null, token);
+    sha = f.sha;
+    existing = JSON.parse(atob(f.content.replace(/\n/g,'')));
+  } catch {}
+
+  // 현재 날짜 폴더 파일 목록 가져오기
+  let fileList = [];
+  try {
+    const items = await ghFetch(`contents/photos/${cat}/${date}`, 'GET', null, token);
+    fileList = items.filter(x => /\.(jpg|jpeg|png|bmp|gif|tif|tiff|webp)$/i.test(x.name))
+                    .map(x => ({ src: `photos/${cat}/${date}/${x.name}`, name: x.name }));
+  } catch {}
+
+  if (!fileList.length) return;
+
+  // 기존 데이터에 병합 (날짜 키)
+  if (!existing[date]) existing[date] = [];
+  fileList.forEach(f => {
+    if (!existing[date].find(x => x.src === f.src)) existing[date].push(f);
+  });
+
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(existing, null, 2))));
+  const body = { message: `photos.json 업데이트 (${date})`, content, branch: BRANCH };
+  if (sha) body.sha = sha;
+  await ghFetch('contents/photos.json', 'PUT', body, token);
+}
+
+// ── 토스트 ───────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
