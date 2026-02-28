@@ -67,7 +67,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 .sidebar{width:260px;min-width:180px;max-width:500px;flex-shrink:0;position:relative;}
 .resizer{width:6px;cursor:col-resize;position:absolute;right:-3px;top:0;bottom:0;z-index:20;border-radius:3px;transition:background .15s;}
 .resizer:hover,.resizer.active{background:var(--orange);}
-.sidebar-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.sidebar-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:relative;}
 .sidebar-inner{position:sticky;top:68px;display:flex;flex-direction:column;gap:10px;}
 .sidebar-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .sidebar-head span{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;}
@@ -246,9 +246,9 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
       <div class="resizer" id="resizer"></div>
       <div class="sidebar-inner">
       <div class="sidebar-card">
-        <div class="sidebar-head">
-          <span>폴더 구조</span>
-          <button class="btn sm" onclick="refreshTree()" title="새로고침" style="padding:2px 6px;">↺</button>
+        <div style="padding:11px 12px 9px;font-size:15px;font-weight:700;letter-spacing:.06em;color:var(--text);text-align:center;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:8px;">
+          폴더 구조
+          <button class="btn sm" onclick="refreshTree()" title="새로고침" style="padding:2px 6px;font-size:11px;position:absolute;right:10px;">↺</button>
         </div>
         <div class="tree" id="treeRoot"></div>
       </div>
@@ -473,7 +473,10 @@ function renderBreadcrumb() {
 // ── 트리 ─────────────────────────────────────────────────────
 async function refreshTree() {
   treeCache = {};
+  calScanDone = false;
+  Object.keys(calDateFolderMap).forEach(k => delete calDateFolderMap[k]);
   renderTreeRoot();
+  renderCal();
 }
 async function renderTreeRoot() {
   const root = document.getElementById('treeRoot');
@@ -886,27 +889,38 @@ async function renderCal() {
   drawCalDays();
 }
 
+let calScanDone = false; // 한 번 스캔하면 재사용
+
 async function collectDateFolders() {
-  // 루트부터 재귀적으로 날짜형 폴더 찾기 (캐시 활용)
+  if (calScanDone) return; // 이미 스캔됐으면 스킵
   calDateFolders = new Set();
-  await scanForDateFolders(rootFolderId);
+  // 루트 하위 폴더들을 병렬로 스캔
+  try {
+    const rootFiles = await listFolder(rootFolderId);
+    const subFolders = rootFiles.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
+    // 1단계 병렬 스캔
+    await Promise.all(subFolders.map(f => scanForDateFolders(f.id, 1)));
+  } catch {}
+  calScanDone = true;
 }
 
 async function scanForDateFolders(folderId, depth=0) {
-  if (depth > 6) return; // 너무 깊이 안 들어가도록
+  if (depth > 5) return;
   try {
     const files = await listFolder(folderId);
+    const subFolders = [];
     for (const f of files) {
       if (f.mimeType !== 'application/vnd.google-apps.folder') continue;
       if (/^\d{4}-\d{2}-\d{2}$/.test(f.name)) {
         calDateFolders.add(f.name);
-        // 같은 날짜 폴더 여러 개 저장
         if (!calDateFolderMap[f.name]) calDateFolderMap[f.name] = [];
         if (!calDateFolderMap[f.name].includes(f.id)) calDateFolderMap[f.name].push(f.id);
       } else {
-        await scanForDateFolders(f.id, depth+1);
+        subFolders.push(f);
       }
     }
+    // 하위 폴더들도 병렬 스캔
+    await Promise.all(subFolders.map(f => scanForDateFolders(f.id, depth+1)));
   } catch {}
 }
 
