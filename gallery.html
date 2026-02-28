@@ -818,10 +818,19 @@ async function deletePhoto(src, name) {
     const sha = await getFileSha(src);
     if (!sha) { showToast('⚠ 파일 SHA 조회 실패 — 토큰 권한을 확인해주세요'); return; }
     await ghFetch(`contents/${encodePath(src)}`, 'DELETE', { message: '사진 삭제: ' + name, sha, branch: BRANCH });
-    await removeFromPhotosJson([src]);
-    showToast('✅ 삭제 완료: ' + name);
+    // 로컬 allPhotos에서 즉시 제거
+    allPhotos = allPhotos.filter(p => p.src !== src);
     selectedPhotos.delete(src);
-    renderAll();
+    // DOM에서 해당 카드 즉시 제거
+    document.querySelectorAll('#photoGrid .photo-card').forEach(card => {
+      if (card.dataset.src === src) card.remove();
+    });
+    // 사진 수 업데이트
+    const stat = document.querySelector('.photo-stat b');
+    if (stat) stat.textContent = allPhotos.length;
+    showToast('✅ 삭제 완료: ' + name);
+    // photos.json 백그라운드 업데이트
+    removeFromPhotosJson([src]);
   } catch(e) { showToast('❌ 삭제 실패: ' + e.message); }
 }
 
@@ -840,10 +849,19 @@ async function deleteSelectedPhotos() {
       ok++;
     } catch { fail++; }
   }
-  await removeFromPhotosJson(srcs);
+  // 로컬에서 즉시 제거
+  srcs.forEach(src => {
+    allPhotos = allPhotos.filter(p => p.src !== src);
+    document.querySelectorAll('#photoGrid .photo-card').forEach(card => {
+      if (card.dataset.src === src) card.remove();
+    });
+  });
   selectedPhotos.clear();
+  const stat = document.querySelector('.photo-stat b');
+  if (stat) stat.textContent = allPhotos.length;
   showToast('✅ ' + ok + '장 삭제 완료' + (fail ? ' / ❌ ' + fail + '장 실패' : ''));
-  renderAll();
+  // photos.json 백그라운드 업데이트
+  removeFromPhotosJson(srcs);
 }
 
 async function removeFromPhotosJson(deletedSrcs) {
