@@ -320,9 +320,13 @@ const REPO   = 'safety-portal';
 const BRANCH = 'main';
 function getToken() { return localStorage.getItem('gh_token') || ''; }
 
+function encodePath(path) {
+  return path.split('/').map(seg => encodeURIComponent(seg)).join('/');
+}
+
 async function ghFetch(endpoint, method, body) {
   const token = getToken();
-  if (!token) throw new Error('토큰 없음');
+  if (!token) throw new Error('토큰 없음 — upload.html에서 먼저 설정해주세요');
   const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/${endpoint}`, {
     method,
     headers: {
@@ -334,15 +338,19 @@ async function ghFetch(endpoint, method, body) {
   });
   if (method === 'DELETE' && res.status === 204) return {};
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || res.statusText);
+  if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
   return data;
 }
 
-async function getFileSha(path) {
+async function getFileSha(filePath) {
   try {
-    const r = await ghFetch(`contents/${encodeURIComponent(path).replace(/%2F/g,'/')}`, 'GET');
-    return r.sha;
-  } catch { return null; }
+    const encoded = encodePath(filePath);
+    const r = await ghFetch(`contents/${encoded}`, 'GET');
+    return r.sha || null;
+  } catch(e) {
+    console.error('SHA 조회 실패:', filePath, e.message);
+    return null;
+  }
 }
 
 // ── 상태 ────────────────────────────────────────────────────
@@ -803,13 +811,13 @@ function selectAllPhotos(all) {
 }
 
 async function deletePhoto(src, name) {
-  if (!getToken()) { showToast('⚠ 토큰을 먼저 설정해주세요 (upload.html에서 설정)'); return; }
-  if (!confirm(`"${name}" 사진을 삭제할까요?\nGitHub에서 영구 삭제됩니다.`)) return;
+  if (!getToken()) { showToast('⚠ upload.html에서 토큰을 먼저 설정해주세요'); return; }
+  if (!confirm('"' + name + '" 사진을 삭제할까요?\nGitHub에서 영구 삭제됩니다.')) return;
   showToast('🗑 삭제 중...');
   try {
     const sha = await getFileSha(src);
-    if (!sha) { showToast('⚠ 파일을 찾을 수 없습니다'); return; }
-    await ghFetch(`contents/${src}`, 'DELETE', { message: `사진 삭제: ${name}`, sha, branch: BRANCH });
+    if (!sha) { showToast('⚠ 파일 SHA 조회 실패 — 토큰 권한을 확인해주세요'); return; }
+    await ghFetch(`contents/${encodePath(src)}`, 'DELETE', { message: '사진 삭제: ' + name, sha, branch: BRANCH });
     await removeFromPhotosJson([src]);
     showToast('✅ 삭제 완료: ' + name);
     selectedPhotos.delete(src);
@@ -818,9 +826,9 @@ async function deletePhoto(src, name) {
 }
 
 async function deleteSelectedPhotos() {
-  if (!getToken()) { showToast('⚠ 토큰을 먼저 설정해주세요'); return; }
+  if (!getToken()) { showToast('⚠ upload.html에서 토큰을 먼저 설정해주세요'); return; }
   if (!selectedPhotos.size) return;
-  if (!confirm(`선택한 ${selectedPhotos.size}장을 삭제할까요?\nGitHub에서 영구 삭제됩니다.`)) return;
+  if (!confirm('선택한 ' + selectedPhotos.size + '장을 삭제할까요?\nGitHub에서 영구 삭제됩니다.')) return;
   let ok = 0, fail = 0;
   const srcs = [...selectedPhotos];
   for (const src of srcs) {
@@ -828,13 +836,13 @@ async function deleteSelectedPhotos() {
       const sha = await getFileSha(src);
       if (!sha) { fail++; continue; }
       const name = src.split('/').pop();
-      await ghFetch(`contents/${src}`, 'DELETE', { message: `사진 삭제: ${name}`, sha, branch: BRANCH });
+      await ghFetch(`contents/${encodePath(src)}`, 'DELETE', { message: '사진 삭제: ' + name, sha, branch: BRANCH });
       ok++;
     } catch { fail++; }
   }
   await removeFromPhotosJson(srcs);
   selectedPhotos.clear();
-  showToast(`✅ ${ok}장 삭제 완료${fail ? ` / ❌ ${fail}장 실패` : ''}`);
+  showToast('✅ ' + ok + '장 삭제 완료' + (fail ? ' / ❌ ' + fail + '장 실패' : ''));
   renderAll();
 }
 
