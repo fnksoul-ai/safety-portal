@@ -882,8 +882,9 @@ async function scanForDateFolders(folderId, depth=0) {
       if (f.mimeType !== 'application/vnd.google-apps.folder') continue;
       if (/^\d{4}-\d{2}-\d{2}$/.test(f.name)) {
         calDateFolders.add(f.name);
-        // id도 저장
-        calDateFolderMap[f.name] = f.id;
+        // 같은 날짜 폴더 여러 개 저장
+        if (!calDateFolderMap[f.name]) calDateFolderMap[f.name] = [];
+        if (!calDateFolderMap[f.name].includes(f.id)) calDateFolderMap[f.name].push(f.id);
       } else {
         await scanForDateFolders(f.id, depth+1);
       }
@@ -891,17 +892,95 @@ async function scanForDateFolders(folderId, depth=0) {
   } catch {}
 }
 
-const calDateFolderMap = {}; // dateStr → folderId
+const calDateFolderMap = {}; // dateStr → [folderId, ...]
 
 async function calGoDate(dateStr) {
   calSelected = dateStr;
   renderCal();
-  const folderId = calDateFolderMap[dateStr];
-  if (!folderId) { showToast('폴더를 찾을 수 없습니다'); return; }
-  // 폴더로 이동
-  folderPath = [];
-  await navigateToFolder(folderId, dateStr);
+  const folderIds = calDateFolderMap[dateStr];
+  if (!folderIds || !folderIds.length) { showToast('폴더를 찾을 수 없습니다'); return; }
+
+  if (folderIds.length === 1) {
+    // 하나면 바로 이동
+    folderPath = [];
+    await navigateToFolder(folderIds[0], dateStr);
+  } else {
+    // 여러 폴더면 사진 합쳐서 표시
+    folderPath = [{ id: '__date__', name: dateStr }];
+    currentFolderId = '__date__';
+    currentFolderName = dateStr;
+    renderBreadcrumb();
+    await renderDateMerged(dateStr, folderIds);
+  }
   showToast(`📅 ${dateStr} 사진 보기`);
+}
+
+async function renderDateMerged(dateStr, folderIds) {
+  const content = document.getElementById('content');
+  content.innerHTML = '<div class="loading-box"><span class="spin">⏳</span> 전체 폴더 사진 불러오는 중...</div>';
+
+  try {
+    // 모든 폴더에서 사진 병렬로 가져오기
+    const results = await Promise.all(folderIds.map(id => listFolder(id)));
+    const allFiles = results.flat();
+    const photos = allFiles.filter(f =>
+      f.mimeType !== 'application/vnd.google-apps.folder' &&
+      (f.mimeType?.startsWith('image/') || IMG_EXTS.test(f.name))
+    );
+    allPhotos = photos;
+    selectedPhotos.clear();
+    content.innerHTML = '';
+
+    // 헤더
+    const hdr = document.createElement('div'); hdr.className = 'folder-header';
+    hdr.innerHTML = `<span class="folder-icon">📅</span>
+      <div><div class="folder-title">${dateStr}</div>
+      <div class="folder-path">${folderIds.length}개 폴더 · 사진 ${photos.length}장</div></div>`;
+    content.appendChild(hdr);
+
+    if (photos.length === 0) {
+      const box = document.createElement('div'); box.className = 'empty-box';
+      box.innerHTML = '<div class="eb-icon">🖼️</div><p>이 날짜에 사진이 없습니다.</p>';
+      content.appendChild(box);
+      return;
+    }
+
+    const lbl = document.createElement('div'); lbl.className = 'sec-label'; lbl.id = 'photoSecLabel';
+    lbl.textContent = `사진 (${photos.length}장)`;
+    content.appendChild(lbl);
+
+    const toolbar = document.createElement('div'); toolbar.className = 'photo-toolbar';
+    toolbar.innerHTML = `
+      <div class="srch">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="파일명 검색" oninput="filterPhotos(this.value)">
+      </div>
+      ${editMode ? `<button class="btn sm" onclick="selectAll(true)">전체선택</button>
+        <button class="btn sm" onclick="selectAll(false)">선택해제</button>
+        <button class="btn sm danger" id="bulkDelBtn" style="display:none" onclick="deleteSelected()">🗑 선택삭제</button>` : ''}
+      <div class="photo-stat" id="photoStat"><b>${photos.length}</b>장</div>`;
+    content.appendChild(toolbar);
+
+    const grid = document.createElement('div'); grid.className = 'photo-grid'; grid.id = 'photoGrid';
+    photos.forEach((p, i) => {
+      const card = document.createElement('div');
+      card.className = 'photo-card'; card.dataset.name = p.name; card.dataset.id = p.id;
+      const imgSrc = p.thumbnailLink
+        ? p.thumbnailLink.replace('=s220', '=s400')
+        : `https://lh3.googleusercontent.com/d/${p.id}=s400`;
+      card.innerHTML = `
+        <img src="${imgSrc}" alt="${p.name}" loading="lazy">
+        <div class="pc-ov"><div class="pc-nm">${p.name}</div></div>
+        ${editMode ? `<button class="pc-del-btn" onclick="event.stopPropagation();deletePhoto('${p.id}','${p.name}',this.closest('.photo-card'))">🗑</button>
+          <label class="pc-check" onclick="event.stopPropagation()"><input type="checkbox" onchange="toggleSelect(this,'${p.id}')"></label>` : ''}`;
+      if (!editMode) card.onclick = () => { curModalIdx = i; openModalPhoto(p); };
+      grid.appendChild(card);
+    });
+    content.appendChild(grid);
+
+  } catch(e) {
+    content.innerHTML = `<div class="empty-box"><div class="eb-icon">⚠️</div><p>불러오기 실패: ${e.message}</p></div>`;
+  }
 }
 
 // ── 토스트 ────────────────────────────────────────────────────
