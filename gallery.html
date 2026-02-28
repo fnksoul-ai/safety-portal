@@ -19,22 +19,15 @@ body::before{content:'';position:fixed;inset:0;z-index:0;
   background-image:linear-gradient(rgba(249,115,22,.025) 1px,transparent 1px),
   linear-gradient(90deg,rgba(249,115,22,.025) 1px,transparent 1px);
   background-size:40px 40px;pointer-events:none;}
-
-/* NAV */
 nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
   backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
   padding:0 24px;display:flex;align-items:center;height:52px;gap:16px;}
-.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;
-  letter-spacing:.1em;color:var(--orange);text-decoration:none;white-space:nowrap;}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.1em;color:var(--orange);text-decoration:none;}
 .nav-logo span{color:var(--text);}
-.nav-back{font-size:12px;color:var(--muted2);text-decoration:none;
-  display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:6px;transition:all .15s;}
+.nav-back{font-size:12px;color:var(--muted2);text-decoration:none;display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:6px;transition:all .15s;}
 .nav-back:hover{color:var(--text);background:var(--bg3);}
-.nav-divider{color:var(--border);}
-.breadcrumb{display:flex;align-items:center;gap:6px;font-size:13px;overflow:hidden;}
-.bc-item{color:var(--muted2);cursor:pointer;white-space:nowrap;
-  padding:3px 6px;border-radius:5px;transition:all .15s;max-width:140px;
-  overflow:hidden;text-overflow:ellipsis;}
+.breadcrumb{display:flex;align-items:center;gap:6px;font-size:13px;overflow:hidden;flex-wrap:wrap;}
+.bc-item{color:var(--muted2);cursor:pointer;white-space:nowrap;padding:3px 6px;border-radius:5px;transition:all .15s;}
 .bc-item:hover{color:var(--text);background:var(--bg3);}
 .bc-item.active{color:var(--text);font-weight:600;}
 .bc-sep{color:var(--muted);font-size:11px;}
@@ -45,169 +38,101 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 .btn:hover{color:var(--text);border-color:var(--muted);}
 .btn.primary{background:var(--orange);border-color:var(--orange);color:#fff;}
 .btn.primary:hover{background:#ea6c0a;}
-.btn.danger{background:transparent;border-color:var(--red);color:var(--red);}
+.btn.danger{border-color:var(--red);color:var(--red);}
 .btn.danger:hover{background:var(--red);color:#fff;}
 .btn.sm{padding:4px 10px;font-size:11px;}
-
-/* MAIN LAYOUT */
-.page{position:relative;z-index:1;display:flex;max-width:1400px;margin:0 auto;
-  padding:20px 24px 60px;gap:0;}
-
-/* SIDEBAR TREE */
+.page{position:relative;z-index:1;display:flex;max-width:1400px;margin:0 auto;padding:20px 24px 60px;gap:0;}
 .sidebar{width:260px;min-width:180px;max-width:500px;margin-right:0;flex-shrink:0;position:relative;}
-.resizer{width:6px;cursor:col-resize;position:absolute;right:-3px;top:0;bottom:0;z-index:20;
-  border-radius:3px;transition:background .15s;}
+.resizer{width:6px;cursor:col-resize;position:absolute;right:-3px;top:0;bottom:0;z-index:20;border-radius:3px;transition:background .15s;}
 .resizer:hover,.resizer.active{background:var(--orange);}
-.sidebar-card{background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;overflow:hidden;position:sticky;top:68px;}
-.sidebar-head{padding:12px 14px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;justify-content:space-between;}
-.sidebar-head span{font-size:11px;font-weight:700;letter-spacing:.08em;
-  color:var(--muted);text-transform:uppercase;}
+.sidebar-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;position:sticky;top:68px;}
+.sidebar-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.sidebar-head span{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;}
 .tree{padding:8px 0;max-height:calc(100vh - 140px);overflow-y:auto;}
 .tree::-webkit-scrollbar{width:3px;}
 .tree::-webkit-scrollbar-thumb{background:var(--border);}
-.tree-item{display:flex;align-items:center;padding:6px 10px;font-size:12px;
-  color:var(--muted2);cursor:pointer;gap:5px;transition:all .15s;
-  border-left:2px solid transparent;user-select:none;min-width:0;}
+.tree-item{display:flex;align-items:center;padding:6px 10px;font-size:12px;color:var(--muted2);cursor:pointer;gap:5px;transition:all .15s;border-left:2px solid transparent;user-select:none;min-width:0;}
 .tree-item:hover{color:var(--text);background:rgba(255,255,255,.04);}
-.tree-item.active{color:var(--orange);background:rgba(249,115,22,.07);
-  border-left-color:var(--orange);}
+.tree-item.active{color:var(--orange);background:rgba(249,115,22,.07);border-left-color:var(--orange);}
 .tree-item .ti-icon{font-size:13px;flex-shrink:0;}
 .tree-item .ti-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
-.tree-item .ti-cnt{font-size:10px;color:var(--muted);background:var(--bg3);
-  padding:1px 5px;border-radius:8px;flex-shrink:0;}
+.tree-item .ti-cnt{font-size:10px;color:var(--muted);background:var(--bg3);padding:1px 5px;border-radius:8px;flex-shrink:0;}
 .tree-item .ti-toggle{font-size:10px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
 .tree-item.open .ti-toggle{transform:rotate(90deg);}
 .tree-children{padding-left:14px;border-left:1px solid var(--border);margin-left:20px;}
 .tree-children.hidden{display:none;}
-
-/* CONTENT */
-.content{flex:1;min-width:0;position:relative;margin-left:280px;transition:margin-left .0s;}
-
-/* FOLDER VIEW */
+.content{flex:1;min-width:0;position:relative;margin-left:280px;}
 .folder-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
 .folder-icon{font-size:28px;}
 .folder-title{font-size:20px;font-weight:700;}
 .folder-desc{font-size:13px;color:var(--muted2);margin-top:2px;}
 .folder-actions{margin-left:auto;display:flex;gap:8px;}
-
-/* SUBFOLDER GRID */
 .subfolder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:28px;}
-.folder-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;
-  padding:16px;cursor:pointer;transition:all .2s;text-align:center;position:relative;}
+.folder-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;text-align:center;position:relative;}
 .folder-card:hover{border-color:var(--orange);background:var(--bg3);transform:translateY(-2px);}
 .folder-card .fc-icon{font-size:28px;margin-bottom:8px;}
-.folder-card .fc-name{font-size:12px;font-weight:600;color:var(--text);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.folder-card .fc-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .folder-card .fc-cnt{font-size:11px;color:var(--muted);margin-top:3px;}
 .folder-card .fc-actions{position:absolute;top:6px;right:6px;display:none;gap:3px;}
 .folder-card:hover .fc-actions{display:flex;}
-.icon-btn{width:22px;height:22px;border-radius:4px;border:none;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;font-size:11px;
-  background:var(--bg4);color:var(--muted2);transition:all .15s;}
+.icon-btn{width:22px;height:22px;border-radius:4px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--bg4);color:var(--muted2);transition:all .15s;}
 .icon-btn:hover.edit{background:var(--blue);color:#fff;}
 .icon-btn:hover.del{background:var(--red);color:#fff;}
-
-/* ADD FOLDER CARD */
-.add-folder-card{background:transparent;border:1px dashed var(--border);border-radius:10px;
-  padding:16px;cursor:pointer;transition:all .2s;text-align:center;color:var(--muted);}
+.add-folder-card{background:transparent;border:1px dashed var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;text-align:center;color:var(--muted);}
 .add-folder-card:hover{border-color:var(--orange);color:var(--orange);background:rgba(249,115,22,.04);}
-.add-folder-card .afc-icon{font-size:24px;margin-bottom:6px;}
-.add-folder-card .afc-text{font-size:12px;font-weight:500;}
-
-/* SECTION DIVIDER */
-.sec-label{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted);
-  text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
+.sec-label{font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:10px;}
 .sec-label::after{content:'';flex:1;height:1px;background:var(--border);}
-
-/* PHOTO GRID */
 .photo-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
 .srch{position:relative;}
-.srch svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);
-  pointer-events:none;color:var(--muted);}
-.srch input{background:var(--bg2);border:1px solid var(--border);border-radius:7px;
-  padding:7px 12px 7px 30px;color:var(--text);font-size:12px;
-  font-family:'Noto Sans KR',sans-serif;width:200px;}
+.srch svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);}
+.srch input{background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:7px 12px 7px 30px;color:var(--text);font-size:12px;font-family:'Noto Sans KR',sans-serif;width:200px;}
 .srch input:focus{outline:none;border-color:var(--orange);}
 .srch input::placeholder{color:var(--muted);}
 .photo-stat{font-size:12px;color:var(--muted);margin-left:auto;}
 .photo-stat b{color:var(--text);}
-
 .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:7px;}
-.photo-card{position:relative;border-radius:8px;overflow:hidden;background:var(--bg3);
-  cursor:pointer;border:1px solid var(--border);aspect-ratio:4/3;
-  transition:transform .2s,border-color .2s,box-shadow .2s;}
-.photo-card:hover{transform:translateY(-3px);border-color:var(--orange);
-  box-shadow:0 10px 28px rgba(0,0,0,.5);}
+.photo-card{position:relative;border-radius:8px;overflow:hidden;background:var(--bg3);cursor:pointer;border:1px solid var(--border);aspect-ratio:4/3;transition:transform .2s,border-color .2s,box-shadow .2s;}
+.photo-card:hover{transform:translateY(-3px);border-color:var(--orange);box-shadow:0 10px 28px rgba(0,0,0,.5);}
 .photo-card img{width:100%;height:100%;object-fit:cover;display:block;}
-.photo-card .pc-ov{position:absolute;inset:0;
-  background:linear-gradient(to top,rgba(0,0,0,.75),transparent 55%);
-  opacity:0;transition:opacity .2s;display:flex;align-items:flex-end;padding:7px;}
+.photo-card .pc-ov{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75),transparent 55%);opacity:0;transition:opacity .2s;display:flex;align-items:flex-end;padding:7px;}
 .photo-card:hover .pc-ov{opacity:1;}
 .photo-card .pc-nm{font-size:10px;color:#fff;word-break:break-all;line-height:1.3;}
-.photo-card .pc-date{position:absolute;top:6px;left:6px;font-size:9px;
-  background:rgba(0,0,0,.6);color:rgba(255,255,255,.8);padding:2px 6px;border-radius:4px;}
-.photo-card .pc-del-btn{position:absolute;top:5px;right:5px;width:24px;height:24px;
-  border-radius:5px;border:none;background:rgba(239,68,68,.85);color:#fff;
-  font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  opacity:0;transition:opacity .15s;z-index:5;}
+.photo-card .pc-date{position:absolute;top:6px;left:6px;font-size:9px;background:rgba(0,0,0,.6);color:rgba(255,255,255,.8);padding:2px 6px;border-radius:4px;}
+.photo-card .pc-del-btn{position:absolute;top:5px;right:5px;width:24px;height:24px;border-radius:5px;border:none;background:rgba(239,68,68,.85);color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;z-index:5;}
 .photo-card:hover .pc-del-btn{opacity:1;}
 .photo-card .pc-check{position:absolute;top:5px;left:5px;z-index:5;cursor:pointer;}
 .photo-card .pc-check input{width:16px;height:16px;cursor:pointer;accent-color:var(--orange);}
-
-/* EMPTY */
 .empty-box{text-align:center;padding:60px 20px;color:var(--muted);}
 .empty-box .eb-icon{font-size:40px;margin-bottom:12px;}
 .empty-box p{font-size:13px;line-height:1.7;color:var(--muted2);}
-
-/* MODAL */
-.modal{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.93);
-  align-items:center;justify-content:center;padding:20px;}
+.loading-box{text-align:center;padding:40px;color:var(--muted);font-size:13px;}
+.loading-box .spin{display:inline-block;animation:spin 1s linear infinite;font-size:24px;margin-bottom:8px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.modal{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.93);align-items:center;justify-content:center;padding:20px;}
 .modal.open{display:flex;}
 .modal-wrap{position:relative;display:flex;flex-direction:column;align-items:center;}
-.modal-img{max-width:90vw;max-height:82vh;border-radius:8px;
-  box-shadow:0 24px 80px rgba(0,0,0,.8);display:block;}
-.modal-x{position:absolute;top:-14px;right:-14px;width:30px;height:30px;
-  border-radius:50%;background:var(--bg3);border:1px solid var(--border);
-  color:var(--text);font-size:16px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.modal-img{max-width:90vw;max-height:82vh;border-radius:8px;box-shadow:0 24px 80px rgba(0,0,0,.8);display:block;}
+.modal-x{position:absolute;top:-14px;right:-14px;width:30px;height:30px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .modal-x:hover{background:#ef4444;border-color:#ef4444;color:#fff;}
 .modal-nav{display:flex;gap:10px;margin-top:14px;}
-.modal-nav button{padding:7px 18px;border-radius:7px;font-size:13px;font-weight:600;
-  border:1px solid var(--border);background:var(--bg3);color:var(--muted2);
-  cursor:pointer;transition:all .15s;font-family:'Noto Sans KR',sans-serif;}
+.modal-nav button{padding:7px 18px;border-radius:7px;font-size:13px;font-weight:600;border:1px solid var(--border);background:var(--bg3);color:var(--muted2);cursor:pointer;transition:all .15s;font-family:'Noto Sans KR',sans-serif;}
 .modal-nav button:hover{color:var(--text);border-color:var(--muted);}
 .modal-info{text-align:center;margin-top:10px;font-size:12px;color:var(--muted);}
 .modal-counter{font-size:11px;color:var(--muted);margin-top:3px;}
-
-/* DIALOG (폴더 추가/수정) */
-.dialog-bg{display:none;position:fixed;inset:0;z-index:200;
-  background:rgba(0,0,0,.7);align-items:center;justify-content:center;}
+.dialog-bg{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);align-items:center;justify-content:center;}
 .dialog-bg.open{display:flex;}
-.dialog{background:var(--bg2);border:1px solid var(--border);border-radius:12px;
-  padding:24px;width:360px;max-width:90vw;}
+.dialog{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;width:360px;max-width:90vw;}
 .dialog h3{font-size:16px;font-weight:700;margin-bottom:16px;}
 .field{margin-bottom:14px;}
 .field label{display:block;font-size:12px;color:var(--muted2);margin-bottom:6px;font-weight:500;}
-.field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--border);
-  border-radius:7px;padding:9px 12px;color:var(--text);font-size:13px;
-  font-family:'Noto Sans KR',sans-serif;transition:border-color .15s;}
+.field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:9px 12px;color:var(--text);font-size:13px;font-family:'Noto Sans KR',sans-serif;transition:border-color .15s;}
 .field input:focus,.field select:focus{outline:none;border-color:var(--orange);}
 .dialog-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
-
-/* TOAST */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
-  background:var(--bg3);border:1px solid var(--border);border-radius:8px;
-  padding:10px 20px;font-size:13px;color:var(--text);z-index:500;
-  opacity:0;transition:all .3s;pointer-events:none;}
+.token-warn{background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.25);border-radius:8px;padding:12px 14px;font-size:12px;color:#ca8a04;margin-bottom:20px;display:none;}
+.token-warn.show{display:block;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 20px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:all .3s;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-@media(max-width:768px){
-  .sidebar{display:none;}
-  .page{padding:12px 14px 40px;}
-  .subfolder-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));}
-}
+@media(max-width:768px){.sidebar{display:none;}.page{padding:12px 14px 40px;}.content{margin-left:0;}}
 </style>
 </head>
 <body>
@@ -215,7 +140,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 <nav>
   <a class="nav-logo" href="index.html">⚠ <span>SAFETY</span></a>
   <a class="nav-back" href="index.html">← 홈</a>
-  <span class="nav-divider">|</span>
+  <span style="color:var(--border)">|</span>
   <div class="breadcrumb" id="breadcrumb"></div>
   <div class="nav-right">
     <button class="btn sm" onclick="toggleEditMode()" id="editBtn">✏️ 편집</button>
@@ -223,22 +148,20 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 </nav>
 
 <div class="page">
-  <!-- 사이드바 트리 -->
   <aside class="sidebar" id="sidebar">
     <div class="resizer" id="resizer"></div>
     <div class="sidebar-card">
-      <div class="sidebar-head">
-        <span>폴더 구조</span>
-      </div>
+      <div class="sidebar-head"><span>폴더 구조</span></div>
       <div class="tree" id="treeRoot"></div>
     </div>
   </aside>
-
-  <!-- 메인 콘텐츠 -->
-  <div class="content" id="content"></div>
+  <div class="content" id="content">
+    <div class="token-warn" id="tokenWarn">
+      ⚠ GitHub 토큰이 설정되지 않았습니다. <a href="upload.html" style="color:inherit;font-weight:700;text-decoration:underline">upload.html</a>에서 토큰을 먼저 설정해주세요.
+    </div>
+  </div>
 </div>
 
-<!-- 모달 -->
 <div class="modal" id="modal" onclick="closeModal(event)">
   <div class="modal-wrap">
     <button class="modal-x" onclick="closeModal(null)">✕</button>
@@ -252,18 +175,11 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
   </div>
 </div>
 
-<!-- 폴더 추가/수정 다이얼로그 -->
 <div class="dialog-bg" id="folderDialog">
   <div class="dialog">
     <h3 id="dialogTitle">폴더 추가</h3>
-    <div class="field">
-      <label>폴더 이름</label>
-      <input type="text" id="folderNameInput" placeholder="예: 01_일일점검">
-    </div>
-    <div class="field">
-      <label>설명 (선택)</label>
-      <input type="text" id="folderDescInput" placeholder="폴더 설명을 입력하세요">
-    </div>
+    <div class="field"><label>폴더 이름</label><input type="text" id="folderNameInput" placeholder="예: 01_일일점검"></div>
+    <div class="field"><label>설명 (선택)</label><input type="text" id="folderDescInput" placeholder="폴더 설명"></div>
     <div class="field">
       <label>아이콘</label>
       <select id="folderIconSelect">
@@ -289,44 +205,20 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 <div class="toast" id="toast"></div>
 
 <script>
-// ── 기본 폴더 구조 ──────────────────────────────────────────
-const DEFAULT_STRUCTURE = {
-  id: 'root', name: '현장사진관리', icon: '📸', desc: '전체 현장 사진 관리',
-  children: [
-    { id: 'c01', name: '01.점검기록', icon: '📋', desc: '각종 점검 사진 기록', children: [
-      { id: 'c01_01', name: '01_일일점검', icon: '📅', desc: '일일 안전점검 사진', children: [] },
-      { id: 'c01_02', name: '02_정기점검', icon: '🔄', desc: '정기점검 사진', children: [
-        { id: 'c01_02_01', name: '01_월간점검', icon: '📆', desc: '', children: [] },
-        { id: 'c01_02_02', name: '02_법정점검', icon: '⚖️', desc: '', children: [] },
-        { id: 'c01_02_03', name: '03_협력업체점검', icon: '🤝', desc: '', children: [] },
-      ]},
-      { id: 'c01_03', name: '03_합동점검', icon: '👥', desc: '합동점검 사진', children: [
-        { id: 'c01_03_01', name: '01_발주처합동점검', icon: '🏢', desc: '', children: [] },
-        { id: 'c01_03_02', name: '02_감리합동점검', icon: '🔍', desc: '', children: [] },
-      ]},
-      { id: 'c01_04', name: '04_유관기관점검', icon: '🏛️', desc: '', children: [] },
-    ]},
-    { id: 'c02', name: '02.지적&이슈', icon: '⚠️', desc: '지적사항 및 이슈 사진', children: [] },
-    { id: 'c03', name: '03.개선조치', icon: '✅', desc: '개선조치 전후 사진', children: [] },
-    { id: 'c04', name: '04.교육&회의', icon: '🎓', desc: '교육 및 회의 사진', children: [] },
-    { id: 'c05', name: '05.사고사례', icon: '🚨', desc: '사고사례 사진', children: [] },
-    { id: 'c06', name: '06.기타', icon: '📦', desc: '기타 사진', children: [] },
-  ]
-};
-
-// ── GitHub API ───────────────────────────────────────────────
 const OWNER  = 'fnksoul-ai';
 const REPO   = 'safety-portal';
 const BRANCH = 'main';
+
+// ── 토큰 ────────────────────────────────────────────────────
 function getToken() { return localStorage.getItem('gh_token') || ''; }
 
 function encodePath(path) {
-  return path.split('/').map(seg => encodeURIComponent(seg)).join('/');
+  return path.split('/').map(s => encodeURIComponent(s)).join('/');
 }
 
-async function ghFetch(endpoint, method, body) {
+async function ghFetch(endpoint, method='GET', body=null) {
   const token = getToken();
-  if (!token) throw new Error('토큰 없음 — upload.html에서 먼저 설정해주세요');
+  if (!token) throw new Error('NO_TOKEN');
   const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/${endpoint}`, {
     method,
     headers: {
@@ -342,648 +234,408 @@ async function ghFetch(endpoint, method, body) {
   return data;
 }
 
-async function getFileSha(filePath) {
-  try {
-    const encoded = encodePath(filePath);
-    const r = await ghFetch(`contents/${encoded}`, 'GET');
-    return r.sha || null;
-  } catch(e) {
-    console.error('SHA 조회 실패:', filePath, e.message);
-    return null;
-  }
+// ── GitHub 폴더 직접 읽기 ────────────────────────────────────
+const IMG_EXTS = /\.(jpg|jpeg|png|bmp|gif|tif|tiff|webp)$/i;
+
+async function listPhotos(ghPath) {
+  // GitHub API로 해당 경로의 파일 목록 가져오기
+  const items = await ghFetch(`contents/${encodePath(ghPath)}`);
+  if (!Array.isArray(items)) return [];
+  return items
+    .filter(f => f.type === 'file' && IMG_EXTS.test(f.name))
+    .map(f => ({
+      src: f.download_url,
+      name: f.name,
+      path: f.path,
+      sha: f.sha,
+    }));
 }
+
+// ── 폴더 구조 (로컬스토리지) ────────────────────────────────
+const DEFAULT_STRUCTURE = {
+  id:'root', name:'현장사진관리', icon:'📸', desc:'전체 현장 사진 관리', ghPath:'photos',
+  children:[
+    {id:'c01', name:'01.점검기록', icon:'📋', desc:'각종 점검 사진 기록', ghPath:'photos/01.점검기록', children:[
+      {id:'c01_01', name:'01_일일점검', icon:'📅', desc:'일일 안전점검 사진', ghPath:'photos/01.점검기록/01_일일점검', children:[]},
+      {id:'c01_02', name:'02_정기점검', icon:'🔄', desc:'정기점검 사진', ghPath:'photos/01.점검기록/02_정기점검', children:[
+        {id:'c01_02_01', name:'01_월간점검', icon:'📆', desc:'', ghPath:'photos/01.점검기록/02_정기점검/01_월간점검', children:[]},
+        {id:'c01_02_02', name:'02_법정점검', icon:'⚖️', desc:'', ghPath:'photos/01.점검기록/02_정기점검/02_법정점검', children:[]},
+        {id:'c01_02_03', name:'03_협력업체점검', icon:'🤝', desc:'', ghPath:'photos/01.점검기록/02_정기점검/03_협력업체점검', children:[]},
+      ]},
+      {id:'c01_03', name:'03_합동점검', icon:'👥', desc:'합동점검 사진', ghPath:'photos/01.점검기록/03_합동점검', children:[
+        {id:'c01_03_01', name:'01_발주처합동점검', icon:'🏢', desc:'', ghPath:'photos/01.점검기록/03_합동점검/01_발주처합동점검', children:[]},
+        {id:'c01_03_02', name:'02_감리합동점검', icon:'🔍', desc:'', ghPath:'photos/01.점검기록/03_합동점검/02_감리합동점검', children:[]},
+      ]},
+      {id:'c01_04', name:'04_유관기관점검', icon:'🏛️', desc:'', ghPath:'photos/01.점검기록/04_유관기관점검', children:[]},
+    ]},
+    {id:'c02', name:'02.지적&이슈', icon:'⚠️', desc:'지적사항 및 이슈', ghPath:'photos/02.지적&이슈', children:[]},
+    {id:'c03', name:'03.개선조치', icon:'✅', desc:'개선조치 전후 사진', ghPath:'photos/03.개선조치', children:[]},
+    {id:'c04', name:'04.교육&회의', icon:'🎓', desc:'교육 및 회의', ghPath:'photos/04.교육&회의', children:[]},
+    {id:'c05', name:'05.사고사례', icon:'🚨', desc:'사고사례 사진', ghPath:'photos/05.사고사례', children:[]},
+    {id:'c06', name:'06.기타', icon:'📦', desc:'기타 사진', ghPath:'photos/06.기타', children:[]},
+  ]
+};
+
+function loadStructure(){
+  try{ const s=localStorage.getItem('galleryStructure'); return s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_STRUCTURE)); }
+  catch{ return JSON.parse(JSON.stringify(DEFAULT_STRUCTURE)); }
+}
+function saveStructure(){ localStorage.setItem('galleryStructure', JSON.stringify(structure)); }
 
 // ── 상태 ────────────────────────────────────────────────────
-let structure  = loadStructure();
-let currentPath= ['root'];  // id 배열
-let editMode   = false;
-let allPhotos  = [];         // 현재 폴더의 사진 목록 (modal용)
-let curModalIdx= 0;
-let dialogMode = null;       // 'add' | 'edit'
-let editTarget = null;       // 수정 대상 node
+let structure    = loadStructure();
+let currentPath  = ['root'];
+let editMode     = false;
+let allPhotos    = [];
+let curModalIdx  = 0;
+let dialogMode   = null;
+let editTarget   = null;
 let dialogParentId = null;
-let selectedPhotos = new Set(); // 편집모드 선택된 사진 src 목록
+let selectedPhotos = new Set();
 
-function loadStructure() {
-  try {
-    const s = localStorage.getItem('galleryStructure');
-    return s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_STRUCTURE));
-  } catch { return JSON.parse(JSON.stringify(DEFAULT_STRUCTURE)); }
-}
-function saveStructure() {
-  localStorage.setItem('galleryStructure', JSON.stringify(structure));
-}
+// ── 노드 탐색 ────────────────────────────────────────────────
+function findNode(id, node){ if(!node)node=structure; if(node.id===id)return node; if(node.children){for(const c of node.children){const r=findNode(id,c);if(r)return r;}} return null; }
+function findParent(id, node, parent){ if(!node)node=structure; if(node.id===id)return parent; if(node.children){for(const c of node.children){const r=findParent(id,c,node);if(r)return r;}} return null; }
+function genId(){ return 'f_'+Date.now()+'_'+Math.random().toString(36).slice(2,6); }
+function getPathTo(targetId, node, path){ const np=[...path,node.id]; if(node.id===targetId)return np; if(node.children){for(const c of node.children){const r=getPathTo(targetId,c,np);if(r)return r;}} return null; }
 
-// ── 노드 탐색 헬퍼 ──────────────────────────────────────────
-function findNode(id, node) {
-  if (!node) node = structure;
-  if (node.id === id) return node;
-  if (node.children) {
-    for (const c of node.children) {
-      const r = findNode(id, c);
-      if (r) return r;
-    }
-  }
-  return null;
+// ── 트리 ─────────────────────────────────────────────────────
+function renderTree(){
+  const root=document.getElementById('treeRoot');
+  root.innerHTML='';
+  renderTreeNode(structure,root,0);
 }
-function findParent(id, node, parent) {
-  if (!node) node = structure;
-  if (node.id === id) return parent;
-  if (node.children) {
-    for (const c of node.children) {
-      const r = findParent(id, c, node);
-      if (r) return r;
-    }
-  }
-  return null;
-}
-function genId() { return 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2,6); }
-
-// ── 트리 렌더 ───────────────────────────────────────────────
-function renderTree() {
-  const root = document.getElementById('treeRoot');
-  root.innerHTML = '';
-  renderTreeNode(structure, root, 0);
-}
-function renderTreeNode(node, container, depth) {
-  const item = document.createElement('div');
-  const hasChildren = node.children && node.children.length > 0;
-  const isActive = currentPath[currentPath.length-1] === node.id;
-  const isOpen   = currentPath.includes(node.id);
-
-  item.className = 'tree-item' + (isActive ? ' active' : '') + (isOpen && hasChildren ? ' open' : '');
-  item.style.paddingLeft = (14 + depth * 12) + 'px';
-  item.innerHTML = `
-    <span class="ti-toggle">${hasChildren ? '▶' : ' '}</span>
-    <span class="ti-icon">${node.icon||'📁'}</span>
-    <span class="ti-name">${node.name}</span>
-  `;
-  item.onclick = (e) => { e.stopPropagation(); navigateTo(node.id); };
+function renderTreeNode(node, container, depth){
+  const hasChildren=node.children&&node.children.length>0;
+  const isActive=currentPath[currentPath.length-1]===node.id;
+  const isOpen=currentPath.includes(node.id);
+  const item=document.createElement('div');
+  item.className='tree-item'+(isActive?' active':'')+(isOpen&&hasChildren?' open':'');
+  item.style.paddingLeft=(14+depth*12)+'px';
+  item.innerHTML=`<span class="ti-toggle">${hasChildren?'▶':' '}</span><span class="ti-icon">${node.icon||'📁'}</span><span class="ti-name">${node.name}</span>`;
+  item.onclick=e=>{e.stopPropagation();navigateTo(node.id);};
   container.appendChild(item);
-
-  if (hasChildren) {
-    const children = document.createElement('div');
-    children.className = 'tree-children' + (isOpen ? '' : ' hidden');
-    node.children.forEach(c => renderTreeNode(c, children, depth + 1));
-    container.appendChild(children);
+  if(hasChildren){
+    const ch=document.createElement('div');
+    ch.className='tree-children'+(isOpen?'':' hidden');
+    node.children.forEach(c=>renderTreeNode(c,ch,depth+1));
+    container.appendChild(ch);
   }
 }
 
 // ── 브레드크럼 ──────────────────────────────────────────────
-function renderBreadcrumb() {
-  const bc = document.getElementById('breadcrumb');
-  bc.innerHTML = '';
-  currentPath.forEach((id, i) => {
-    const node = findNode(id);
-    if (!node) return;
-    if (i > 0) { const sep = document.createElement('span'); sep.className='bc-sep'; sep.textContent='›'; bc.appendChild(sep); }
-    const item = document.createElement('span');
-    item.className = 'bc-item' + (i === currentPath.length-1 ? ' active' : '');
-    item.textContent = node.name;
-    item.onclick = () => navigateToPath(currentPath.slice(0, i+1));
+function renderBreadcrumb(){
+  const bc=document.getElementById('breadcrumb');
+  bc.innerHTML='';
+  currentPath.forEach((id,i)=>{
+    const node=findNode(id);
+    if(!node)return;
+    if(i>0){const sep=document.createElement('span');sep.className='bc-sep';sep.textContent='›';bc.appendChild(sep);}
+    const item=document.createElement('span');
+    item.className='bc-item'+(i===currentPath.length-1?' active':'');
+    item.textContent=node.name;
+    item.onclick=()=>navigateToPath(currentPath.slice(0,i+1));
     bc.appendChild(item);
   });
 }
 
 // ── 네비게이션 ──────────────────────────────────────────────
-function navigateTo(id) {
-  // 경로 재계산
-  const path = getPathTo(id, structure, []);
-  if (path) { currentPath = path; renderAll(); }
-}
-function getPathTo(targetId, node, path) {
-  const newPath = [...path, node.id];
-  if (node.id === targetId) return newPath;
-  if (node.children) {
-    for (const c of node.children) {
-      const r = getPathTo(targetId, c, newPath);
-      if (r) return r;
-    }
-  }
-  return null;
-}
-function navigateToPath(path) { currentPath = path; renderAll(); }
+function navigateTo(id){ const path=getPathTo(id,structure,[]); if(path){currentPath=path;renderAll();} }
+function navigateToPath(path){ currentPath=path; renderAll(); }
 
-function renderAll() {
-  renderTree();
-  renderBreadcrumb();
-  renderContent();
-  if (window._updateContentMargin) window._updateContentMargin();
-}
+function renderAll(){ renderTree(); renderBreadcrumb(); renderContent(); if(window._updateContentMargin)window._updateContentMargin(); }
 
-// ── 콘텐츠 렌더 ─────────────────────────────────────────────
-function renderContent() {
-  const node = findNode(currentPath[currentPath.length-1]);
-  if (!node) return;
-  const content = document.getElementById('content');
-  content.innerHTML = '';
+// ── 콘텐츠 ──────────────────────────────────────────────────
+function renderContent(){
+  const node=findNode(currentPath[currentPath.length-1]);
+  if(!node)return;
+  const content=document.getElementById('content');
+
+  // 토큰 경고 유지
+  const warn=document.getElementById('tokenWarn');
+  content.innerHTML='';
+  content.appendChild(warn);
+  if(!getToken()) warn.classList.add('show'); else warn.classList.remove('show');
 
   // 헤더
-  const hdr = document.createElement('div');
-  hdr.className = 'folder-header';
-  hdr.innerHTML = `
-    <span class="folder-icon">${node.icon||'📁'}</span>
-    <div>
-      <div class="folder-title">${node.name}</div>
-      ${node.desc ? `<div class="folder-desc">${node.desc}</div>` : ''}
-    </div>
-    <div class="folder-actions" id="folderActions"></div>
-  `;
+  const hdr=document.createElement('div');
+  hdr.className='folder-header';
+  hdr.innerHTML=`<span class="folder-icon">${node.icon||'📁'}</span>
+    <div><div class="folder-title">${node.name}</div>${node.desc?`<div class="folder-desc">${node.desc}</div>`:''}</div>
+    <div class="folder-actions" id="folderActions"></div>`;
   content.appendChild(hdr);
 
-  // 편집 버튼
-  if (editMode && node.id !== 'root') {
-    const fa = hdr.querySelector('#folderActions');
-    fa.innerHTML = `
+  if(editMode&&node.id!=='root'){
+    hdr.querySelector('#folderActions').innerHTML=`
       <button class="btn sm" onclick="openEditDialog('${node.id}')">✏️ 이름 변경</button>
-      <button class="btn sm danger" onclick="deleteFolder('${node.id}')">🗑️ 삭제</button>
-    `;
+      <button class="btn sm danger" onclick="deleteFolder('${node.id}')">🗑️ 삭제</button>`;
   }
 
   // 하위 폴더
-  if (node.children && node.children.length > 0) {
-    const secLbl = document.createElement('div');
-    secLbl.className = 'sec-label';
-    secLbl.textContent = '하위 폴더';
-    content.appendChild(secLbl);
-
-    const grid = document.createElement('div');
-    grid.className = 'subfolder-grid';
-    node.children.forEach(child => {
-      const card = document.createElement('div');
-      card.className = 'folder-card';
-      card.innerHTML = `
-        <div class="fc-icon">${child.icon||'📁'}</div>
+  if(node.children&&node.children.length>0){
+    const lbl=document.createElement('div');lbl.className='sec-label';lbl.textContent='하위 폴더';
+    content.appendChild(lbl);
+    const grid=document.createElement('div');grid.className='subfolder-grid';
+    node.children.forEach(child=>{
+      const card=document.createElement('div');card.className='folder-card';
+      card.innerHTML=`<div class="fc-icon">${child.icon||'📁'}</div>
         <div class="fc-name">${child.name}</div>
-        <div class="fc-cnt">${countChildren(child)}</div>
-        ${editMode ? `<div class="fc-actions">
+        <div class="fc-cnt">폴더</div>
+        ${editMode?`<div class="fc-actions">
           <button class="icon-btn edit" onclick="event.stopPropagation();openEditDialog('${child.id}')">✏️</button>
-          <button class="icon-btn del"  onclick="event.stopPropagation();deleteFolder('${child.id}')">🗑</button>
-        </div>` : ''}
-      `;
-      card.onclick = () => navigateTo(child.id);
+          <button class="icon-btn del" onclick="event.stopPropagation();deleteFolder('${child.id}')">🗑</button>
+        </div>`:''}`;
+      card.onclick=()=>navigateTo(child.id);
       grid.appendChild(card);
     });
-
-    // 폴더 추가 버튼
-    if (editMode) {
-      const addCard = document.createElement('div');
-      addCard.className = 'add-folder-card';
-      addCard.innerHTML = `<div class="afc-icon">➕</div><div class="afc-text">폴더 추가</div>`;
-      addCard.onclick = () => openAddDialog(node.id);
-      grid.appendChild(addCard);
+    if(editMode){
+      const add=document.createElement('div');add.className='add-folder-card';
+      add.innerHTML='<div style="font-size:24px;margin-bottom:6px">➕</div><div style="font-size:12px;font-weight:500">폴더 추가</div>';
+      add.onclick=()=>openAddDialog(node.id);
+      grid.appendChild(add);
     }
     content.appendChild(grid);
-  } else if (editMode) {
-    const grid = document.createElement('div');
-    grid.className = 'subfolder-grid';
-    const addCard = document.createElement('div');
-    addCard.className = 'add-folder-card';
-    addCard.innerHTML = `<div class="afc-icon">➕</div><div class="afc-text">폴더 추가</div>`;
-    addCard.onclick = () => openAddDialog(node.id);
-    grid.appendChild(addCard);
-
-    const secLbl = document.createElement('div');
-    secLbl.className = 'sec-label';
-    secLbl.textContent = '하위 폴더';
-    content.appendChild(secLbl);
+  } else if(editMode){
+    const lbl=document.createElement('div');lbl.className='sec-label';lbl.textContent='하위 폴더';
+    content.appendChild(lbl);
+    const grid=document.createElement('div');grid.className='subfolder-grid';
+    const add=document.createElement('div');add.className='add-folder-card';
+    add.innerHTML='<div style="font-size:24px;margin-bottom:6px">➕</div><div style="font-size:12px;font-weight:500">폴더 추가</div>';
+    add.onclick=()=>openAddDialog(node.id);
+    grid.appendChild(add);
     content.appendChild(grid);
   }
 
-  // 사진 섹션
-  renderPhotos(node, content);
-}
-
-function countChildren(node) {
-  if (!node.children || !node.children.length) return '폴더 없음';
-  return node.children.length + '개 폴더';
-}
-
-// ── 사진 렌더 (photos.json 로드) ────────────────────────────
-function renderPhotos(node, container) {
-  // 현재 폴더 경로 기반으로 photos.json에서 사진 매핑
-  // 폴더 이름에서 날짜 패턴 사진 또는 폴더명 기반 사진 표시
-  const pathStr = currentPath.slice(1).map(id => findNode(id)?.name || '').join('/');
-
-  // photos.json에서 로드 시도
-  fetch('photos.json?t=' + Date.now())
-    .then(r => r.ok ? r.json() : null)
-    .then(data => {
-      if (!data) { renderPhotoEmpty(container, true); return; }
-
-      // 경로에 맞는 사진 필터링
-      // photos.json의 src가 현재 폴더 경로를 포함하는 것만
-      let photos = [];
-      const nodeName = node.name.toLowerCase();
-
-      Object.entries(data).forEach(([date, list]) => {
-        list.forEach(p => {
-          const srcLower = p.src.toLowerCase();
-          // 현재 폴더명이 경로에 포함되거나 루트/점검기록 계열이면 포함
-          if (srcLower.includes(nodeName.replace(/[0-9_\.]/g,'').trim()) ||
-              node.id === 'c01_01' || currentPath.includes('c01_01')) {
-            photos.push({...p, date});
-          }
-        });
-      });
-
-      // 일일점검 폴더거나 root에선 전체 표시
-      if (node.id === 'root' || node.id === 'c01_01') {
-        photos = [];
-        Object.entries(data).forEach(([date, list]) => {
-          list.forEach(p => photos.push({...p, date}));
-        });
-      }
-
-      if (!photos.length) { renderPhotoEmpty(container, false); return; }
-
-      allPhotos = photos;
-      const secLbl = document.createElement('div');
-      secLbl.className = 'sec-label';
-      secLbl.id = 'photoSecLabel';
-      secLbl.textContent = '사진 (' + photos.length + '장)';
-      container.appendChild(secLbl);
-
-      const toolbar = document.createElement('div');
-      toolbar.className = 'photo-toolbar';
-      const bulkBtns = editMode ? `
-        <button class="btn sm" onclick="selectAllPhotos(true)">전체선택</button>
-        <button class="btn sm" onclick="selectAllPhotos(false)">선택해제</button>
-        <button class="btn sm danger" id="bulkDelBtn" onclick="deleteSelectedPhotos()" style="display:none">🗑 선택삭제</button>
-      ` : '';
-      toolbar.innerHTML = `
-        <div class="srch">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input type="text" placeholder="파일명 또는 날짜 검색" oninput="filterPhotos(this.value,'photoGrid')">
-        </div>
-        ${bulkBtns}
-        <div class="photo-stat"><b>${photos.length}</b>장</div>
-      `;
-      container.appendChild(toolbar);
-
-      const grid = document.createElement('div');
-      grid.className = 'photo-grid'; grid.id = 'photoGrid';
-      photos.forEach((p, i) => {
-        const card = document.createElement('div');
-        card.className = 'photo-card'; card.dataset.name = p.name; card.dataset.date = p.date||''; card.dataset.src = p.src;
-        const deleteBtn = editMode
-          ? `<button class="pc-del-btn" onclick="event.stopPropagation();deletePhoto('${p.src}','${p.name}')" title="삭제">🗑</button>`
-          : '';
-        const checkbox = editMode
-          ? `<label class="pc-check" onclick="event.stopPropagation()"><input type="checkbox" onchange="toggleSelectPhoto('${p.src}',this.checked)" ${selectedPhotos.has(p.src)?'checked':''}></label>`
-          : '';
-        card.innerHTML = `
-          <img src="${p.src}" alt="${p.name}" loading="lazy"
-            onerror="
-              this.closest('.photo-card').remove();
-              removeBrokenFromJson('${p.src}');
-              const stat = document.querySelector('.photo-stat b');
-              const lbl = document.getElementById('photoSecLabel');
-              const newCnt = document.querySelectorAll('#photoGrid .photo-card').length;
-              if(stat) stat.textContent = newCnt;
-              if(lbl) lbl.textContent = '사진 (' + newCnt + '장)';
-            ">
-          <span class="pc-date">${p.date||''}</span>
-          <div class="pc-ov"><div class="pc-nm">${p.name}</div></div>
-          ${deleteBtn}${checkbox}
-        `;
-        if (!editMode) card.onclick = () => { curModalIdx = i; updateModal(); document.getElementById('modal').classList.add('open'); };
-        grid.appendChild(card);
-      });
-      container.appendChild(grid);
-    })
-    .catch(() => renderPhotoEmpty(container, true));
-}
-
-function renderPhotoEmpty(container, noFile) {
-  const box = document.createElement('div');
-  box.className = 'empty-box';
-  if (noFile) {
-    box.innerHTML = `<div class="eb-icon">📂</div>
-      <p>photos.json 파일이 없습니다.<br>
-      <b>사진목록_생성.vbs</b>를 실행 후 GitHub에 업로드해 주세요.</p>`;
-  } else {
-    box.innerHTML = `<div class="eb-icon">🖼️</div>
-      <p>이 폴더에 등록된 사진이 없습니다.</p>`;
+  // 사진 섹션 — GitHub API로 직접 로드
+  if(node.ghPath && getToken()){
+    renderPhotosFromGitHub(node, content);
+  } else if(!getToken()) {
+    // 토큰 없음 안내
   }
-  container.appendChild(box);
 }
 
-function filterPhotos(val, gridId) {
-  document.querySelectorAll('#'+gridId+' .photo-card').forEach(card => {
-    const match = !val ||
-      card.dataset.name.toLowerCase().includes(val.toLowerCase()) ||
-      card.dataset.date.includes(val);
-    card.style.display = match ? '' : 'none';
+// ── GitHub API로 사진 직접 로드 ─────────────────────────────
+async function renderPhotosFromGitHub(node, container){
+  const loadingEl=document.createElement('div');
+  loadingEl.className='loading-box';
+  loadingEl.innerHTML='<div class="spin">⏳</div><div>사진 불러오는 중...</div>';
+  container.appendChild(loadingEl);
+
+  try {
+    const photos = await listPhotos(node.ghPath);
+    loadingEl.remove();
+
+    if(!photos.length){
+      const box=document.createElement('div');box.className='empty-box';
+      box.innerHTML='<div class="eb-icon">🖼️</div><p>이 폴더에 사진이 없습니다.<br><a href="upload.html" style="color:var(--orange)">사진 업로드하기 →</a></p>';
+      container.appendChild(box);
+      return;
+    }
+
+    allPhotos = photos;
+    selectedPhotos.clear();
+
+    const lbl=document.createElement('div');lbl.className='sec-label';lbl.id='photoSecLabel';
+    lbl.textContent=`사진 (${photos.length}장)`;
+    container.appendChild(lbl);
+
+    const toolbar=document.createElement('div');toolbar.className='photo-toolbar';
+    toolbar.innerHTML=`
+      <div class="srch">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" placeholder="파일명 검색" oninput="filterPhotos(this.value)">
+      </div>
+      ${editMode?`<button class="btn sm" onclick="selectAll(true)">전체선택</button>
+        <button class="btn sm" onclick="selectAll(false)">선택해제</button>
+        <button class="btn sm danger" id="bulkDelBtn" style="display:none" onclick="deleteSelected()">🗑 선택삭제</button>`:''}
+      <div class="photo-stat" id="photoStat"><b>${photos.length}</b>장</div>`;
+    container.appendChild(toolbar);
+
+    const grid=document.createElement('div');grid.className='photo-grid';grid.id='photoGrid';
+    photos.forEach((p,i)=>{
+      const card=document.createElement('div');
+      card.className='photo-card';card.dataset.name=p.name;card.dataset.path=p.path;card.dataset.sha=p.sha;
+      card.innerHTML=`
+        <img src="${p.src}" alt="${p.name}" loading="lazy">
+        <div class="pc-ov"><div class="pc-nm">${p.name}</div></div>
+        ${editMode?`<button class="pc-del-btn" onclick="event.stopPropagation();deletePhoto(this.closest('.photo-card'))">🗑</button>
+          <label class="pc-check" onclick="event.stopPropagation()"><input type="checkbox" onchange="toggleSelect(this,'${p.path}')"></label>`:''}`;
+      if(!editMode) card.onclick=()=>{curModalIdx=i;updateModal();document.getElementById('modal').classList.add('open');};
+      grid.appendChild(card);
+    });
+    container.appendChild(grid);
+
+  } catch(e) {
+    loadingEl.remove();
+    if(e.message==='NO_TOKEN') return;
+    const box=document.createElement('div');box.className='empty-box';
+    box.innerHTML=`<div class="eb-icon">⚠️</div><p>사진을 불러오지 못했습니다.<br>${e.message}</p>`;
+    container.appendChild(box);
+  }
+}
+
+// ── 사진 필터 ────────────────────────────────────────────────
+function filterPhotos(val){
+  document.querySelectorAll('#photoGrid .photo-card').forEach(card=>{
+    card.style.display=(!val||card.dataset.name.toLowerCase().includes(val.toLowerCase()))?'':'none';
   });
 }
 
-// ── 모달 ────────────────────────────────────────────────────
-function updateModal() {
-  const p = allPhotos[curModalIdx];
-  document.getElementById('mImg').src = p.src;
-  document.getElementById('mInfo').textContent = (p.date||'') + '  ·  ' + p.name;
-  document.getElementById('mCounter').textContent = (curModalIdx+1) + ' / ' + allPhotos.length;
+// ── 사진 선택 ────────────────────────────────────────────────
+function toggleSelect(cb, path){
+  if(cb.checked) selectedPhotos.add(path); else selectedPhotos.delete(path);
+  const btn=document.getElementById('bulkDelBtn');
+  if(btn) btn.style.display=selectedPhotos.size>0?'':'none';
 }
-function moveModal(dir) {
-  curModalIdx = (curModalIdx + dir + allPhotos.length) % allPhotos.length;
-  updateModal();
+function selectAll(all){
+  document.querySelectorAll('#photoGrid .photo-card').forEach(card=>{
+    const cb=card.querySelector('input[type=checkbox]');
+    const path=card.dataset.path;
+    if(all){selectedPhotos.add(path);if(cb)cb.checked=true;}
+    else{selectedPhotos.delete(path);if(cb)cb.checked=false;}
+  });
+  const btn=document.getElementById('bulkDelBtn');
+  if(btn) btn.style.display=selectedPhotos.size>0?'':'none';
 }
-function closeModal(e) {
-  if (e===null || e.target===document.getElementById('modal'))
-    document.getElementById('modal').classList.remove('open');
+
+// ── 사진 삭제 ────────────────────────────────────────────────
+async function deletePhoto(card){
+  if(!getToken()){showToast('⚠ 토큰을 먼저 설정해주세요');return;}
+  const path=card.dataset.path;
+  const sha=card.dataset.sha;
+  const name=card.dataset.name;
+  if(!confirm(`"${name}" 을 삭제할까요?`))return;
+  try{
+    await ghFetch(`contents/${encodePath(path)}`, 'DELETE', {message:`사진 삭제: ${name}`, sha, branch:BRANCH});
+    card.remove();
+    updatePhotoCount(-1);
+    showToast('✅ 삭제 완료: '+name);
+  }catch(e){showToast('❌ 삭제 실패: '+e.message);}
 }
-document.addEventListener('keydown', e => {
-  if (!document.getElementById('modal').classList.contains('open')) return;
-  if (e.key==='Escape') closeModal(null);
-  if (e.key==='ArrowLeft') moveModal(-1);
-  if (e.key==='ArrowRight') moveModal(1);
+
+async function deleteSelected(){
+  if(!getToken()){showToast('⚠ 토큰을 먼저 설정해주세요');return;}
+  if(!selectedPhotos.size)return;
+  if(!confirm(`선택한 ${selectedPhotos.size}장을 삭제할까요?`))return;
+  let ok=0,fail=0;
+  const cards=[...document.querySelectorAll('#photoGrid .photo-card')].filter(c=>selectedPhotos.has(c.dataset.path));
+  for(const card of cards){
+    try{
+      await ghFetch(`contents/${encodePath(card.dataset.path)}`, 'DELETE', {message:`사진 삭제: ${card.dataset.name}`, sha:card.dataset.sha, branch:BRANCH});
+      card.remove(); ok++;
+    }catch{fail++;}
+  }
+  selectedPhotos.clear();
+  updatePhotoCount(-ok);
+  showToast(`✅ ${ok}장 삭제${fail?` / ❌ ${fail}장 실패`:''}`);
+}
+
+function updatePhotoCount(delta){
+  const stat=document.getElementById('photoStat');
+  const lbl=document.getElementById('photoSecLabel');
+  const cur=allPhotos.length+delta; // 근사값
+  const actual=document.querySelectorAll('#photoGrid .photo-card').length;
+  if(stat) stat.innerHTML=`<b>${actual}</b>장`;
+  if(lbl) lbl.textContent=`사진 (${actual}장)`;
+}
+
+// ── 모달 ─────────────────────────────────────────────────────
+function updateModal(){ const p=allPhotos[curModalIdx]; document.getElementById('mImg').src=p.src; document.getElementById('mInfo').textContent=p.name; document.getElementById('mCounter').textContent=(curModalIdx+1)+' / '+allPhotos.length; }
+function moveModal(dir){ curModalIdx=(curModalIdx+dir+allPhotos.length)%allPhotos.length; updateModal(); }
+function closeModal(e){ if(e===null||e.target===document.getElementById('modal'))document.getElementById('modal').classList.remove('open'); }
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('modal').classList.contains('open'))return;
+  if(e.key==='Escape')closeModal(null);
+  if(e.key==='ArrowLeft')moveModal(-1);
+  if(e.key==='ArrowRight')moveModal(1);
 });
 
 // ── 편집 모드 ────────────────────────────────────────────────
-function toggleEditMode() {
-  editMode = !editMode;
-  const btn = document.getElementById('editBtn');
-  btn.textContent = editMode ? '✅ 완료' : '✏️ 편집';
-  btn.className   = editMode ? 'btn sm primary' : 'btn sm';
+function toggleEditMode(){
+  editMode=!editMode;
+  const btn=document.getElementById('editBtn');
+  btn.textContent=editMode?'✅ 완료':'✏️ 편집';
+  btn.className=editMode?'btn sm primary':'btn sm';
+  selectedPhotos.clear();
   renderAll();
-  showToast(editMode ? '편집 모드 활성화' : '편집 완료');
+  showToast(editMode?'편집 모드 활성화':'편집 완료');
 }
 
 // ── 폴더 추가/수정/삭제 ─────────────────────────────────────
-function openAddDialog(parentId) {
-  dialogMode = 'add'; dialogParentId = parentId; editTarget = null;
-  document.getElementById('dialogTitle').textContent = '폴더 추가';
-  document.getElementById('dialogSaveBtn').textContent = '추가';
-  document.getElementById('folderNameInput').value = '';
-  document.getElementById('folderDescInput').value = '';
-  document.getElementById('folderIconSelect').value = '📁';
+function openAddDialog(parentId){
+  dialogMode='add';dialogParentId=parentId;editTarget=null;
+  document.getElementById('dialogTitle').textContent='폴더 추가';
+  document.getElementById('dialogSaveBtn').textContent='추가';
+  document.getElementById('folderNameInput').value='';
+  document.getElementById('folderDescInput').value='';
+  document.getElementById('folderIconSelect').value='📁';
   document.getElementById('folderDialog').classList.add('open');
-  setTimeout(() => document.getElementById('folderNameInput').focus(), 100);
+  setTimeout(()=>document.getElementById('folderNameInput').focus(),100);
 }
-function openEditDialog(id) {
-  const node = findNode(id);
-  if (!node) return;
-  dialogMode = 'edit'; editTarget = node;
-  document.getElementById('dialogTitle').textContent = '폴더 수정';
-  document.getElementById('dialogSaveBtn').textContent = '저장';
-  document.getElementById('folderNameInput').value = node.name;
-  document.getElementById('folderDescInput').value = node.desc||'';
-  document.getElementById('folderIconSelect').value = node.icon||'📁';
+function openEditDialog(id){
+  const node=findNode(id);if(!node)return;
+  dialogMode='edit';editTarget=node;
+  document.getElementById('dialogTitle').textContent='폴더 수정';
+  document.getElementById('dialogSaveBtn').textContent='저장';
+  document.getElementById('folderNameInput').value=node.name;
+  document.getElementById('folderDescInput').value=node.desc||'';
+  document.getElementById('folderIconSelect').value=node.icon||'📁';
   document.getElementById('folderDialog').classList.add('open');
-  setTimeout(() => document.getElementById('folderNameInput').focus(), 100);
+  setTimeout(()=>document.getElementById('folderNameInput').focus(),100);
 }
-function closeDialog() { document.getElementById('folderDialog').classList.remove('open'); }
-
-function saveFolder() {
-  const name = document.getElementById('folderNameInput').value.trim();
-  if (!name) { document.getElementById('folderNameInput').focus(); return; }
-  const desc = document.getElementById('folderDescInput').value.trim();
-  const icon = document.getElementById('folderIconSelect').value;
-
-  if (dialogMode === 'add') {
-    const parent = findNode(dialogParentId);
-    if (!parent) return;
-    if (!parent.children) parent.children = [];
-    parent.children.push({ id: genId(), name, icon, desc, children: [] });
-    showToast('폴더 추가됨: ' + name);
-  } else if (dialogMode === 'edit' && editTarget) {
-    editTarget.name = name; editTarget.icon = icon; editTarget.desc = desc;
-    showToast('폴더 수정됨: ' + name);
+function closeDialog(){document.getElementById('folderDialog').classList.remove('open');}
+function saveFolder(){
+  const name=document.getElementById('folderNameInput').value.trim();
+  if(!name){document.getElementById('folderNameInput').focus();return;}
+  const desc=document.getElementById('folderDescInput').value.trim();
+  const icon=document.getElementById('folderIconSelect').value;
+  if(dialogMode==='add'){
+    const parent=findNode(dialogParentId);if(!parent)return;
+    if(!parent.children)parent.children=[];
+    const parentPath=parent.ghPath||'photos';
+    parent.children.push({id:genId(),name,icon,desc,ghPath:parentPath+'/'+name,children:[]});
+    showToast('폴더 추가됨: '+name);
+  }else if(dialogMode==='edit'&&editTarget){
+    editTarget.name=name;editTarget.icon=icon;editTarget.desc=desc;
+    showToast('폴더 수정됨: '+name);
   }
-  saveStructure();
-  closeDialog();
-  renderAll();
+  saveStructure();closeDialog();renderAll();
 }
-
-function deleteFolder(id) {
-  const node = findNode(id);
-  if (!node) return;
-  if (!confirm('\"' + node.name + '\" 폴더를 삭제할까요?\n(하위 폴더도 모두 삭제됩니다)')) return;
-  const parent = findParent(id);
-  if (!parent) return;
-  parent.children = parent.children.filter(c => c.id !== id);
-  // 현재 경로에 있던 폴더가 삭제된 경우 상위로 이동
-  if (currentPath.includes(id)) {
-    const idx = currentPath.indexOf(id);
-    currentPath = currentPath.slice(0, idx);
-    if (!currentPath.length) currentPath = ['root'];
-  }
-  saveStructure();
-  renderAll();
-  showToast('폴더 삭제됨: ' + node.name);
+function deleteFolder(id){
+  const node=findNode(id);if(!node)return;
+  if(!confirm(`"${node.name}" 폴더를 삭제할까요?\n(로컬 구조에서만 삭제됩니다)`))return;
+  const parent=findParent(id);if(!parent)return;
+  parent.children=parent.children.filter(c=>c.id!==id);
+  if(currentPath.includes(id)){const idx=currentPath.indexOf(id);currentPath=currentPath.slice(0,idx);if(!currentPath.length)currentPath=['root'];}
+  saveStructure();renderAll();showToast('폴더 삭제됨: '+node.name);
 }
-
-// ── 다이얼로그 키보드 ─────────────────────────────────────
-document.addEventListener('keydown', e => {
-  if (document.getElementById('folderDialog').classList.contains('open')) {
-    if (e.key === 'Enter') saveFolder();
-    if (e.key === 'Escape') closeDialog();
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('folderDialog').classList.contains('open')){
+    if(e.key==='Enter')saveFolder();
+    if(e.key==='Escape')closeDialog();
   }
 });
-document.getElementById('folderDialog').onclick = e => {
-  if (e.target === document.getElementById('folderDialog')) closeDialog();
-};
+document.getElementById('folderDialog').onclick=e=>{if(e.target===document.getElementById('folderDialog'))closeDialog();};
+window.resetStructure=()=>{if(confirm('초기화할까요?')){localStorage.removeItem('galleryStructure');structure=JSON.parse(JSON.stringify(DEFAULT_STRUCTURE));currentPath=['root'];renderAll();showToast('초기화 완료');}};
 
-// ── 초기화 버튼 (구조 리셋) ─────────────────────────────────
-// 숨겨진 기능: 콘솔에서 resetStructure() 호출 가능
-window.resetStructure = () => {
-  if (confirm('폴더 구조를 기본값으로 초기화할까요?')) {
-    localStorage.removeItem('galleryStructure');
-    structure = JSON.parse(JSON.stringify(DEFAULT_STRUCTURE));
-    currentPath = ['root'];
-    renderAll();
-    showToast('초기화 완료');
-  }
-};
-
-// ── 사진 선택/삭제 ──────────────────────────────────────────
-function toggleSelectPhoto(src, checked) {
-  if (checked) selectedPhotos.add(src);
-  else selectedPhotos.delete(src);
-  const btn = document.getElementById('bulkDelBtn');
-  if (btn) btn.style.display = selectedPhotos.size > 0 ? '' : 'none';
-}
-
-function selectAllPhotos(all) {
-  document.querySelectorAll('#photoGrid .photo-card').forEach(card => {
-    const src = card.dataset.src;
-    const cb  = card.querySelector('input[type=checkbox]');
-    if (!src) return;
-    if (all) { selectedPhotos.add(src); if(cb) cb.checked = true; }
-    else      { selectedPhotos.delete(src); if(cb) cb.checked = false; }
-  });
-  const btn = document.getElementById('bulkDelBtn');
-  if (btn) btn.style.display = selectedPhotos.size > 0 ? '' : 'none';
-}
-
-async function deletePhoto(src, name) {
-  if (!getToken()) { showToast('⚠ upload.html에서 토큰을 먼저 설정해주세요'); return; }
-  if (!confirm('"' + name + '" 사진을 삭제할까요?\nGitHub에서 영구 삭제됩니다.')) return;
-  showToast('🗑 삭제 중...');
-  try {
-    const sha = await getFileSha(src);
-    if (!sha) { showToast('⚠ 파일 SHA 조회 실패 — 토큰 권한을 확인해주세요'); return; }
-    await ghFetch(`contents/${encodePath(src)}`, 'DELETE', { message: '사진 삭제: ' + name, sha, branch: BRANCH });
-    // 로컬 allPhotos에서 즉시 제거
-    allPhotos = allPhotos.filter(p => p.src !== src);
-    selectedPhotos.delete(src);
-    // DOM에서 해당 카드 즉시 제거
-    document.querySelectorAll('#photoGrid .photo-card').forEach(card => {
-      if (card.dataset.src === src) card.remove();
-    });
-    // 사진 수 업데이트
-    const stat = document.querySelector('.photo-stat b');
-    if (stat) stat.textContent = allPhotos.length;
-    showToast('✅ 삭제 완료: ' + name);
-    // photos.json 백그라운드 업데이트
-    removeFromPhotosJson([src]);
-  } catch(e) { showToast('❌ 삭제 실패: ' + e.message); }
-}
-
-async function deleteSelectedPhotos() {
-  if (!getToken()) { showToast('⚠ upload.html에서 토큰을 먼저 설정해주세요'); return; }
-  if (!selectedPhotos.size) return;
-  if (!confirm('선택한 ' + selectedPhotos.size + '장을 삭제할까요?\nGitHub에서 영구 삭제됩니다.')) return;
-  let ok = 0, fail = 0;
-  const srcs = [...selectedPhotos];
-  for (const src of srcs) {
-    try {
-      const sha = await getFileSha(src);
-      if (!sha) { fail++; continue; }
-      const name = src.split('/').pop();
-      await ghFetch(`contents/${encodePath(src)}`, 'DELETE', { message: '사진 삭제: ' + name, sha, branch: BRANCH });
-      ok++;
-    } catch { fail++; }
-  }
-  // 로컬에서 즉시 제거
-  srcs.forEach(src => {
-    allPhotos = allPhotos.filter(p => p.src !== src);
-    document.querySelectorAll('#photoGrid .photo-card').forEach(card => {
-      if (card.dataset.src === src) card.remove();
-    });
-  });
-  selectedPhotos.clear();
-  const stat = document.querySelector('.photo-stat b');
-  if (stat) stat.textContent = allPhotos.length;
-  showToast('✅ ' + ok + '장 삭제 완료' + (fail ? ' / ❌ ' + fail + '장 실패' : ''));
-  // photos.json 백그라운드 업데이트
-  removeFromPhotosJson(srcs);
-}
-
-async function removeFromPhotosJson(deletedSrcs) {
-  try {
-    const f = await ghFetch('contents/photos.json', 'GET');
-    const sha = f.sha;
-    let data = JSON.parse(atob(f.content.replace(/\n/g,'')));
-    deletedSrcs.forEach(src => {
-      Object.keys(data).forEach(date => {
-        data[date] = data[date].filter(p => p.src !== src);
-        if (!data[date].length) delete data[date];
-      });
-    });
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-    await ghFetch('contents/photos.json', 'PUT', {
-      message: 'photos.json 업데이트 (삭제: ' + deletedSrcs.length + '장)',
-      content: encoded, sha, branch: BRANCH
-    });
-    console.log('photos.json 업데이트 완료');
-  } catch(e) {
-    console.error('photos.json 업데이트 실패:', e.message);
-    showToast('⚠ photos.json 업데이트 실패: ' + e.message);
-  }
-}
-
-// ── 깨진 사진 자동 정리 ────────────────────────────────────────
-async function removeBrokenFromJson(src) {
-  try {
-    const f = await ghFetch('contents/photos.json', 'GET');
-    const sha = f.sha;
-    let data = JSON.parse(atob(f.content.replace(/\n/g,'')));
-    let changed = false;
-    Object.keys(data).forEach(date => {
-      const before = data[date].length;
-      data[date] = data[date].filter(p => p.src !== src);
-      if (data[date].length !== before) changed = true;
-      if (!data[date].length) delete data[date];
-    });
-    if (!changed) return;
-    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-    await ghFetch('contents/photos.json', 'PUT', {
-      message: 'photos.json 정리: 없는 파일 제거',
-      content: encoded, sha, branch: BRANCH
-    });
-  } catch(e) { console.log('json 정리 실패:', e.message); }
-}
+// ── 사이드바 리사이즈 ────────────────────────────────────────
+(function(){
+  const sidebar=document.getElementById('sidebar');
+  const resizer=document.getElementById('resizer');
+  let isDown=false,startX=0,startW=0;
+  const saved=localStorage.getItem('sidebarWidth');
+  if(saved)sidebar.style.width=saved+'px';
+  updateContentMargin();
+  resizer.addEventListener('mousedown',e=>{isDown=true;startX=e.clientX;startW=sidebar.offsetWidth;resizer.classList.add('active');document.body.style.cursor='col-resize';document.body.style.userSelect='none';e.preventDefault();});
+  document.addEventListener('mousemove',e=>{if(!isDown)return;const newW=Math.min(500,Math.max(180,startW+(e.clientX-startX)));sidebar.style.width=newW+'px';updateContentMargin();});
+  document.addEventListener('mouseup',()=>{if(!isDown)return;isDown=false;resizer.classList.remove('active');document.body.style.cursor='';document.body.style.userSelect='';localStorage.setItem('sidebarWidth',sidebar.offsetWidth);});
+  resizer.addEventListener('dblclick',()=>{let maxW=180;document.querySelectorAll('.tree-item').forEach(el=>{maxW=Math.max(maxW,el.scrollWidth+20);});maxW=Math.min(500,maxW);sidebar.style.width=maxW+'px';updateContentMargin();localStorage.setItem('sidebarWidth',maxW);});
+  function updateContentMargin(){document.querySelector('.content').style.marginLeft=(sidebar.offsetWidth+20)+'px';}
+  window._updateContentMargin=updateContentMargin;
+})();
 
 // ── 토스트 ───────────────────────────────────────────────────
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
-}
-
-// ── 사이드바 드래그 리사이즈 ─────────────────────────────────
-(function() {
-  const sidebar  = document.getElementById('sidebar');
-  const resizer  = document.getElementById('resizer');
-  const content  = document.getElementById('content');
-  const page     = document.querySelector('.page');
-  let isDown = false, startX = 0, startW = 0;
-
-  // 저장된 너비 복원
-  const saved = localStorage.getItem('sidebarWidth');
-  if (saved) sidebar.style.width = saved + 'px';
-  updateContentMargin();
-
-  resizer.addEventListener('mousedown', e => {
-    isDown = true;
-    startX = e.clientX;
-    startW = sidebar.offsetWidth;
-    resizer.classList.add('active');
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    e.preventDefault();
-  });
-
-  document.addEventListener('mousemove', e => {
-    if (!isDown) return;
-    const diff = e.clientX - startX;
-    const newW = Math.min(500, Math.max(180, startW + diff));
-    sidebar.style.width = newW + 'px';
-    updateContentMargin();
-  });
-
-  document.addEventListener('mouseup', () => {
-    if (!isDown) return;
-    isDown = false;
-    resizer.classList.remove('active');
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-    localStorage.setItem('sidebarWidth', sidebar.offsetWidth);
-  });
-
-  // 더블클릭 → 너비 자동 맞춤
-  resizer.addEventListener('dblclick', () => {
-    // 트리 아이템 중 가장 긴 것 기준으로 자동 맞춤
-    let maxW = 180;
-    document.querySelectorAll('.tree-item').forEach(el => {
-      maxW = Math.max(maxW, el.scrollWidth + 20);
-    });
-    maxW = Math.min(500, maxW);
-    sidebar.style.width = maxW + 'px';
-    updateContentMargin();
-    localStorage.setItem('sidebarWidth', maxW);
-  });
-
-  function updateContentMargin() {
-    const w = sidebar.offsetWidth;
-    document.querySelector('.content').style.marginLeft = (w + 20) + 'px';
-  }
-  window._updateContentMargin = updateContentMargin;
-})();
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 // ── 시작 ─────────────────────────────────────────────────────
 renderAll();
