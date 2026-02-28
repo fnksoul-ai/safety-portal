@@ -485,9 +485,6 @@ async function renderContent() {
       content.appendChild(grid);
     }
 
-    // 업로드 패널
-    renderUploadPanel(content);
-
     // 사진
     if (photos.length > 0) {
       const lbl = document.createElement('div'); lbl.className = 'sec-label'; lbl.id = 'photoSecLabel'; lbl.textContent = `사진 (${photos.length}장)`;
@@ -520,15 +517,18 @@ async function renderContent() {
           <div class="pc-ov"><div class="pc-nm">${p.name}</div></div>
           ${editMode ? `<button class="pc-del-btn" onclick="event.stopPropagation();deletePhoto('${p.id}','${p.name}',this.closest('.photo-card'))">🗑</button>
             <label class="pc-check" onclick="event.stopPropagation()"><input type="checkbox" onchange="toggleSelect(this,'${p.id}')"></label>` : ''}`;
-        if (!editMode) card.onclick = () => { curModalIdx = i; openModal(p); };
+        if (!editMode) card.onclick = () => { curModalIdx = i; openModalPhoto(p); };
         grid.appendChild(card);
       });
       content.appendChild(grid);
     } else if (folders.length === 0) {
       const box = document.createElement('div'); box.className = 'empty-box';
-      box.innerHTML = '<div class="eb-icon">🖼️</div><p>이 폴더에 사진이 없습니다.<br>위 업로드 영역에서 사진을 추가해보세요!</p>';
+      box.innerHTML = '<div class="eb-icon">🖼️</div><p>이 폴더에 사진이 없습니다.<br>아래 업로드 영역에서 사진을 추가해보세요!</p>';
       content.appendChild(box);
     }
+
+    // 업로드 패널 (사진 아래)
+    renderUploadPanel(content);
 
   } catch(e) {
     content.innerHTML = `<div class="empty-box"><div class="eb-icon">⚠️</div><p>불러오기 실패: ${e.message}</p></div>`;
@@ -694,21 +694,32 @@ function filterPhotos(val) {
 }
 
 // ── 모달 ─────────────────────────────────────────────────────
-function openModal(photo) {
-  const src = photo.thumbnailLink
-    ? photo.thumbnailLink.replace(/=s\d+/, '=s1600')
-    : `https://lh3.googleusercontent.com/d/${photo.id}=s1600`;
-  document.getElementById('mImg').src = src;
+function openModalPhoto(photo) {
+  // 원본 크기 이미지: Drive export 방식 사용
+  const src = `https://drive.google.com/uc?export=download&id=${photo.id}`;
+  const mImg = document.getElementById('mImg');
+  mImg.src = '';
+  // 로딩 표시
+  mImg.style.minWidth = '200px';
+  mImg.style.minHeight = '150px';
+  mImg.style.background = 'var(--bg3)';
+  // 썸네일 먼저 표시 후 원본 로드
+  if (photo.thumbnailLink) {
+    mImg.src = photo.thumbnailLink.replace('=s220', '=s1600');
+  } else {
+    mImg.src = `https://lh3.googleusercontent.com/d/${photo.id}=s1600`;
+  }
   document.getElementById('mInfo').textContent = photo.name;
   document.getElementById('mCounter').textContent = (curModalIdx+1) + ' / ' + allPhotos.length;
   document.getElementById('modal').classList.add('open');
 }
 function updateModal() {
   const p = allPhotos[curModalIdx];
-  const src = p.thumbnailLink
-    ? p.thumbnailLink.replace(/=s\d+/, '=s1600')
-    : `https://lh3.googleusercontent.com/d/${p.id}=s1600`;
-  document.getElementById('mImg').src = src;
+  if (p.thumbnailLink) {
+    document.getElementById('mImg').src = p.thumbnailLink.replace('=s220', '=s1600');
+  } else {
+    document.getElementById('mImg').src = `https://lh3.googleusercontent.com/d/${p.id}=s1600`;
+  }
   document.getElementById('mInfo').textContent = p.name;
   document.getElementById('mCounter').textContent = (curModalIdx+1) + ' / ' + allPhotos.length;
 }
