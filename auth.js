@@ -108,6 +108,7 @@ const AUTH = (() => {
     const client = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPE,
+      prompt: 'select_account',
       callback: async (resp) => {
         if (resp.error) { showMsg('❌ 로그인 실패: ' + resp.error); return; }
         save(resp);
