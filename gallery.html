@@ -253,7 +253,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
         <div class="tree" id="treeRoot"></div>
       </div>
       <div class="cal-card" id="calCard">
-        <div style="padding:10px 12px 8px;font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--muted2);text-align:center;border-bottom:1px solid var(--border);">일자별 사진</div>
+        <div style="padding:11px 12px 9px;font-size:15px;font-weight:700;letter-spacing:.06em;color:var(--text);text-align:center;border-bottom:1px solid var(--border);">일자별 사진</div>
         <div class="cal-head">
           <button class="cal-nav" onclick="calMove(-1)">‹</button>
           <span id="calTitle"></span>
@@ -365,7 +365,8 @@ function onAuthSuccess() {
   document.getElementById('galleryScreen').style.display = 'block';
   document.getElementById('editBtn').style.display = '';
   folderPath = [];
-  navigateToFolder(rootFolderId, '📁 내 드라이브');
+  const savedRootName = localStorage.getItem('drive_root_name') || '내 드라이브';
+  navigateToFolder(rootFolderId, savedRootName);
   setTimeout(() => renderCal(), 1500);
 }
 
@@ -503,9 +504,22 @@ function makeTreeItem(icon, name, folderId, depth, hasChildren) {
   const item = document.createElement('div');
   item.className = 'tree-item' + (currentFolderId === folderId ? ' active' : '');
   item.style.paddingLeft = (14 + depth * 12) + 'px';
-  item.innerHTML = `<span class="ti-toggle">${hasChildren ? '▶' : ' '}</span><span class="ti-icon">${icon}</span><span class="ti-name">${name}</span>`;
+  const isRoot = (folderId === rootFolderId && depth === 0);
+  item.innerHTML = `<span class="ti-toggle">${hasChildren ? '▶' : ' '}</span><span class="ti-icon">${icon}</span><span class="ti-name" id="${isRoot?'rootNameLabel':''}">${name}</span>${isRoot ? '<span class="ti-edit" onclick="event.stopPropagation();editRootName()" title="이름 변경" style="margin-left:4px;font-size:10px;color:var(--muted);cursor:pointer;flex-shrink:0;">✏️</span>' : ''}`;
   item.onclick = () => navigateToFolder(folderId, name);
   return item;
+}
+
+function editRootName() {
+  const cur = localStorage.getItem('drive_root_name') || '내 드라이브';
+  const newName = prompt('폴더 표시 이름을 입력하세요:', cur);
+  if (!newName || !newName.trim()) return;
+  localStorage.setItem('drive_root_name', newName.trim());
+  // 현재 경로에서도 이름 업데이트
+  if (folderPath.length > 0 && folderPath[0].id === rootFolderId) folderPath[0].name = newName.trim();
+  renderBreadcrumb();
+  renderTreeRoot();
+  showToast('✅ 이름 변경: ' + newName.trim());
 }
 
 // ── 콘텐츠 렌더 ──────────────────────────────────────────────
