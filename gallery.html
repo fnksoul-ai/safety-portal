@@ -73,7 +73,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 
 /* 레이아웃 */
 .page{position:relative;z-index:1;display:flex;max-width:1400px;margin:0 auto;padding:20px 24px 60px;gap:0;}
-.sidebar{width:260px;min-width:180px;max-width:500px;flex-shrink:0;position:relative;}
+.sidebar{width:320px;min-width:220px;max-width:500px;flex-shrink:0;position:relative;}
 .resizer{width:6px;cursor:col-resize;position:absolute;right:-3px;top:0;bottom:0;z-index:20;border-radius:3px;transition:background .15s;}
 .resizer:hover,.resizer.active{background:var(--orange);}
 .sidebar-inner{position:sticky;top:68px;display:flex;flex-direction:column;gap:10px;}
@@ -90,7 +90,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 .tree-item.open .ti-toggle{transform:rotate(90deg);}
 .tree-children{padding-left:14px;border-left:1px solid var(--border);margin-left:20px;}
 .tree-children.hidden{display:none;}
-.content{flex:1;min-width:0;margin-left:280px;}
+.content{flex:1;min-width:0;margin-left:340px;}
 
 /* 폴더 헤더 */
 .folder-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
@@ -153,11 +153,11 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 .cal-head span{font-size:12px;font-weight:700;color:var(--text);}
 .cal-nav{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;transition:all .15s;}
 .cal-nav:hover{color:var(--text);background:var(--bg3);}
-.cal-grid{padding:8px;}
+.cal-grid{padding:10px;}
 .cal-dow{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
 .cal-dow span{text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px 0;}
 .cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
-.cal-day{text-align:center;font-size:11px;padding:4px 2px;border-radius:5px;cursor:default;color:var(--muted2);transition:all .15s;min-height:24px;display:flex;align-items:center;justify-content:center;position:relative;}
+.cal-day{text-align:center;font-size:12px;padding:5px 2px;border-radius:5px;cursor:default;color:var(--muted2);transition:all .15s;min-height:34px;display:flex;align-items:center;justify-content:center;position:relative;}
 .cal-day.has-photos{color:var(--orange);font-weight:700;cursor:pointer;}
 .cal-day.has-photos:hover{background:rgba(249,115,22,.15);}
 .cal-day.has-photos::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--orange);}
