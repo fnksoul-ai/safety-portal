@@ -372,7 +372,7 @@ function setupSave() {
 function startGallery() {
   document.getElementById('setupScreen').style.display = 'none';
   document.getElementById('galleryScreen').style.display = 'block';
-  const savedName = localStorage.getItem('drive_root_name') || '내 드라이브';
+  const savedName = localStorage.getItem('drive_root_name') || '석문호 수상태양광발전소 EPC공사';
   folderPath = [];
   navigateToFolder(rootFolderId, savedName);
   setTimeout(() => renderCal(), 2000);
@@ -417,7 +417,7 @@ async function renderTreeRoot() {
     const files = await listFolder(rootFolderId);
     root.innerHTML = '';
     const folders = files.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
-    const savedName = localStorage.getItem('drive_root_name') || '내 드라이브';
+    const savedName = localStorage.getItem('drive_root_name') || '석문호 수상태양광발전소 EPC공사';
     const rootItem = makeTreeItem('📁', savedName, rootFolderId, 0, folders.length > 0, true);
     root.appendChild(rootItem);
     if (currentFolderId === rootFolderId || folderPath.some(f => f.id === rootFolderId)) {
@@ -438,7 +438,7 @@ function makeTreeItem(icon, name, folderId, depth, hasChildren, isRoot) {
   return item;
 }
 function editRootName() {
-  const cur = localStorage.getItem('drive_root_name') || '내 드라이브';
+  const cur = localStorage.getItem('drive_root_name') || '석문호 수상태양광발전소 EPC공사';
   const n = prompt('폴더 표시 이름:', cur);
   if (!n || !n.trim()) return;
   localStorage.setItem('drive_root_name', n.trim());
