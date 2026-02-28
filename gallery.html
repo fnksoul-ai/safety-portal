@@ -352,8 +352,8 @@ async function driveAPI(endpoint, opts = {}) {
 async function listFolder(folderId) {
   if (treeCache[folderId]) return treeCache[folderId];
   const q = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
-  const fields = 'files(id,name,mimeType,thumbnailLink,webContentLink,size,modifiedTime)';
-  const data = await driveAPI(`files?q=${q}&fields=${fields}&orderBy=name&pageSize=200`);
+  const fields = 'files(id,name,mimeType,thumbnailLink,webContentLink,iconLink,size,modifiedTime)';
+  const data = await driveAPI(`files?q=${q}&fields=${fields}&orderBy=name&pageSize=1000`);
   treeCache[folderId] = data.files || [];
   return treeCache[folderId];
 }
@@ -456,7 +456,10 @@ async function renderContent() {
     content.innerHTML = '';
 
     const folders = files.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
-    const photos  = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && IMG_EXTS.test(f.name));
+    const photos  = files.filter(f =>
+      f.mimeType !== 'application/vnd.google-apps.folder' &&
+      (f.mimeType?.startsWith('image/') || IMG_EXTS.test(f.name))
+    );
     allPhotos = photos;
 
     // 헤더
@@ -508,9 +511,10 @@ async function renderContent() {
         card.className = 'photo-card';
         card.dataset.name = p.name;
         card.dataset.id   = p.id;
+        // 썸네일: Drive 공식 URL (토큰 불필요, 공유 설정 무관하게 동작)
         const imgSrc = p.thumbnailLink
-          ? p.thumbnailLink.replace('=s220', '=s400')
-          : `https://drive.google.com/thumbnail?id=${p.id}&sz=w400`;
+          ? p.thumbnailLink.replace(/=s\d+/, '=s400').replace(/=s220/, '=s400')
+          : `https://lh3.googleusercontent.com/d/${p.id}=s400`;
         card.innerHTML = `
           <img src="${imgSrc}" alt="${p.name}" loading="lazy">
           <div class="pc-ov"><div class="pc-nm">${p.name}</div></div>
@@ -691,7 +695,9 @@ function filterPhotos(val) {
 
 // ── 모달 ─────────────────────────────────────────────────────
 function openModal(photo) {
-  const src = `https://drive.google.com/uc?export=view&id=${photo.id}`;
+  const src = photo.thumbnailLink
+    ? photo.thumbnailLink.replace(/=s\d+/, '=s1600')
+    : `https://lh3.googleusercontent.com/d/${photo.id}=s1600`;
   document.getElementById('mImg').src = src;
   document.getElementById('mInfo').textContent = photo.name;
   document.getElementById('mCounter').textContent = (curModalIdx+1) + ' / ' + allPhotos.length;
@@ -699,7 +705,10 @@ function openModal(photo) {
 }
 function updateModal() {
   const p = allPhotos[curModalIdx];
-  document.getElementById('mImg').src = `https://drive.google.com/uc?export=view&id=${p.id}`;
+  const src = p.thumbnailLink
+    ? p.thumbnailLink.replace(/=s\d+/, '=s1600')
+    : `https://lh3.googleusercontent.com/d/${p.id}=s1600`;
+  document.getElementById('mImg').src = src;
   document.getElementById('mInfo').textContent = p.name;
   document.getElementById('mCounter').textContent = (curModalIdx+1) + ' / ' + allPhotos.length;
 }
