@@ -203,6 +203,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
   <span style="color:var(--border)">|</span>
   <div class="breadcrumb" id="breadcrumb"></div>
   <div class="nav-right">
+    <button class="btn sm" onclick="showFolderSetup()" id="changeFolderBtn" style="display:none">📁 폴더변경</button>
     <button class="btn sm" onclick="toggleEditMode()" id="editBtn" style="display:none">✏️ 편집</button>
   </div>
 </nav>
@@ -288,7 +289,8 @@ const IMG_EXTS  = /\.(jpg|jpeg|png|bmp|gif|tif|tiff|webp)$/i;
 // 관리자 상태는 AUTH 모듈에서 관리
 let adminToken   = () => AUTH.getToken();
 let isAdmin      = false; // AUTH.isAdmin()으로 동적 체크
-let rootFolderId = localStorage.getItem('drive_root') || '';
+const DEFAULT_FOLDER_ID = '17uxtfjjvEk223--tBDvf5y6veXKtKiOz';
+let rootFolderId = localStorage.getItem('drive_root') || DEFAULT_FOLDER_ID;
 let currentFolderId = '';
 let currentFolderName = '';
 let folderPath   = [];
@@ -361,6 +363,7 @@ async function listFolder(folderId) {
 
 
 function setupSave() {
+  if (!AUTH.isAdmin()) { showToast('관리자만 폴더를 변경할 수 있습니다'); return; }
   const val = document.getElementById('setupFolderInput').value.trim();
   if (!val) { showToast('폴더 ID를 입력해주세요'); return; }
   const match = val.match(/[-\w]{25,}/);
@@ -746,4 +749,17 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 })();
 </script>
 </body>
-</html>
+</html>function showFolderSetup() {
+  if (!AUTH.isAdmin()) { showToast('관리자만 변경 가능합니다'); return; }
+  const cur = rootFolderId;
+  const n = prompt('구글 드라이브 폴더 ID 또는 URL:', cur);
+  if (!n || !n.trim()) return;
+  const match = n.match(/[-\w]{25,}/);
+  const newId = match ? match[0] : n.trim();
+  rootFolderId = newId;
+  localStorage.setItem('drive_root', newId);
+  showToast('✅ 폴더 변경됨 - 새로고침합니다');
+  setTimeout(() => location.reload(), 1000);
+}
+
+
