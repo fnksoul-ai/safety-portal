@@ -130,6 +130,28 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 .dialog-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
 .token-warn{background:rgba(234,179,8,.08);border:1px solid rgba(234,179,8,.25);border-radius:8px;padding:12px 14px;font-size:12px;color:#ca8a04;margin-bottom:20px;display:none;}
 .token-warn.show{display:block;}
+.upload-card{background:transparent;border:1px dashed var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;text-align:center;color:var(--muted);}
+.upload-card:hover{border-color:var(--blue);color:var(--blue);background:rgba(59,130,246,.04);}
+.upload-panel{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;}
+.upload-panel h4{font-size:13px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.dropzone{border:2px dashed var(--border);border-radius:8px;padding:32px 16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;margin-bottom:12px;}
+.dropzone:hover,.dropzone.drag{border-color:var(--orange);background:rgba(249,115,22,.04);}
+.dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:6px;margin-bottom:12px;}
+.preview-item{position:relative;border-radius:6px;overflow:hidden;aspect-ratio:4/3;background:var(--bg3);}
+.preview-item img{width:100%;height:100%;object-fit:cover;}
+.preview-item .pi-x{position:absolute;top:3px;right:3px;width:16px;height:16px;border-radius:50%;background:rgba(239,68,68,.9);color:#fff;font-size:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.preview-item .pi-nm{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.65);font-size:8px;color:#fff;padding:2px 4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.upload-prog{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:8px;}
+.upload-prog-bar{height:100%;background:var(--orange);border-radius:3px;transition:width .3s;width:0%;}
+.upload-log{font-size:11px;color:var(--muted2);text-align:center;margin-bottom:10px;}
+.token-panel{background:var(--bg2);border:1px solid rgba(234,179,8,.3);border-radius:10px;padding:16px;margin-bottom:20px;}
+.token-panel h4{font-size:12px;font-weight:700;color:#ca8a04;margin-bottom:10px;}
+.token-row{display:flex;gap:8px;}
+.token-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);font-size:12px;font-family:'Noto Sans KR',sans-serif;}
+.token-row input:focus{outline:none;border-color:var(--orange);}
+.token-help{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6;}
+.token-help a{color:var(--orange);text-decoration:none;}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:10px 20px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:all .3s;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 @media(max-width:768px){.sidebar{display:none;}.page{padding:12px 14px 40px;}.content{margin-left:0;}}
@@ -143,6 +165,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
   <span style="color:var(--border)">|</span>
   <div class="breadcrumb" id="breadcrumb"></div>
   <div class="nav-right">
+    <div id="tokenDot" style="width:8px;height:8px;border-radius:50%;background:var(--red);cursor:pointer;" onclick="toggleTokenPanel()" title="토큰 설정"></div>
     <button class="btn sm" onclick="toggleEditMode()" id="editBtn">✏️ 편집</button>
   </div>
 </nav>
@@ -156,8 +179,17 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
     </div>
   </aside>
   <div class="content" id="content">
-    <div class="token-warn" id="tokenWarn">
-      ⚠ GitHub 토큰이 설정되지 않았습니다. <a href="upload.html" style="color:inherit;font-weight:700;text-decoration:underline">upload.html</a>에서 토큰을 먼저 설정해주세요.
+    <div class="token-panel" id="tokenPanel" style="display:none">
+      <h4>🔑 GitHub 토큰 설정</h4>
+      <div class="token-row">
+        <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxx">
+        <button class="btn primary sm" onclick="saveToken()">저장</button>
+        <button class="btn danger sm" id="clearTokenBtn" onclick="clearToken()" style="display:none">삭제</button>
+      </div>
+      <div class="token-help">
+        토큰이 없으면 <a href="https://github.com/settings/tokens/new?scopes=repo&description=SafetyPortal" target="_blank">여기 클릭</a>
+        → <b>repo</b> 체크 → Generate token → 복사 후 붙여넣기
+      </div>
     </div>
   </div>
 </div>
@@ -406,12 +438,139 @@ function renderContent(){
     content.appendChild(grid);
   }
 
+  // 📤 사진 업로드 패널 (폴더에 ghPath가 있을 때 항상 표시)
+  if(node.ghPath && getToken()){
+    renderUploadPanel(node, content);
+  }
+
   // 사진 섹션 — GitHub API로 직접 로드
   if(node.ghPath && getToken()){
     renderPhotosFromGitHub(node, content);
   } else if(!getToken()) {
     // 토큰 없음 안내
   }
+}
+
+// ── 업로드 패널 렌더 ────────────────────────────────────────
+function renderUploadPanel(node, container){
+  let uploadFiles = [];
+  let isUploading = false;
+
+  const panel = document.createElement('div');
+  panel.className = 'upload-panel';
+  panel.id = 'uploadPanel';
+  panel.innerHTML = `
+    <h4>📤 사진 업로드 <span style="font-size:11px;color:var(--muted);font-weight:400">→ ${node.ghPath}/</span></h4>
+    <div class="dropzone" id="upDropzone">
+      <input type="file" id="upFileInput" accept="image/*" multiple>
+      <div style="font-size:28px;margin-bottom:8px">📸</div>
+      <div style="font-size:13px;font-weight:600;color:var(--muted2)">사진을 끌어다 놓거나 클릭해서 선택</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">JPG, PNG, BMP, GIF · 여러 장 동시 가능</div>
+    </div>
+    <div class="preview-grid" id="upPreviewGrid" style="display:none"></div>
+    <div class="upload-prog" id="upProg" style="display:none"><div class="upload-prog-bar" id="upProgBar"></div></div>
+    <div class="upload-log" id="upLog"></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="btn primary" id="upBtn" onclick="startUpload_${node.id}()" disabled>📤 업로드</button>
+      <button class="btn sm" id="upClearBtn" onclick="clearUpload_${node.id}()" style="display:none">초기화</button>
+      <span id="upCount" style="font-size:12px;color:var(--muted)"></span>
+    </div>`;
+  container.appendChild(panel);
+
+  const dz = panel.querySelector('#upDropzone');
+  const fi = panel.querySelector('#upFileInput');
+  const IMG_EXTS2 = ['jpg','jpeg','png','bmp','gif','tif','tiff','webp'];
+
+  dz.addEventListener('dragover', e=>{e.preventDefault();dz.classList.add('drag');});
+  dz.addEventListener('dragleave', ()=>dz.classList.remove('drag'));
+  dz.addEventListener('drop', e=>{e.preventDefault();dz.classList.remove('drag');handleUploadFiles(e.dataTransfer.files);});
+  fi.addEventListener('change', ()=>handleUploadFiles(fi.files));
+
+  function handleUploadFiles(fileList){
+    const exts = IMG_EXTS2;
+    const newFiles = [...fileList].filter(f=>exts.includes(f.name.split('.').pop().toLowerCase()));
+    if(!newFiles.length){showToast('이미지 파일만 선택 가능합니다');return;}
+    newFiles.forEach(f=>{if(!uploadFiles.find(x=>x.name===f.name&&x.size===f.size))uploadFiles.push(f);});
+    renderPreviews();
+    updateUploadCount();
+    if(getToken()) panel.querySelector('#upBtn').disabled = false;
+  }
+
+  function renderPreviews(){
+    const grid = panel.querySelector('#upPreviewGrid');
+    grid.style.display = uploadFiles.length ? 'grid' : 'none';
+    grid.innerHTML = '';
+    uploadFiles.forEach((f,i)=>{
+      const url = URL.createObjectURL(f);
+      const item = document.createElement('div');
+      item.className = 'preview-item';
+      item.innerHTML = `<img src="${url}"><div class="pi-nm">${f.name}</div><button class="pi-x" onclick="removeUpFile(${i})">✕</button>`;
+      grid.appendChild(item);
+    });
+    panel.querySelector('#upClearBtn').style.display = uploadFiles.length ? '' : 'none';
+  }
+
+  window[`removeUpFile`] = function(i){ uploadFiles.splice(i,1); renderPreviews(); updateUploadCount(); if(!uploadFiles.length) panel.querySelector('#upBtn').disabled=true; };
+
+  function updateUploadCount(){
+    panel.querySelector('#upCount').textContent = uploadFiles.length ? uploadFiles.length+'장 선택됨' : '';
+  }
+
+  window[`clearUpload_${node.id}`] = function(){
+    uploadFiles=[];renderPreviews();updateUploadCount();
+    panel.querySelector('#upBtn').disabled=true;
+    panel.querySelector('#upLog').textContent='';
+    panel.querySelector('#upProg').style.display='none';
+  };
+
+  window[`startUpload_${node.id}`] = async function(){
+    if(isUploading||!uploadFiles.length) return;
+    if(!getToken()){showToast('토큰을 먼저 설정해주세요');return;}
+    isUploading = true;
+    const btn = panel.querySelector('#upBtn');
+    btn.disabled=true; btn.textContent='⏳ 업로드 중...';
+    panel.querySelector('#upProg').style.display='block';
+    const log = panel.querySelector('#upLog');
+    const progBar = panel.querySelector('#upProgBar');
+    let ok=0, fail=0;
+    const total = uploadFiles.length;
+
+    for(let i=0;i<total;i++){
+      const f = uploadFiles[i];
+      progBar.style.width = Math.round((i/total)*100)+'%';
+      log.textContent = `(${i+1}/${total}) ${f.name} 업로드 중...`;
+      try{
+        const b64 = await fileToBase64(f);
+        const ghPath = node.ghPath+'/'+f.name;
+        let sha;
+        try{ const chk=await ghFetch(`contents/${encodePath(ghPath)}`); sha=chk.sha; }catch{}
+        const body={message:`사진 업로드: ${f.name}`, content:b64, branch:BRANCH};
+        if(sha) body.sha=sha;
+        await ghFetch(`contents/${encodePath(ghPath)}`, 'PUT', body);
+        ok++;
+      }catch(e){ fail++; console.error(f.name, e.message); }
+    }
+
+    progBar.style.width='100%';
+    log.textContent = `✅ ${ok}장 완료${fail?` / ❌ ${fail}장 실패`:''}`;
+    isUploading=false;
+    btn.disabled=false; btn.textContent='📤 업로드';
+    if(ok>0){
+      showToast(`✅ ${ok}장 업로드 완료!`);
+      uploadFiles=[];renderPreviews();updateUploadCount();
+      // 사진 목록 새로고침
+      setTimeout(()=>renderAll(), 1500);
+    }
+  };
+}
+
+async function fileToBase64(file){
+  return new Promise((res,rej)=>{
+    const r=new FileReader();
+    r.onload=()=>res(r.result.split(',')[1]);
+    r.onerror=rej;
+    r.readAsDataURL(file);
+  });
 }
 
 // ── GitHub API로 사진 직접 로드 ─────────────────────────────
@@ -634,10 +793,48 @@ window.resetStructure=()=>{if(confirm('초기화할까요?')){localStorage.remov
   window._updateContentMargin=updateContentMargin;
 })();
 
+// ── 토큰 관리 ────────────────────────────────────────────────
+function toggleTokenPanel(){
+  const panel = document.getElementById('tokenPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+function saveToken(){
+  const val = document.getElementById('tokenInput').value.trim();
+  if(!val){showToast('토큰을 입력해주세요');return;}
+  if(!val.startsWith('ghp_')&&!val.startsWith('github_pat_')){showToast('올바른 GitHub 토큰 형식이 아닙니다');return;}
+  localStorage.setItem('gh_token', val);
+  document.getElementById('tokenInput').value='';
+  updateTokenDot();
+  document.getElementById('tokenPanel').style.display='none';
+  showToast('✅ 토큰 저장됨! 갤러리를 새로고침합니다.');
+  setTimeout(()=>renderAll(), 500);
+}
+function clearToken(){
+  if(!confirm('토큰을 삭제할까요?'))return;
+  localStorage.removeItem('gh_token');
+  updateTokenDot();
+  showToast('토큰 삭제됨');
+  renderAll();
+}
+function updateTokenDot(){
+  const dot = document.getElementById('tokenDot');
+  const clearBtn = document.getElementById('clearTokenBtn');
+  if(getToken()){
+    dot.style.background='var(--green)';
+    dot.title='토큰 설정됨 (클릭하여 변경)';
+    if(clearBtn) clearBtn.style.display='';
+  } else {
+    dot.style.background='var(--red)';
+    dot.title='토큰 미설정 (클릭하여 설정)';
+    if(clearBtn) clearBtn.style.display='none';
+  }
+}
+
 // ── 토스트 ───────────────────────────────────────────────────
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 // ── 시작 ─────────────────────────────────────────────────────
+updateTokenDot();
 renderAll();
 </script>
 </body>
