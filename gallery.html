@@ -51,10 +51,13 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 
 /* MAIN LAYOUT */
 .page{position:relative;z-index:1;display:flex;max-width:1400px;margin:0 auto;
-  padding:20px 24px 60px;}
+  padding:20px 24px 60px;gap:0;}
 
 /* SIDEBAR TREE */
-.sidebar{width:220px;min-width:220px;margin-right:24px;flex-shrink:0;}
+.sidebar{width:260px;min-width:180px;max-width:500px;margin-right:0;flex-shrink:0;position:relative;}
+.resizer{width:6px;cursor:col-resize;position:absolute;right:-3px;top:0;bottom:0;z-index:20;
+  border-radius:3px;transition:background .15s;}
+.resizer:hover,.resizer.active{background:var(--orange);}
 .sidebar-card{background:var(--bg2);border:1px solid var(--border);
   border-radius:10px;overflow:hidden;position:sticky;top:68px;}
 .sidebar-head{padding:12px 14px;border-bottom:1px solid var(--border);
@@ -64,14 +67,14 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 .tree{padding:8px 0;max-height:calc(100vh - 140px);overflow-y:auto;}
 .tree::-webkit-scrollbar{width:3px;}
 .tree::-webkit-scrollbar-thumb{background:var(--border);}
-.tree-item{display:flex;align-items:center;padding:6px 14px;font-size:12px;
-  color:var(--muted2);cursor:pointer;gap:6px;transition:all .15s;
-  border-left:2px solid transparent;user-select:none;}
+.tree-item{display:flex;align-items:center;padding:6px 10px;font-size:12px;
+  color:var(--muted2);cursor:pointer;gap:5px;transition:all .15s;
+  border-left:2px solid transparent;user-select:none;min-width:0;}
 .tree-item:hover{color:var(--text);background:rgba(255,255,255,.04);}
 .tree-item.active{color:var(--orange);background:rgba(249,115,22,.07);
   border-left-color:var(--orange);}
 .tree-item .ti-icon{font-size:13px;flex-shrink:0;}
-.tree-item .ti-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tree-item .ti-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;}
 .tree-item .ti-cnt{font-size:10px;color:var(--muted);background:var(--bg3);
   padding:1px 5px;border-radius:8px;flex-shrink:0;}
 .tree-item .ti-toggle{font-size:10px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
@@ -80,7 +83,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 .tree-children.hidden{display:none;}
 
 /* CONTENT */
-.content{flex:1;min-width:0;}
+.content{flex:1;min-width:0;position:relative;margin-left:280px;transition:margin-left .0s;}
 
 /* FOLDER VIEW */
 .folder-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
@@ -145,6 +148,13 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 .photo-card .pc-nm{font-size:10px;color:#fff;word-break:break-all;line-height:1.3;}
 .photo-card .pc-date{position:absolute;top:6px;left:6px;font-size:9px;
   background:rgba(0,0,0,.6);color:rgba(255,255,255,.8);padding:2px 6px;border-radius:4px;}
+.photo-card .pc-del-btn{position:absolute;top:5px;right:5px;width:24px;height:24px;
+  border-radius:5px;border:none;background:rgba(239,68,68,.85);color:#fff;
+  font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .15s;z-index:5;}
+.photo-card:hover .pc-del-btn{opacity:1;}
+.photo-card .pc-check{position:absolute;top:5px;left:5px;z-index:5;cursor:pointer;}
+.photo-card .pc-check input{width:16px;height:16px;cursor:pointer;accent-color:var(--orange);}
 
 /* EMPTY */
 .empty-box{text-align:center;padding:60px 20px;color:var(--muted);}
@@ -214,7 +224,8 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 
 <div class="page">
   <!-- 사이드바 트리 -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
+    <div class="resizer" id="resizer"></div>
     <div class="sidebar-card">
       <div class="sidebar-head">
         <span>폴더 구조</span>
@@ -303,6 +314,37 @@ const DEFAULT_STRUCTURE = {
   ]
 };
 
+// ── GitHub API ───────────────────────────────────────────────
+const OWNER  = 'fnksoul-ai';
+const REPO   = 'safety-portal';
+const BRANCH = 'main';
+function getToken() { return localStorage.getItem('gh_token') || ''; }
+
+async function ghFetch(endpoint, method, body) {
+  const token = getToken();
+  if (!token) throw new Error('토큰 없음');
+  const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/${endpoint}`, {
+    method,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github+json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  if (method === 'DELETE' && res.status === 204) return {};
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || res.statusText);
+  return data;
+}
+
+async function getFileSha(path) {
+  try {
+    const r = await ghFetch(`contents/${encodeURIComponent(path).replace(/%2F/g,'/')}`, 'GET');
+    return r.sha;
+  } catch { return null; }
+}
+
 // ── 상태 ────────────────────────────────────────────────────
 let structure  = loadStructure();
 let currentPath= ['root'];  // id 배열
@@ -312,6 +354,7 @@ let curModalIdx= 0;
 let dialogMode = null;       // 'add' | 'edit'
 let editTarget = null;       // 수정 대상 node
 let dialogParentId = null;
+let selectedPhotos = new Set(); // 편집모드 선택된 사진 src 목록
 
 function loadStructure() {
   try {
@@ -417,6 +460,7 @@ function renderAll() {
   renderTree();
   renderBreadcrumb();
   renderContent();
+  if (window._updateContentMargin) window._updateContentMargin();
 }
 
 // ── 콘텐츠 렌더 ─────────────────────────────────────────────
@@ -553,6 +597,11 @@ function renderPhotos(node, container) {
 
       const toolbar = document.createElement('div');
       toolbar.className = 'photo-toolbar';
+      const bulkBtns = editMode ? `
+        <button class="btn sm" onclick="selectAllPhotos(true)">전체선택</button>
+        <button class="btn sm" onclick="selectAllPhotos(false)">선택해제</button>
+        <button class="btn sm danger" id="bulkDelBtn" onclick="deleteSelectedPhotos()" style="display:none">🗑 선택삭제</button>
+      ` : '';
       toolbar.innerHTML = `
         <div class="srch">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -560,6 +609,7 @@ function renderPhotos(node, container) {
           </svg>
           <input type="text" placeholder="파일명 또는 날짜 검색" oninput="filterPhotos(this.value,'photoGrid')">
         </div>
+        ${bulkBtns}
         <div class="photo-stat"><b>${photos.length}</b>장</div>
       `;
       container.appendChild(toolbar);
@@ -568,14 +618,21 @@ function renderPhotos(node, container) {
       grid.className = 'photo-grid'; grid.id = 'photoGrid';
       photos.forEach((p, i) => {
         const card = document.createElement('div');
-        card.className = 'photo-card'; card.dataset.name = p.name; card.dataset.date = p.date||'';
+        card.className = 'photo-card'; card.dataset.name = p.name; card.dataset.date = p.date||''; card.dataset.src = p.src;
+        const deleteBtn = editMode
+          ? `<button class="pc-del-btn" onclick="event.stopPropagation();deletePhoto('${p.src}','${p.name}')" title="삭제">🗑</button>`
+          : '';
+        const checkbox = editMode
+          ? `<label class="pc-check" onclick="event.stopPropagation()"><input type="checkbox" onchange="toggleSelectPhoto('${p.src}',this.checked)" ${selectedPhotos.has(p.src)?'checked':''}></label>`
+          : '';
         card.innerHTML = `
           <img src="${p.src}" alt="${p.name}" loading="lazy"
             onerror="this.style.opacity=.15;this.parentElement.querySelector('.pc-date').textContent='⚠ 없음'">
           <span class="pc-date">${p.date||''}</span>
           <div class="pc-ov"><div class="pc-nm">${p.name}</div></div>
+          ${deleteBtn}${checkbox}
         `;
-        card.onclick = () => { curModalIdx = i; updateModal(); document.getElementById('modal').classList.add('open'); };
+        if (!editMode) card.onclick = () => { curModalIdx = i; updateModal(); document.getElementById('modal').classList.add('open'); };
         grid.appendChild(card);
       });
       container.appendChild(grid);
@@ -725,12 +782,142 @@ window.resetStructure = () => {
   }
 };
 
+// ── 사진 선택/삭제 ──────────────────────────────────────────
+function toggleSelectPhoto(src, checked) {
+  if (checked) selectedPhotos.add(src);
+  else selectedPhotos.delete(src);
+  const btn = document.getElementById('bulkDelBtn');
+  if (btn) btn.style.display = selectedPhotos.size > 0 ? '' : 'none';
+}
+
+function selectAllPhotos(all) {
+  document.querySelectorAll('#photoGrid .photo-card').forEach(card => {
+    const src = card.dataset.src;
+    const cb  = card.querySelector('input[type=checkbox]');
+    if (!src) return;
+    if (all) { selectedPhotos.add(src); if(cb) cb.checked = true; }
+    else      { selectedPhotos.delete(src); if(cb) cb.checked = false; }
+  });
+  const btn = document.getElementById('bulkDelBtn');
+  if (btn) btn.style.display = selectedPhotos.size > 0 ? '' : 'none';
+}
+
+async function deletePhoto(src, name) {
+  if (!getToken()) { showToast('⚠ 토큰을 먼저 설정해주세요 (upload.html에서 설정)'); return; }
+  if (!confirm(`"${name}" 사진을 삭제할까요?\nGitHub에서 영구 삭제됩니다.`)) return;
+  showToast('🗑 삭제 중...');
+  try {
+    const sha = await getFileSha(src);
+    if (!sha) { showToast('⚠ 파일을 찾을 수 없습니다'); return; }
+    await ghFetch(`contents/${src}`, 'DELETE', { message: `사진 삭제: ${name}`, sha, branch: BRANCH });
+    await removeFromPhotosJson([src]);
+    showToast('✅ 삭제 완료: ' + name);
+    selectedPhotos.delete(src);
+    renderAll();
+  } catch(e) { showToast('❌ 삭제 실패: ' + e.message); }
+}
+
+async function deleteSelectedPhotos() {
+  if (!getToken()) { showToast('⚠ 토큰을 먼저 설정해주세요'); return; }
+  if (!selectedPhotos.size) return;
+  if (!confirm(`선택한 ${selectedPhotos.size}장을 삭제할까요?\nGitHub에서 영구 삭제됩니다.`)) return;
+  let ok = 0, fail = 0;
+  const srcs = [...selectedPhotos];
+  for (const src of srcs) {
+    try {
+      const sha = await getFileSha(src);
+      if (!sha) { fail++; continue; }
+      const name = src.split('/').pop();
+      await ghFetch(`contents/${src}`, 'DELETE', { message: `사진 삭제: ${name}`, sha, branch: BRANCH });
+      ok++;
+    } catch { fail++; }
+  }
+  await removeFromPhotosJson(srcs);
+  selectedPhotos.clear();
+  showToast(`✅ ${ok}장 삭제 완료${fail ? ` / ❌ ${fail}장 실패` : ''}`);
+  renderAll();
+}
+
+async function removeFromPhotosJson(deletedSrcs) {
+  try {
+    const f = await ghFetch('contents/photos.json', 'GET');
+    const sha = f.sha;
+    let data = JSON.parse(atob(f.content.replace(/\n/g,'')));
+    Object.keys(data).forEach(date => {
+      data[date] = data[date].filter(p => !deletedSrcs.includes(p.src));
+      if (!data[date].length) delete data[date];
+    });
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+    await ghFetch('contents/photos.json', 'PUT', { message: 'photos.json 업데이트 (삭제)', content, sha, branch: BRANCH });
+  } catch {}
+}
+
 // ── 토스트 ───────────────────────────────────────────────────
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
 }
+
+// ── 사이드바 드래그 리사이즈 ─────────────────────────────────
+(function() {
+  const sidebar  = document.getElementById('sidebar');
+  const resizer  = document.getElementById('resizer');
+  const content  = document.getElementById('content');
+  const page     = document.querySelector('.page');
+  let isDown = false, startX = 0, startW = 0;
+
+  // 저장된 너비 복원
+  const saved = localStorage.getItem('sidebarWidth');
+  if (saved) sidebar.style.width = saved + 'px';
+  updateContentMargin();
+
+  resizer.addEventListener('mousedown', e => {
+    isDown = true;
+    startX = e.clientX;
+    startW = sidebar.offsetWidth;
+    resizer.classList.add('active');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    const diff = e.clientX - startX;
+    const newW = Math.min(500, Math.max(180, startW + diff));
+    sidebar.style.width = newW + 'px';
+    updateContentMargin();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!isDown) return;
+    isDown = false;
+    resizer.classList.remove('active');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    localStorage.setItem('sidebarWidth', sidebar.offsetWidth);
+  });
+
+  // 더블클릭 → 너비 자동 맞춤
+  resizer.addEventListener('dblclick', () => {
+    // 트리 아이템 중 가장 긴 것 기준으로 자동 맞춤
+    let maxW = 180;
+    document.querySelectorAll('.tree-item').forEach(el => {
+      maxW = Math.max(maxW, el.scrollWidth + 20);
+    });
+    maxW = Math.min(500, maxW);
+    sidebar.style.width = maxW + 'px';
+    updateContentMargin();
+    localStorage.setItem('sidebarWidth', maxW);
+  });
+
+  function updateContentMargin() {
+    const w = sidebar.offsetWidth;
+    document.querySelector('.content').style.marginLeft = (w + 20) + 'px';
+  }
+  window._updateContentMargin = updateContentMargin;
+})();
 
 // ── 시작 ─────────────────────────────────────────────────────
 renderAll();
