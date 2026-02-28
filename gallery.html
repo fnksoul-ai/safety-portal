@@ -635,7 +635,7 @@ function renderPhotos(node, container) {
           : '';
         card.innerHTML = `
           <img src="${p.src}" alt="${p.name}" loading="lazy"
-            onerror="this.style.opacity=.15;this.parentElement.querySelector('.pc-date').textContent='⚠ 없음'">
+            onerror="this.closest('.photo-card').remove(); removeBrokenFromJson('${p.src}');">
           <span class="pc-date">${p.date||''}</span>
           <div class="pc-ov"><div class="pc-nm">${p.name}</div></div>
           ${deleteBtn}${checkbox}
@@ -885,6 +885,28 @@ async function removeFromPhotosJson(deletedSrcs) {
     console.error('photos.json 업데이트 실패:', e.message);
     showToast('⚠ photos.json 업데이트 실패: ' + e.message);
   }
+}
+
+// ── 깨진 사진 자동 정리 ────────────────────────────────────────
+async function removeBrokenFromJson(src) {
+  try {
+    const f = await ghFetch('contents/photos.json', 'GET');
+    const sha = f.sha;
+    let data = JSON.parse(atob(f.content.replace(/\n/g,'')));
+    let changed = false;
+    Object.keys(data).forEach(date => {
+      const before = data[date].length;
+      data[date] = data[date].filter(p => p.src !== src);
+      if (data[date].length !== before) changed = true;
+      if (!data[date].length) delete data[date];
+    });
+    if (!changed) return;
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+    await ghFetch('contents/photos.json', 'PUT', {
+      message: 'photos.json 정리: 없는 파일 제거',
+      content: encoded, sha, branch: BRANCH
+    });
+  } catch(e) { console.log('json 정리 실패:', e.message); }
 }
 
 // ── 토스트 ───────────────────────────────────────────────────
