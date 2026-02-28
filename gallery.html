@@ -355,10 +355,30 @@ async function driveAPI(endpoint, opts = {}) {
 async function listFolder(folderId) {
   if (treeCache[folderId]) return treeCache[folderId];
   const q = encodeURIComponent(`'${folderId}' in parents and trashed=false`);
-  const fields = 'files(id,name,mimeType,thumbnailLink,webContentLink,iconLink,size,modifiedTime)';
+  const fields = 'files(id,name,mimeType,thumbnailLink,webContentLink,iconLink,size,modifiedTime,shortcutDetails)';
   const data = await driveAPI(`files?q=${q}&fields=${fields}&orderBy=name&pageSize=1000`);
-  treeCache[folderId] = data.files || [];
-  return treeCache[folderId];
+  let files = data.files || [];
+
+  // 바로가기(shortcut)를 실제 파일 정보로 교체
+  const shortcuts = files.filter(f => f.mimeType === 'application/vnd.google-apps.shortcut');
+  if (shortcuts.length > 0) {
+    const resolved = await Promise.all(shortcuts.map(async s => {
+      try {
+        const targetId = s.shortcutDetails?.targetId;
+        if (!targetId) return null;
+        const target = await driveAPI(`files/${targetId}?fields=id,name,mimeType,thumbnailLink,webContentLink,size,modifiedTime`);
+        // 바로가기 이름 유지, 실제 파일 정보 사용
+        return { ...target, name: s.name, _shortcut: true };
+      } catch { return null; }
+    }));
+    // 바로가기를 실제 파일로 교체
+    const shortcutIds = new Set(shortcuts.map(s => s.id));
+    files = files.filter(f => !shortcutIds.has(f.id));
+    resolved.filter(Boolean).forEach(f => files.push(f));
+  }
+
+  treeCache[folderId] = files;
+  return files;
 }
 
 async function uploadToDrive(file, folderId) {
