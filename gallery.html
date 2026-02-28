@@ -905,7 +905,7 @@ async function collectDateFolders() {
 }
 
 async function scanForDateFolders(folderId, depth=0) {
-  if (depth > 5) return;
+  if (depth > 10) return;
   try {
     const files = await listFolder(folderId);
     const subFolders = [];
