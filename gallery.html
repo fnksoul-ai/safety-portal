@@ -306,14 +306,20 @@ let calScanDone  = false;
 
 // ── Drive API (공개 읽기 + 관리자 쓰기) ───────────────────────
 async function driveAPI(endpoint, opts = {}) {
-  const token = AUTH.isAdmin() ? adminToken : null;
-  const headers = { 'Content-Type': 'application/json', ...(opts.headers||{}) };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const token = AUTH.isAdmin() ? AUTH.getToken() : null;
+  const headers = { ...(opts.headers||{}) };
+  if (opts.method !== 'DELETE') headers['Content-Type'] = 'application/json';
 
-  // 읽기 요청은 API Key로 공개 접근 가능
   const sep = endpoint.includes('?') ? '&' : '?';
-  const keyParam = (!token && opts.method !== 'DELETE') ? `${sep}key=${API_KEY}` : '';
-  const url = `https://www.googleapis.com/drive/v3/${endpoint}${keyParam}`;
+  let url;
+  if (token) {
+    // 관리자: Bearer 토큰 사용
+    headers['Authorization'] = `Bearer ${token}`;
+    url = `https://www.googleapis.com/drive/v3/${endpoint}`;
+  } else {
+    // 비로그인: API Key로 공개 폴더 읽기
+    url = `https://www.googleapis.com/drive/v3/${endpoint}${sep}key=${API_KEY}`;
+  }
 
   const res = await fetch(url, { ...opts, headers });
   if (res.status === 204) return {};
