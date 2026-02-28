@@ -178,18 +178,17 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
       <div class="tree" id="treeRoot"></div>
     </div>
   </aside>
-  <div class="content" id="content">
-    <div class="token-panel" id="tokenPanel" style="display:none">
-      <h4>🔑 GitHub 토큰 설정</h4>
-      <div class="token-row">
-        <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxx">
-        <button class="btn primary sm" onclick="saveToken()">저장</button>
-        <button class="btn danger sm" id="clearTokenBtn" onclick="clearToken()" style="display:none">삭제</button>
-      </div>
-      <div class="token-help">
-        토큰이 없으면 <a href="https://github.com/settings/tokens/new?scopes=repo&description=SafetyPortal" target="_blank">여기 클릭</a>
-        → <b>repo</b> 체크 → Generate token → 복사 후 붙여넣기
-      </div>
+  <div class="content" id="content"></div>
+  <div class="token-panel" id="tokenPanel" style="display:none;position:fixed;top:60px;right:16px;width:340px;z-index:150;box-shadow:0 8px 32px rgba(0,0,0,.5);">
+    <h4>🔑 GitHub 토큰 설정</h4>
+    <div class="token-row">
+      <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxx">
+      <button class="btn primary sm" onclick="saveToken()">저장</button>
+      <button class="btn danger sm" id="clearTokenBtn" onclick="clearToken()" style="display:none">삭제</button>
+    </div>
+    <div class="token-help">
+      토큰이 없으면 <a href="https://github.com/settings/tokens/new?scopes=repo&description=SafetyPortal" target="_blank">여기 클릭</a>
+      → <b>repo</b> 체크 → Generate token → 복사 후 붙여넣기
     </div>
   </div>
 </div>
@@ -382,12 +381,7 @@ function renderContent(){
   const node=findNode(currentPath[currentPath.length-1]);
   if(!node)return;
   const content=document.getElementById('content');
-
-  // 토큰 경고 유지
-  const warn=document.getElementById('tokenWarn');
   content.innerHTML='';
-  content.appendChild(warn);
-  if(!getToken()) warn.classList.add('show'); else warn.classList.remove('show');
 
   // 헤더
   const hdr=document.createElement('div');
