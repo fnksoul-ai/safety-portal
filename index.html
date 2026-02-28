@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>안전관리 포털</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0f1117;
+    --bg2:      #171b24;
+    --bg3:      #1e2330;
+    --border:   #2c3347;
+    --orange:   #f97316;
+    --orange2:  #fb923c;
+    --blue:     #3b82f6;
+    --green:    #22c55e;
+    --red:      #ef4444;
+    --yellow:   #eab308;
+    --text:     #f1f5f9;
+    --muted:    #64748b;
+    --muted2:   #94a3b8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── 배경 그리드 패턴 ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(249,115,22,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(249,115,22,.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* ── 네비게이션 ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(15,17,23,.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    display: flex; align-items: center;
+    height: 56px; gap: 32px;
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: .1em;
+    color: var(--orange);
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--text); }
+  .nav-links { display: flex; gap: 4px; margin-left: auto; }
+  .nav-link {
+    padding: 6px 14px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; color: var(--muted2);
+    text-decoration: none; transition: all .15s;
+    cursor: pointer;
+  }
+  .nav-link:hover { color: var(--text); background: var(--bg3); }
+  .nav-badge {
+    background: var(--orange); color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+    margin-left: 4px; vertical-align: middle;
+  }
+
+  /* ── 히어로 섹션 ── */
+  .hero {
+    position: relative; z-index: 1;
+    padding: 80px 32px 64px;
+    max-width: 1200px; margin: 0 auto;
+  }
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(249,115,22,.1);
+    border: 1px solid rgba(249,115,22,.3);
+    color: var(--orange2);
+    font-size: 12px; font-weight: 600; letter-spacing: .08em;
+    padding: 4px 12px; border-radius: 20px;
+    margin-bottom: 20px;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--orange);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: .3; }
+  }
+  .hero h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 8vw, 88px);
+    line-height: .95; letter-spacing: .03em;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+  .hero h1 em {
+    font-style: normal;
+    -webkit-text-stroke: 2px var(--orange);
+    color: transparent;
+  }
+  .hero-sub {
+    font-size: 16px; color: var(--muted2);
+    max-width: 480px; line-height: 1.7;
+    margin-bottom: 36px;
+  }
+  .hero-sub strong { color: var(--text); font-weight: 600; }
+
+  /* ── 상태 바 ── */
+  .status-bar {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    margin-bottom: 56px;
+  }
+  .stat-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--muted2);
+  }
+  .stat-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+  }
+  .stat-dot.green  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .stat-dot.yellow { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+  .stat-dot.red    { background: var(--red); box-shadow: 0 0 6px var(--red); }
+  .stat-item strong { color: var(--text); font-weight: 700; font-size: 15px; }
+
+  /* ── 메인 그리드 ── */
+  .section {
+    position: relative; z-index: 1;
+    max-width: 1200px; margin: 0 auto;
+    padding: 0 32px 80px;
+  }
+  .section-title {
+    font-size: 12px; font-weight: 700; letter-spacing: .12em;
+    color: var(--muted); text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .card-grid.featured {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    cursor: pointer;
+    text-decoration: none; color: inherit;
+    transition: transform .2s, border-color .2s, box-shadow .2s;
+    display: flex; flex-direction: column; gap: 12px;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ''; position: absolute;
+    top: 0; left: 0; right: 0; height: 2px;
+    background: var(--card-accent, var(--orange));
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .2s;
+  }
+  .card:hover { transform: translateY(-3px); border-color: var(--card-accent, var(--orange)); box-shadow: 0 12px 32px rgba(0,0,0,.4); }
+  .card:hover::before { transform: scaleX(1); }
+
+  .card-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid var(--border);
+  }
+  .card-title { font-size: 16px; font-weight: 700; }
+  .card-desc { font-size: 13px; color: var(--muted2); line-height: 1.6; }
+  .card-footer {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: auto; padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 12px; color: var(--muted);
+  }
+  .card-status {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 10px;
+    font-size: 11px; font-weight: 600;
+  }
+  .card-status.ready  { background: rgba(34,197,94,.1);  color: var(--green); }
+  .card-status.soon   { background: rgba(234,179,8,.1);  color: var(--yellow); }
+  .card-status.new    { background: rgba(249,115,22,.1); color: var(--orange); }
+  .card-arrow { margin-left: auto; color: var(--muted); font-size: 16px; transition: transform .2s; }
+  .card:hover .card-arrow { transform: translateX(4px); color: var(--card-accent, var(--orange)); }
+
+  /* 카드 색상 변형 */
+  .card.blue  { --card-accent: var(--blue); }
+  .card.green { --card-accent: var(--green); }
+  .card.red   { --card-accent: var(--red); }
+  .card.yellow{ --card-accent: var(--yellow); }
+
+  /* ── 공지 배너 ── */
+  .notice-bar {
+    position: relative; z-index: 1;
+    max-width: 1200px; margin: 0 auto;
+    padding: 0 32px 32px;
+  }
+  .notice {
+    background: linear-gradient(135deg, rgba(249,115,22,.12), rgba(251,146,60,.06));
+    border: 1px solid rgba(249,115,22,.25);
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 13px;
+  }
+  .notice-icon { font-size: 20px; flex-shrink: 0; }
+  .notice-text { flex: 1; color: var(--muted2); line-height: 1.5; }
+  .notice-text strong { color: var(--orange2); }
+  .notice-date { font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+  /* ── 푸터 ── */
+  footer {
+    position: relative; z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 24px 32px;
+    text-align: center;
+    font-size: 12px; color: var(--muted);
+  }
+  footer span { color: var(--orange); }
+
+  /* ── 애니메이션 ── */
+  .fade-up {
+    opacity: 0; transform: translateY(20px);
+    animation: fadeUp .5s forwards;
+  }
+  @keyframes fadeUp {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-up:nth-child(1) { animation-delay: .1s; }
+  .fade-up:nth-child(2) { animation-delay: .2s; }
+  .fade-up:nth-child(3) { animation-delay: .3s; }
+  .fade-up:nth-child(4) { animation-delay: .4s; }
+  .fade-up:nth-child(5) { animation-delay: .5s; }
+  .fade-up:nth-child(6) { animation-delay: .6s; }
+
+  @media (max-width: 640px) {
+    nav { padding: 0 16px; gap: 16px; }
+    .hero, .section, .notice-bar { padding-left: 16px; padding-right: 16px; }
+    .hero h1 { font-size: 52px; }
+    .nav-links { gap: 2px; }
+    .nav-link { padding: 5px 10px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 네비게이션 -->
+<nav>
+  <a class="nav-logo" href="#">⚠ <span>SAFETY</span> PORTAL</a>
+  <div class="nav-links">
+    <a class="nav-link" href="#tools">도구</a>
+    <a class="nav-link" href="#forms">서류</a>
+    <a class="nav-link" href="#gallery">갤러리</a>
+    <a class="nav-link" href="#info">정보</a>
+  </div>
+</nav>
+
+<!-- 히어로 -->
+<section class="hero">
+  <div class="hero-tag">건설 현장 안전관리 시스템</div>
+  <h1>SAFETY<br><em>PORTAL</em></h1>
+  <p class="hero-sub">
+    현장 안전관리에 필요한 <strong>서류 양식, 점검 도구, 사진 기록</strong>을<br>
+    한 곳에서 관리하고 공유하세요.
+  </p>
+  <div class="status-bar">
+    <div class="stat-item">
+      <div class="stat-dot green"></div>
+      서비스 정상 운영중
+    </div>
+    <div class="stat-item">
+      <div class="stat-dot yellow"></div>
+      일부 기능 <strong>준비중</strong>
+    </div>
+    <div class="stat-item">
+      📅 <strong id="today"></strong>
+    </div>
+  </div>
+</section>
+
+<!-- 공지 -->
+<div class="notice-bar">
+  <div class="notice">
+    <div class="notice-icon">📢</div>
+    <div class="notice-text">
+      <strong>사이트 오픈 안내</strong> — 안전관리 포털이 구축되었습니다.
+      순차적으로 서류 양식, 사진대지, 갤러리 기능이 추가될 예정입니다.
+    </div>
+    <div class="notice-date" id="noticeDate"></div>
+  </div>
+</div>
+
+<!-- 주요 도구 -->
+<section class="section" id="tools">
+  <div class="section-title">주요 도구</div>
+  <div class="card-grid featured">
+
+    <a class="card fade-up" href="photo-board.html">
+      <div class="card-icon">📸</div>
+      <div class="card-title">사진대지 작성</div>
+      <div class="card-desc">현장 점검 사진을 업로드하고 사진대지 양식을 웹에서 바로 작성·출력할 수 있습니다.</div>
+      <div class="card-footer">
+        <span class="card-status new">● NEW</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card blue fade-up" href="gallery.html">
+      <div class="card-icon">🖼️</div>
+      <div class="card-title">일일점검 갤러리</div>
+      <div class="card-desc">날짜별로 정리된 현장 점검 사진을 한눈에 확인하고 검색할 수 있습니다.</div>
+      <div class="card-footer">
+        <span class="card-status ready">● 준비완료</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card green fade-up" href="checklist.html">
+      <div class="card-icon">✅</div>
+      <div class="card-title">안전점검 체크리스트</div>
+      <div class="card-desc">일일·주간·월간 안전점검 체크리스트를 온라인으로 작성하고 기록을 저장합니다.</div>
+      <div class="card-footer">
+        <span class="card-status soon">● 준비중</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- 서류 양식 -->
+<section class="section" id="forms">
+  <div class="section-title">서류 양식</div>
+  <div class="card-grid">
+
+    <a class="card yellow fade-up" href="#">
+      <div class="card-icon">📋</div>
+      <div class="card-title">위험성 평가서</div>
+      <div class="card-desc">작업별 위험성 평가 양식을 작성하고 PDF로 출력합니다.</div>
+      <div class="card-footer">
+        <span class="card-status soon">● 준비중</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card fade-up" href="#">
+      <div class="card-icon">📝</div>
+      <div class="card-title">안전교육 일지</div>
+      <div class="card-desc">안전교육 실시 일지 및 서명 양식을 관리합니다.</div>
+      <div class="card-footer">
+        <span class="card-status soon">● 준비중</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card blue fade-up" href="#">
+      <div class="card-icon">🏗️</div>
+      <div class="card-title">작업허가서</div>
+      <div class="card-desc">고위험 작업 허가서 양식을 작성하고 승인 처리합니다.</div>
+      <div class="card-footer">
+        <span class="card-status soon">● 준비중</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card red fade-up" href="#">
+      <div class="card-icon">🚨</div>
+      <div class="card-title">사고 보고서</div>
+      <div class="card-desc">재해·아차사고 보고서를 즉시 작성하고 기록을 보관합니다.</div>
+      <div class="card-footer">
+        <span class="card-status soon">● 준비중</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card green fade-up" href="#">
+      <div class="card-icon">👷</div>
+      <div class="card-title">TBM 기록지</div>
+      <div class="card-desc">작업 전 안전미팅(TBM) 기록지를 작성하고 관리합니다.</div>
+      <div class="card-footer">
+        <span class="card-status soon">● 준비중</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card fade-up" href="#">
+      <div class="card-icon">📊</div>
+      <div class="card-title">안전관리 현황</div>
+      <div class="card-desc">현장 안전관리 현황 보고서 및 통계 자료를 확인합니다.</div>
+      <div class="card-footer">
+        <span class="card-status soon">● 준비중</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<!-- 안전 정보 -->
+<section class="section" id="info">
+  <div class="section-title">안전 정보</div>
+  <div class="card-grid">
+
+    <a class="card fade-up" href="#">
+      <div class="card-icon">📖</div>
+      <div class="card-title">산업안전보건법 주요 내용</div>
+      <div class="card-desc">현장 관리자가 알아야 할 산업안전보건법 주요 조항 및 의무사항을 정리합니다.</div>
+      <div class="card-footer">
+        <span class="card-status soon">● 준비중</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card blue fade-up" href="#">
+      <div class="card-icon">⚙️</div>
+      <div class="card-title">장비 안전 기준</div>
+      <div class="card-desc">건설 장비별 안전 기준과 점검 항목을 확인합니다.</div>
+      <div class="card-footer">
+        <span class="card-status soon">● 준비중</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+    <a class="card yellow fade-up" href="#">
+      <div class="card-icon">🎓</div>
+      <div class="card-title">안전교육 자료실</div>
+      <div class="card-desc">작업별 안전교육 자료와 동영상을 공유합니다.</div>
+      <div class="card-footer">
+        <span class="card-status soon">● 준비중</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>
+
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 <span>Safety Portal</span> · 건설 현장 안전관리 시스템 · Powered by GitHub Pages</p>
+</footer>
+
+<script>
+  // 오늘 날짜
+  const now = new Date();
+  const days = ['일','월','화','수','목','금','토'];
+  document.getElementById('today').textContent =
+    now.getFullYear() + '.' +
+    String(now.getMonth()+1).padStart(2,'0') + '.' +
+    String(now.getDate()).padStart(2,'0') + ' (' + days[now.getDay()] + ')';
+  document.getElementById('noticeDate').textContent =
+    now.getFullYear() + '.' + String(now.getMonth()+1).padStart(2,'0');
+
+  // 스크롤 애니메이션
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) e.target.style.animationPlayState = 'running';
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-up').forEach(el => {
+    el.style.animationPlayState = 'paused';
+    observer.observe(el);
+  });
+</script>
+</body>
+</html>
