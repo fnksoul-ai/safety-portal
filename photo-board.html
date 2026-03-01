@@ -221,156 +221,6 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 }
 </style>
 <script src="auth.js"></script>
-<script>
-// ══════════════════════════════════════════════
-//  양식 저장 / 불러오기 (localStorage, 사용자별)
-// ══════════════════════════════════════════════
-function getSaveKey() {
-  const p = AUTH.isUser() ? AUTH.getUserProfile() : (AUTH.isAdmin() ? AUTH.getProfile() : null);
-  if (!p || !p.email) return null;
-  return 'pb_saves_' + p.email.replace(/[^a-zA-Z0-9]/g,'_');
-}
-function loadSaves() {
-  const key = getSaveKey(); if (!key) return [];
-  try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
-}
-function writeSaves(list) {
-  const key = getSaveKey(); if (!key) return;
-  localStorage.setItem(key, JSON.stringify(list));
-}
-
-function renderSavePanel() {
-  const body = document.getElementById('savePanelBody');
-  const btn  = document.getElementById('spSaveBtn');
-  if (!body) return;
-  const loggedIn = AUTH.isLoggedIn();
-  btn.disabled = !loggedIn;
-  if (!loggedIn) {
-    body.innerHTML = `<div class="sp-login-prompt">
-      🔒 로그인하면<br>양식을 저장하고<br>언제든 불러올 수 있습니다.
-      <button class="sp-login-prompt-btn" onclick="AUTH.toggleUserDropdown()">구글로 로그인</button>
-    </div>`;
-    return;
-  }
-  const saves = loadSaves();
-  if (!saves.length) {
-    body.innerHTML = '<div class="sp-empty">저장된 양식이 없습니다.<br>+ 저장 버튼을 눌러<br>현재 양식을 저장하세요.</div>';
-  } else {
-    body.innerHTML = '';
-    const ul = document.createElement('div'); ul.className = 'sp-list';
-    saves.forEach((s, idx) => {
-      const item = document.createElement('div');
-      item.className = 'sp-item' + (s.active ? ' active' : '');
-      item.innerHTML = `
-        <div class="sp-item-name">${s.name}</div>
-        <div class="sp-item-meta">${s.date} · ${s.pages}페이지</div>
-        <button class="sp-item-del" onclick="deleteSave(${idx},event)" title="삭제">×</button>`;
-      item.addEventListener('click', () => loadSave(idx));
-      ul.appendChild(item);
-    });
-    body.appendChild(ul);
-  }
-  // 새 양식 버튼
-  const nb = document.createElement('button'); nb.className='sp-new-btn'; nb.textContent='+ 새 양식 시작';
-  nb.onclick = () => { resetForm(); };
-  body.appendChild(nb);
-}
-
-let pendingSaveName = '';
-
-function showLoginRequired() {
-  let el = document.getElementById('loginRequiredToast');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'loginRequiredToast';
-    el.innerHTML = `
-      <div style="font-size:28px;margin-bottom:10px">🔒</div>
-      <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:6px">로그인이 필요합니다</div>
-      <div style="font-size:12px;color:var(--m2);line-height:1.7;margin-bottom:16px">저장 기능은 로그인한 사용자만<br>이용할 수 있습니다.</div>
-      <button onclick="AUTH.toggleUserDropdown();hideLoginRequired()" style="width:100%;padding:9px;border-radius:7px;background:#3b82f6;border:none;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:7px">구글로 로그인</button>
-      <button onclick="hideLoginRequired()" style="width:100%;padding:7px;border-radius:7px;background:var(--bg4);border:1px solid var(--bdr);color:var(--m2);font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">닫기</button>`;
-    document.body.appendChild(el);
-    el.addEventListener('click', e => { if(e.target === el) hideLoginRequired(); });
-  }
-  el.classList.add('show');
-  clearTimeout(el._t);
-  el._t = setTimeout(hideLoginRequired, 5000);
-}
-function hideLoginRequired() {
-  const el = document.getElementById('loginRequiredToast');
-  if (el) el.classList.remove('show');
-}
-
-function openSaveModal() {
-  if (!AUTH.isLoggedIn()) { showLoginRequired(); return; }
-  const site = document.getElementById('siteName').value || '';
-  document.getElementById('saveModalInp').value = site || '';
-  document.getElementById('saveModal').classList.add('open');
-  document.getElementById('saveModalInp').focus();
-}
-function closeSaveModal() { document.getElementById('saveModal').classList.remove('open'); }
-document.getElementById('saveModal').addEventListener('click', e => { if(e.target.id==='saveModal') closeSaveModal(); });
-document.getElementById('saveModalInp').addEventListener('keydown', e => { if(e.key==='Enter') confirmSave(); if(e.key==='Escape') closeSaveModal(); });
-
-function confirmSave() {
-  const name = document.getElementById('saveModalInp').value.trim();
-  if (!name) { document.getElementById('saveModalInp').focus(); return; }
-  const saves = loadSaves();
-  const now = new Date();
-  const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-  // pages 직렬화 (이미지는 base64 그대로)
-  const snapshot = JSON.parse(JSON.stringify(pages));
-  const entry = {
-    name, date: dateStr, pages: snapshot.length,
-    siteName: document.getElementById('siteName').value,
-    docTitle: document.getElementById('docTitle').value,
-    slotCount, showPN,
-    data: snapshot,
-    id: Date.now()
-  };
-  saves.unshift(entry);
-  if (saves.length > 30) saves.splice(30); // 최대 30개
-  writeSaves(saves);
-  closeSaveModal();
-  renderSavePanel();
-  toast(`"${name}" 저장됨`);
-}
-
-function loadSave(idx) {
-  const saves = loadSaves();
-  const entry = saves[idx]; if (!entry) return;
-  saveUndo();
-  pages.length = 0;
-  entry.data.forEach(pg => pages.push(pg));
-  slotCount = entry.slotCount || 6;
-  showPN = entry.showPN ?? true;
-  document.getElementById('siteName').value = entry.siteName || '';
-  document.getElementById('docTitle').value = entry.docTitle || '사진대지';
-  // slotCount 드롭다운 동기화
-  const sel = document.getElementById('slotSel');
-  if (sel) sel.value = String(slotCount);
-  syncSite(entry.siteName||''); syncTitle(entry.docTitle||'사진대지'); syncNavSite(entry.siteName||'');
-  sel?.dispatchEvent ? null : null;
-  renderAll(); renderSavePanel(); toast(`"${entry.name}" 불러옴`);
-}
-
-function deleteSave(idx, e) {
-  e.stopPropagation();
-  const saves = loadSaves();
-  const name = saves[idx]?.name || '';
-  saves.splice(idx, 1);
-  writeSaves(saves);
-  renderSavePanel();
-  toast(`"${name}" 삭제됨`);
-}
-
-// 로그인 상태 변경 시 패널 갱신
-window.onAuthStateChange = () => renderSavePanel();
-window.onUserLogin  = () => renderSavePanel();
-window.onUserLogout = () => renderSavePanel();
-
-
-</script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 </head>
 <body>
@@ -1537,6 +1387,166 @@ document.addEventListener('paste', e => {
   }
 });
 
+
+// ══════════════════════════════════════════════
+//  양식 저장 / 불러오기 (localStorage, 사용자별)
+// ══════════════════════════════════════════════
+function getSaveKey() {
+  const p = AUTH.isUser() ? AUTH.getUserProfile() : (AUTH.isAdmin() ? AUTH.getProfile() : null);
+  if (!p || !p.email) return null;
+  return 'pb_saves_' + p.email.replace(/[^a-zA-Z0-9]/g,'_');
+}
+function loadSaves() {
+  const key = getSaveKey(); if (!key) return [];
+  try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+}
+function writeSaves(list) {
+  const key = getSaveKey(); if (!key) return;
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
+function renderSavePanel() {
+  const body = document.getElementById('savePanelBody');
+  const btn  = document.getElementById('spSaveBtn');
+  if (!body) return;
+  const loggedIn = AUTH.isLoggedIn();
+  btn.disabled = !loggedIn;
+  if (!loggedIn) {
+    body.innerHTML = `<div class="sp-login-prompt">
+      🔒 로그인하면<br>양식을 저장하고<br>언제든 불러올 수 있습니다.
+      <button class="sp-login-prompt-btn" onclick="AUTH.toggleUserDropdown()">구글로 로그인</button>
+    </div>`;
+    return;
+  }
+  const saves = loadSaves();
+  if (!saves.length) {
+    body.innerHTML = '<div class="sp-empty">저장된 양식이 없습니다.<br>+ 저장 버튼을 눌러<br>현재 양식을 저장하세요.</div>';
+  } else {
+    body.innerHTML = '';
+    const ul = document.createElement('div'); ul.className = 'sp-list';
+    saves.forEach((s, idx) => {
+      const item = document.createElement('div');
+      item.className = 'sp-item' + (s.active ? ' active' : '');
+      item.innerHTML = `
+        <div class="sp-item-name">${s.name}</div>
+        <div class="sp-item-meta">${s.date} · ${s.pages}페이지</div>
+        <button class="sp-item-del" onclick="deleteSave(${idx},event)" title="삭제">×</button>`;
+      item.addEventListener('click', () => loadSave(idx));
+      ul.appendChild(item);
+    });
+    body.appendChild(ul);
+  }
+  // 새 양식 버튼
+  const nb = document.createElement('button'); nb.className='sp-new-btn'; nb.textContent='+ 새 양식 시작';
+  nb.onclick = () => { resetForm(); };
+  body.appendChild(nb);
+}
+
+let pendingSaveName = '';
+
+function showLoginRequired() {
+  let el = document.getElementById('loginRequiredToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loginRequiredToast';
+    el.innerHTML = `
+      <div style="font-size:28px;margin-bottom:10px">🔒</div>
+      <div style="font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:6px">로그인이 필요합니다</div>
+      <div style="font-size:12px;color:var(--m2);line-height:1.7;margin-bottom:16px">저장 기능은 로그인한 사용자만<br>이용할 수 있습니다.</div>
+      <button onclick="AUTH.toggleUserDropdown();hideLoginRequired()" style="width:100%;padding:9px;border-radius:7px;background:#3b82f6;border:none;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;margin-bottom:7px">구글로 로그인</button>
+      <button onclick="hideLoginRequired()" style="width:100%;padding:7px;border-radius:7px;background:var(--bg4);border:1px solid var(--bdr);color:var(--m2);font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">닫기</button>`;
+    document.body.appendChild(el);
+    el.addEventListener('click', e => { if(e.target === el) hideLoginRequired(); });
+  }
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(hideLoginRequired, 5000);
+}
+function hideLoginRequired() {
+  const el = document.getElementById('loginRequiredToast');
+  if (el) el.classList.remove('show');
+}
+
+function openSaveModal() {
+  if (!AUTH.isLoggedIn()) { showLoginRequired(); return; }
+  const site = document.getElementById('siteName').value || '';
+  document.getElementById('saveModalInp').value = site || '';
+  document.getElementById('saveModal').classList.add('open');
+  document.getElementById('saveModalInp').focus();
+}
+function closeSaveModal() { document.getElementById('saveModal').classList.remove('open'); }
+
+
+
+function confirmSave() {
+  const name = document.getElementById('saveModalInp').value.trim();
+  if (!name) { document.getElementById('saveModalInp').focus(); return; }
+  const saves = loadSaves();
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+  // pages 직렬화 (이미지는 base64 그대로)
+  const snapshot = JSON.parse(JSON.stringify(pages));
+  const entry = {
+    name, date: dateStr, pages: snapshot.length,
+    siteName: document.getElementById('siteName').value,
+    docTitle: document.getElementById('docTitle').value,
+    slotCount, showPN,
+    data: snapshot,
+    id: Date.now()
+  };
+  saves.unshift(entry);
+  if (saves.length > 30) saves.splice(30); // 최대 30개
+  writeSaves(saves);
+  closeSaveModal();
+  renderSavePanel();
+  toast(`"${name}" 저장됨`);
+}
+
+function loadSave(idx) {
+  const saves = loadSaves();
+  const entry = saves[idx]; if (!entry) return;
+  saveUndo();
+  pages.length = 0;
+  entry.data.forEach(pg => pages.push(pg));
+  slotCount = entry.slotCount || 6;
+  showPN = entry.showPN ?? true;
+  document.getElementById('siteName').value = entry.siteName || '';
+  document.getElementById('docTitle').value = entry.docTitle || '사진대지';
+  // slotCount 드롭다운 동기화
+  const sel = document.getElementById('slotSel');
+  if (sel) sel.value = String(slotCount);
+  syncSite(entry.siteName||''); syncTitle(entry.docTitle||'사진대지'); syncNavSite(entry.siteName||'');
+  sel?.dispatchEvent ? null : null;
+  renderAll(); renderSavePanel(); toast(`"${entry.name}" 불러옴`);
+}
+
+function deleteSave(idx, e) {
+  e.stopPropagation();
+  const saves = loadSaves();
+  const name = saves[idx]?.name || '';
+  saves.splice(idx, 1);
+  writeSaves(saves);
+  renderSavePanel();
+  toast(`"${name}" 삭제됨`);
+}
+
+// 로그인 상태 변경 시 패널 갱신
+window.onAuthStateChange = () => renderSavePanel();
+window.onUserLogin  = () => renderSavePanel();
+window.onUserLogout = () => renderSavePanel();
+
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const saveModal = document.getElementById('saveModal');
+  const saveModalInp = document.getElementById('saveModalInp');
+  if (saveModal) saveModal.addEventListener('click', e => { if(e.target.id==='saveModal') closeSaveModal(); });
+  if (saveModalInp) {
+    saveModalInp.addEventListener('keydown', e => { if(e.key==='Enter') confirmSave(); if(e.key==='Escape') closeSaveModal(); });
+  }
+  renderSavePanel();
+});
 </script>
 <div class="paste-flash" id="pasteFlash"></div>
 

@@ -40,7 +40,7 @@ const AUTH = (() => {
     if (document.getElementById('adminNavBtn')) return;
     const wrapper = document.createElement('div');
     wrapper.id = 'authNavWrapper';
-    wrapper.style.cssText = 'margin-left:auto;display:flex;align-items:center;gap:8px;position:relative;';
+    wrapper.style.cssText = 'display:flex;align-items:center;gap:8px;position:relative;';
     wrapper.innerHTML = `
       <!-- 사용자 로그인 버튼 -->
       <button id="userNavBtn" onclick="AUTH.toggleUserDropdown()" style="
