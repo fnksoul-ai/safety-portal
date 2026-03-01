@@ -242,7 +242,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
           <div class="tree" id="treeRoot"></div>
         </div>
         <div class="cal-card" id="calCard">
-          <div style="padding:11px 12px 9px;font-size:15px;font-weight:700;letter-spacing:.06em;color:var(--text);border-bottom:1px solid var(--border);display:grid;grid-template-columns:24px 1fr 24px;align-items:center;"><span></span><span style="text-align:center;">일자별 사진</span><button onclick="calForceRescan()" title="날짜 다시 스캔" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:2px 4px;border-radius:4px;transition:.15s;justify-self:end;" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--muted)'">🔄</button></div>
+          <div style="padding:11px 12px 9px;font-size:15px;font-weight:700;letter-spacing:.06em;color:var(--text);border-bottom:1px solid var(--border);display:grid;grid-template-columns:24px 1fr 24px;align-items:center;"><span></span><span style="text-align:center;">일자별 사진</span><button class="btn sm" onclick="calForceRescan()" title="날짜 다시 스캔" style="padding:2px 8px;justify-self:end;">↺</button></div>
           <div class="cal-head">
             <button class="cal-nav" onclick="calMove(-1)">‹</button>
             <span id="calTitle"></span>
