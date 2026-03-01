@@ -914,16 +914,35 @@ function renderUploadPanel(container) {
     panel.querySelector('#upProg').style.display='block';
     const log=panel.querySelector('#upLog'),pb=panel.querySelector('#upPB');
     let ok=0,fail=0,total=uploadFiles.length;
+    // 토큰 유효성 재확인
+    const token = AUTH.getToken();
+    if (!token || Date.now() > AUTH.getExpiry()) { showToast('❌ 세션 만료: 관리자 로그인을 다시 해주세요'); AUTH.logout(); isUploading=false; btn.disabled=false; btn.textContent='📤 업로드'; return; }
     for(let i=0;i<total;i++){
       const f=uploadFiles[i];pb.style.width=Math.round((i/total)*100)+'%';log.textContent=`(${i+1}/${total}) ${f.name}`;
       try{
         const meta=JSON.stringify({name:f.name,parents:[currentFolderId]});
-        const form=new FormData();form.append('metadata',new Blob([meta],{type:'application/json'}));form.append('file',f);
-        const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{method:'POST',headers:{Authorization:`Bearer ${AUTH.getToken()}`},body:form});
-        if(!res.ok)throw new Error('실패');ok++;
-      }catch{fail++;}
+        const form=new FormData();
+        form.append('metadata',new Blob([meta],{type:'application/json'}));
+        form.append('file',f);
+        const res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true',{
+          method:'POST',
+          headers:{Authorization:`Bearer ${token}`},
+          body:form
+        });
+        if(!res.ok){
+          const errData = await res.json().catch(()=>({}));
+          const errMsg = errData?.error?.message || `HTTP ${res.status}`;
+          log.textContent=`❌ 실패: ${errMsg}`;
+          console.error('Upload error:', errMsg, errData);
+          fail++;
+        } else { ok++; }
+      }catch(e){
+        log.textContent=`❌ 오류: ${e.message}`;
+        console.error('Upload exception:', e);
+        fail++;
+      }
     }
-    pb.style.width='100%';log.textContent=`✅ ${ok}장 완료${fail?` / ❌ ${fail}장 실패`:''}`;
+    pb.style.width='100%';log.textContent=`${ok>0?`✅ ${ok}장 완료`:''} ${fail>0?`❌ ${fail}장 실패: 콘솔에서 오류 확인`:''}`.trim();
     isUploading=false;btn.disabled=false;btn.textContent='📤 업로드';
     if(ok>0){showToast(`✅ ${ok}장 업로드 완료!`);uploadFiles=[];renderPrev();treeCache[currentFolderId]=null;setTimeout(()=>renderContent(),1000);}
   };
