@@ -932,13 +932,23 @@ function renderUploadPanel(container) {
         if(!res.ok){
           const errData = await res.json().catch(()=>({}));
           const errMsg = errData?.error?.message || `HTTP ${res.status}`;
-          log.textContent=`❌ 실패: ${errMsg}`;
-          console.error('Upload error:', errMsg, errData);
+          const errCode = errData?.error?.code || res.status;
+          log.textContent=`❌ [${errCode}] ${errMsg}`;
+          if(errCode===401||errCode===403){
+            const hint = document.createElement('div');
+            hint.style.cssText='background:#1e2330;border:1px solid #ef4444;border-radius:8px;padding:12px;margin-top:8px;font-size:11px;color:#fca5a5;line-height:1.7';
+            hint.innerHTML = errCode===401
+              ? `<b>401 인증 오류</b><br>토큰이 만료됐습니다. 관리자 로그아웃 후 다시 로그인하세요.`
+              : `<b>403 권한 오류</b><br>가능한 원인:<br>
+                 1. 구글 클라우드 콘솔 → OAuth 동의 화면 → 범위에 <b>Drive API</b> 추가 필요<br>
+                 2. 앱이 <b>테스트 모드</b>인 경우 본인 계정을 테스트 사용자로 추가 필요<br>
+                 3. 해당 폴더에 편집 권한이 없는 경우`;
+            panel.querySelector('#upLog').after(hint);
+          }
           fail++;
         } else { ok++; }
       }catch(e){
-        log.textContent=`❌ 오류: ${e.message}`;
-        console.error('Upload exception:', e);
+        log.textContent=`❌ 네트워크 오류: ${e.message}`;
         fail++;
       }
     }
