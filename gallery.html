@@ -304,6 +304,7 @@ const AUTH = (() => {
     localStorage.setItem('admin_token', resp.access_token);
     localStorage.setItem('admin_expiry', Date.now() + (resp.expires_in - 60) * 1000);
   }
+  function _saveToken(resp) { saveAdmin(resp); }
   function saveUser(resp) {
     localStorage.setItem('user_token', resp.access_token);
     localStorage.setItem('user_expiry', Date.now() + (resp.expires_in - 60) * 1000);
@@ -608,7 +609,7 @@ const AUTH = (() => {
     isUser, getUserToken, getUserProfile, isLoggedIn, getAnyProfile,
     login, logout, userLogin, userLogout,
     toggleDropdown, toggleUserDropdown,
-    injectNavButton, updateUI, showMsg
+    injectNavButton, updateUI, showMsg, _saveToken
   };
 })();
 
@@ -719,7 +720,7 @@ function startGallery() {
   const savedName = localStorage.getItem('drive_root_name') || '석문호 수상태양광발전소 EPC공사';
   folderPath = [];
   navigateToFolder(rootFolderId, savedName);
-  setTimeout(() => renderCal(), 2000);
+  // renderCal은 navigateToFolder 완료 후 호출됨
 }
 
 // ── 네비게이션 ────────────────────────────────────────────────
@@ -792,6 +793,8 @@ function editRootName() {
 
 // ── 콘텐츠 ───────────────────────────────────────────────────
 async function renderContent() {
+  // 컨텐츠 렌더 후 캘린더 표시 업데이트 (이미 스캔 완료면 즉시)
+  setTimeout(() => { if(!calScanDone) renderCal(); }, 100);
   const content = document.getElementById('content');
   content.innerHTML = '<div class="loading-box"><span class="spin">⏳</span> 불러오는 중...</div>';
   renderTreeRoot();
@@ -910,13 +913,20 @@ function renderUploadPanel(container) {
     if(isUploading||!uploadFiles.length)return;
     if(!AUTH.isAdmin()){showToast('관리자 로그인 후 업로드 가능합니다');return;}
     isUploading=true;
-    const btn=panel.querySelector('#upBtn');btn.disabled=true;btn.textContent='⏳ 업로드 중...';
+    const btn=panel.querySelector('#upBtn');btn.disabled=true;btn.textContent='⏳ 토큰 갱신 중...';
     panel.querySelector('#upProg').style.display='block';
     const log=panel.querySelector('#upLog'),pb=panel.querySelector('#upPB');
-    let ok=0,fail=0,total=uploadFiles.length;
-    // 토큰 유효성 재확인
+
+    if (!currentFolderId) {
+      log.textContent = '❌ 폴더가 선택되지 않았습니다. 좌측에서 폴더를 먼저 클릭하세요.';
+      isUploading=false; btn.disabled=false; btn.textContent='📤 업로드'; return;
+    }
     const token = AUTH.getToken();
-    if (!token || Date.now() > AUTH.getExpiry()) { showToast('❌ 세션 만료: 관리자 로그인을 다시 해주세요'); AUTH.logout(); isUploading=false; btn.disabled=false; btn.textContent='📤 업로드'; return; }
+    if (!token) {
+      log.textContent = '❌ 토큰 없음 — 관리자 로그아웃 후 다시 로그인하세요';
+      isUploading=false; btn.disabled=false; btn.textContent='📤 업로드'; return;
+    }
+    let ok=0,fail=0,total=uploadFiles.length;
     for(let i=0;i<total;i++){
       const f=uploadFiles[i];pb.style.width=Math.round((i/total)*100)+'%';log.textContent=`(${i+1}/${total}) ${f.name}`;
       try{
@@ -952,7 +962,7 @@ function renderUploadPanel(container) {
         fail++;
       }
     }
-    pb.style.width='100%';log.textContent=`${ok>0?`✅ ${ok}장 완료`:''} ${fail>0?`❌ ${fail}장 실패: 콘솔에서 오류 확인`:''}`.trim();
+    pb.style.width='100%'; if(ok>0 && fail===0) log.textContent=`✅ ${ok}장 완료`; else if(ok>0 && fail>0) log.textContent=`✅ ${ok}장 완료, ❌ ${fail}장 실패`;
     isUploading=false;btn.disabled=false;btn.textContent='📤 업로드';
     if(ok>0){showToast(`✅ ${ok}장 업로드 완료!`);uploadFiles=[];renderPrev();treeCache[currentFolderId]=null;setTimeout(()=>renderContent(),1000);}
   };
@@ -1028,8 +1038,15 @@ async function renderCal(){
 }
 async function collectDateFolders(){
   if(calScanDone)return;
-  try{const rf=await listFolder(rootFolderId);const subs=rf.filter(f=>f.mimeType==='application/vnd.google-apps.folder');await Promise.all(subs.map(f=>scanForDateFolders(f.id,1)));}catch{}
-  calScanDone=true;
+  try{
+    const rf=await listFolder(rootFolderId);
+    const subs=rf.filter(f=>f.mimeType==='application/vnd.google-apps.folder');
+    await Promise.all(subs.map(f=>scanForDateFolders(f.id,1)));
+    // 하나라도 찾았거나 토큰 있을 때만 완료로 표시
+    if(calDateFolders.size>0||AUTH.isLoggedIn()) calScanDone=true;
+  }catch{
+    // 실패 시 calScanDone 유지 false → 로그인 후 재시도 가능
+  }
 }
 async function scanForDateFolders(folderId,depth=0){
   if(depth>10)return;
@@ -1037,10 +1054,11 @@ async function scanForDateFolders(folderId,depth=0){
     const files=await listFolder(folderId);const subs=[];
     for(const f of files){
       if(f.mimeType!=='application/vnd.google-apps.folder')continue;
-      if(/^\d{4}-\d{2}-\d{2}$/.test(f.name)){
-        calDateFolders.add(f.name);
-        if(!calDateFolderMap[f.name])calDateFolderMap[f.name]=[];
-        if(!calDateFolderMap[f.name].includes(f.id))calDateFolderMap[f.name].push(f.id);
+      const dateMatch=f.name.match(/^(\d{4}-\d{2}-\d{2})/);if(dateMatch){
+        const ds=dateMatch[1];
+        calDateFolders.add(ds);
+        if(!calDateFolderMap[ds])calDateFolderMap[ds]=[];
+        if(!calDateFolderMap[ds].includes(f.id))calDateFolderMap[ds].push(f.id);
       }else{subs.push(f);}
     }
     await Promise.all(subs.map(f=>scanForDateFolders(f.id,depth+1)));
@@ -1126,11 +1144,16 @@ window.onAdminLogin  = () => {
   if (editBtn)        editBtn.style.display = '';
   if (changeFolderBtn) changeFolderBtn.style.display = '';
   if (currentFolderId) renderContent();
+  // 로그인 후 캘린더 재스캔
+  calScanDone = false;
+  renderCal();
 };
 window.onAdminLogout = () => {
   const editBtn       = document.getElementById('editBtn');
   if (editBtn) editBtn.style.display = 'none';
   if (currentFolderId) renderContent();
+  calScanDone = false;
+  renderCal();
 };
 window.onAuthStateChange = () => {
   if (currentFolderId) renderContent();
