@@ -695,6 +695,15 @@ async function listFolder(folderId) {
     files = files.filter(f => !sids.has(f.id));
     resolved.filter(Boolean).forEach(f => files.push(f));
   }
+
+  // ID 기준 중복 제거 (바로가기 → 원본이 이미 있는 경우)
+  const seen = new Set();
+  files = files.filter(f => {
+    if (seen.has(f.id)) return false;
+    seen.add(f.id);
+    return true;
+  });
+
   treeCache[folderId] = files;
   return files;
 }
@@ -802,7 +811,7 @@ async function renderContent() {
     const files = await listFolder(currentFolderId);
     content.innerHTML = '';
     const folders = files.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
-    const photos  = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && (f.mimeType?.startsWith('image/') || IMG_EXTS.test(f.name)));
+    const photos  = files.filter(f => f.mimeType !== 'application/vnd.google-apps.folder' && !(/\.lnk$/i.test(f.name)) && (f.mimeType?.startsWith('image/') || IMG_EXTS.test(f.name)));
     allPhotos = photos;
 
     // 헤더
@@ -1093,7 +1102,7 @@ async function renderDateMerged(dateStr,folderIds){
   content.innerHTML='<div class="loading-box"><span class="spin">⏳</span> 불러오는 중...</div>';
   try{
     const results=await Promise.all(folderIds.map(id=>listFolder(id)));
-    const photos=results.flat().filter(f=>f.mimeType!=='application/vnd.google-apps.folder'&&(f.mimeType?.startsWith('image/')||IMG_EXTS.test(f.name)));
+    const photos=results.flat().filter(f=>f.mimeType!=='application/vnd.google-apps.folder'&&!(/\.lnk$/i.test(f.name))&&(f.mimeType?.startsWith('image/')||IMG_EXTS.test(f.name)));
     allPhotos=photos;selectedPhotos.clear();content.innerHTML='';
     const hdr=document.createElement('div');hdr.className='folder-header';
     hdr.innerHTML=`<span class="folder-icon">📅</span><div><div class="folder-title">${dateStr}</div><div class="folder-path">${folderIds.length}개 폴더 · 사진 ${photos.length}장</div></div>`;
