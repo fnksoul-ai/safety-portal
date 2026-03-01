@@ -13,6 +13,47 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* ─ Side Panel ─ */
+.main-area{display:flex;flex:1;overflow:hidden}
+.preview{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:36px 36px 80px}
+.sidepanel{width:220px;min-width:220px;background:var(--bg2);border-left:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.sp-section{padding:12px 14px;border-bottom:1px solid var(--bdr)}
+.sp-title{font-size:11px;font-weight:600;color:var(--m);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.sp-stat{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--m2);padding:2px 0}
+.sp-stat span:last-child{font-weight:700;color:#93c5fd}
+.sp-stat.filled span:last-child{color:#4ade80}
+.sp-stat.waiting span:last-child{color:#fb923c}
+.sp-drop{border:1.5px dashed #2e3448;border-radius:8px;padding:18px 10px;text-align:center;cursor:pointer;transition:.15s;background:rgba(59,130,246,.03);margin:12px 14px 0}
+.sp-drop:hover{border-color:#f97316;background:rgba(249,115,22,.06)}
+.sp-drop-icon{font-size:26px;margin-bottom:6px;color:#4a90d9}
+.sp-drop-txt{font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:3px}
+.sp-drop-sub{font-size:10px;color:var(--m)}
+.sp-drop input[type=file]{display:none}
+.sp-qwrap{flex:1;overflow-y:auto;padding:8px 0}
+.sp-qlbl{font-size:10px;color:var(--m);padding:4px 14px 6px;font-weight:600}
+.sp-queue{list-style:none;display:flex;flex-direction:column;gap:4px;padding:0 10px}
+.sp-qitem{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;padding:5px 8px;cursor:grab;transition:.1s;position:relative}
+.sp-qitem:hover{border-color:#4a90d9;background:var(--bg4)}
+.sp-qitem img{width:36px;height:27px;object-fit:cover;border-radius:3px;flex-shrink:0}
+.sp-qitem-name{font-size:10px;color:var(--m2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-qitem-del{width:16px;height:16px;border-radius:50%;background:rgba(239,68,68,.7);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1}
+.sp-qitem-del:hover{background:#ef4444}
+.sp-assign-btn{margin:8px 14px 12px;width:calc(100% - 28px);padding:8px;border-radius:7px;background:var(--or);border:none;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:.15s}
+.sp-assign-btn:hover{background:#ea580c}
+.sp-assign-btn:disabled{background:var(--bg4);color:var(--m);cursor:not-allowed}
+
+
+.sp-cap-btn{display:flex;align-items:center;gap:7px;margin:6px 14px 0;padding:8px 10px;border-radius:7px;background:rgba(59,130,246,.1);border:1.5px dashed #3b82f6;color:#93c5fd;font-size:11px;font-weight:600;cursor:pointer;transition:.15s;font-family:'Noto Sans KR',sans-serif;width:calc(100% - 28px)}
+.sp-cap-btn:hover{background:rgba(59,130,246,.2);border-color:#60a5fa}
+.sp-cap-btn svg{flex-shrink:0}
+/* 캡처 오버레이 */
+#captureOverlay{position:fixed;inset:0;z-index:99999;cursor:crosshair;display:none;user-select:none}
+#captureOverlay canvas{position:absolute;inset:0;width:100%;height:100%}
+#captureSel{position:absolute;border:2px solid #3b82f6;background:rgba(59,130,246,.1);pointer-events:none;display:none}
+#captureHint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.75);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;text-align:center;pointer-events:none;font-family:'Noto Sans KR',sans-serif;line-height:1.6}
+#captureCancelBtn{position:absolute;top:16px;right:16px;background:#ef4444;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;z-index:100000}
+
 /* ─ Nav ─ */
 .nav{height:48px;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 16px;gap:14px;flex-shrink:0;z-index:200}
 .logo{font-family:'Bebas Neue',sans-serif;font-size:21px;color:var(--or);letter-spacing:2px;display:flex;align-items:center;gap:7px}
@@ -46,19 +87,20 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .csw{width:22px;height:22px;border-radius:3px;cursor:pointer;border:2px solid transparent;flex-shrink:0}
 .csw:hover{border-color:#f97316;transform:scale(1.1)}
 /* ─ Preview ─ */
-.preview{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:36px 36px 80px}
+/* preview moved to side_css */
 .scalewrap{transform-origin:top center;flex-shrink:0}
 /* ─ Sheet ─ */
 .sheet{width:794px;height:1123px;background:#fff;color:#111;box-shadow:0 8px 40px rgba(0,0,0,.6);font-family:'Malgun Gothic',sans-serif;padding:56.7px;position:relative;display:flex;flex-direction:column}
 .shdr{margin-bottom:7px;flex-shrink:0}
-.shdr-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px}
-.stitle{font-size:19px;font-weight:700;cursor:text;min-width:60px;font-family:'Malgun Gothic',sans-serif}
+.shdr-top{position:relative;display:flex;align-items:baseline;margin-bottom:4px}
+.stitle{font-size:20px;font-weight:700;cursor:text;font-family:'Malgun Gothic',sans-serif;color:#002060;letter-spacing:4px}
 .stitle:focus{outline:2px solid #f97316;background:#fffbf0}
-.smeta{display:flex;align-items:center;min-width:200px}
+.smeta{display:flex;align-items:center;position:absolute;right:0;top:50%;transform:translateY(-50%);white-space:nowrap;}
 .smeta-lbl{font-size:11px;font-weight:700;padding-right:7px;white-space:nowrap;cursor:pointer}
-.smeta-inp{font-size:12px;border:none;outline:none;background:transparent;font-family:'Malgun Gothic',sans-serif;flex:1;min-width:0;width:0}
-.smeta-inp:focus{background:#fffbf0}
-.smeta-txt{font-size:12px;font-family:'Malgun Gothic',sans-serif;flex:1}
+.smeta-inp{font-size:12px;outline:none;background:transparent;font-family:'Malgun Gothic',sans-serif;min-width:20px;display:inline-block;white-space:nowrap;cursor:text;}
+.smeta-inp:focus{background:#fffbf0;outline:none}
+.sinp-empty:not(:focus):before{content:attr(data-placeholder);color:#aaa;pointer-events:none}
+.smeta-txt{font-size:12px;font-family:'Malgun Gothic',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .sdeco{width:100%;height:auto;display:block;margin-bottom:4px}
 /* ─ Grid ─ */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;flex:1;align-content:stretch;grid-auto-rows:1fr;min-height:0}
@@ -103,7 +145,7 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 @media print{
   body{overflow:visible!important;height:auto}
   .nav,.toolbar,.fmtbar,.settings,.zoompanel,.toast,.delpg,.addpgwrap{display:none!important}
-  .preview{padding:0!important;overflow:visible!important;display:block!important}
+  .preview{padding:0!important;overflow:visible!important;display:flex!important;}.main-area{overflow:visible!important}
   .scalewrap{transform:none!important}
   .sheet{box-shadow:none;width:210mm;height:297mm;padding:15mm}
   .pagewrap{break-after:page}
@@ -244,10 +286,37 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
   </div>
 </div>
 
+<div class="main-area">
 <div class="preview" id="preview">
   <div class="scalewrap" id="scalewrap">
     <div id="pgwrap"></div>
   </div>
+</div>
+<!-- Side Panel -->
+<div class="sidepanel">
+  <div class="sp-section">
+    <div class="sp-title">현황</div>
+    <div class="sp-stat"><span>총 칸</span><span id="stat-total">0</span></div>
+    <div class="sp-stat filled"><span>채운 칸</span><span id="stat-filled">0</span></div>
+    <div class="sp-stat waiting"><span>대기 사진</span><span id="stat-queue">0</span></div>
+  </div>
+  <label class="sp-drop" id="spDrop">
+    <div class="sp-drop-icon">🖼</div>
+    <div class="sp-drop-txt">사진 추가</div>
+    <div class="sp-drop-sub">클릭하거나<br>드래그&amp;드롭</div>
+    <input type="file" id="spFileInput" accept="image/*" multiple>
+  </label>
+  <button class="sp-cap-btn" onclick="startCapture()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="3" x2="12" y2="1"/><line x1="12" y1="23" x2="12" y2="21"/><line x1="3" y1="12" x2="1" y2="12"/><line x1="23" y1="12" x2="21" y2="12"/></svg>
+    캡처해서 추가
+  </button>
+  <div class="sp-qwrap">
+    <div class="sp-qlbl" id="spQlbl">대기 사진 (0)</div>
+    <ul class="sp-queue" id="spQueue"></ul>
+  </div>
+  <button class="sp-assign-btn" id="spAssignBtn" onclick="assignQueue()" disabled>빈 칸에 순서대로 배치</button>
+</div>
+</div><!-- /main-area -->
 </div>
 
 <div class="zoompanel">
@@ -272,6 +341,18 @@ let zoom = 0.9;
 // ══════════════════════════════════════════════
 //  기본 데이터 생성
 // ══════════════════════════════════════════════
+function autoSizeInput(inp) {
+  let ruler = document.getElementById('__sinp_ruler__');
+  if (!ruler) {
+    ruler = document.createElement('span');
+    ruler.id = '__sinp_ruler__';
+    ruler.style.cssText = 'visibility:hidden;position:fixed;top:-9999px;left:-9999px;white-space:pre;pointer-events:none;';
+    document.body.appendChild(ruler);
+  }
+  ruler.style.font = `${inp.style.fontWeight||'400'} ${inp.style.fontSize||'12px'} ${inp.style.fontFamily||"'Malgun Gothic',sans-serif"}`;
+  ruler.textContent = inp.value || inp.placeholder || '';
+  inp.style.width = Math.max(20, ruler.offsetWidth + 6) + 'px';
+}
 function defCell() {
   return {font:"'Malgun Gothic',sans-serif",sz:'11px',align:'left',bold:false,va:'middle',bt:0,bb:0,bl:0,br:0,color:'#111',spacing:'0px'};
 }
@@ -294,7 +375,7 @@ function newSlot() {
 }
 function ensureSlots(pg) {
   while (pg.slots.length < slotCount) pg.slots.push(newSlot());
-  if (!pg.titleFmt) pg.titleFmt = {font:"'Malgun Gothic',sans-serif",sz:'19px',bold:true,color:'#111'};
+  if (!pg.titleFmt) pg.titleFmt = {font:"'Malgun Gothic',sans-serif",sz:'20px',bold:true,color:'#002060',spacing:'4px'};
   if (!pg.siteFmt)  pg.siteFmt  = {font:"'Malgun Gothic',sans-serif",sz:'12px',bold:false,color:'#111'};
   if (!pg.siteLblFmt) pg.siteLblFmt = {font:"'Malgun Gothic',sans-serif",sz:'11px',bold:true,color:'#111'};
 }
@@ -334,7 +415,7 @@ function undo() {
 //  동기화
 // ══════════════════════════════════════════════
 function syncTitle(v) { document.querySelectorAll('.sync-title').forEach(e=>e.textContent=v); }
-function syncSite(v)  { document.querySelectorAll('.sync-site').forEach(e=>{if(e.tagName==='INPUT')e.value=v;else e.textContent=v;}); }
+function syncSite(v)  { document.querySelectorAll('.sync-site').forEach(e=>{ if(e.tagName==='INPUT') e.value=v; else if(e.contentEditable==='true'){if(e.textContent!==v)e.textContent=v;} else e.textContent=v; }); }
 
 // ══════════════════════════════════════════════
 //  셀 선택
@@ -529,6 +610,8 @@ function applyFmt(type, value) {
         el.style.fontWeight=f.bold?'700':'400';
         el.style.color=f.color;
         el.style.letterSpacing=f.spacing||'0px';
+        if (ct==='site') el.style.textIndent=f.spacing||'0px';
+        if (el.dataset.hdrType==='title') el.style.textIndent=f.spacing||'0px';
       }
       return;
     }
@@ -539,6 +622,8 @@ function applyFmt(type, value) {
     if (type==='align')   f.align = value;
     if (type==='valign')  f.va = value;
     if (type==='bold')    f.bold = !f.bold;
+    if (type==='spacing') f.spacing = value;
+    if (type==='color')   f.color = value;
     applyFmtDOM(pi, si, ct, f);
   });
   refreshFmtBar();
@@ -560,7 +645,7 @@ function applyFmtDOM(pi, si, ct, f) {
     el.style.justifyContent = jc[f.align] || 'center';
     el.style.alignItems = ai[f.va] || 'center';
     const inp = el.querySelector('input');
-    if (inp) { inp.style.textAlign = f.align || 'center'; inp.style.color = f.color || ''; inp.style.letterSpacing = f.spacing || '0px'; }
+    if (inp) { inp.style.textAlign = f.align || 'center'; inp.style.color = f.color || ''; inp.style.letterSpacing = f.spacing || '0px'; inp.style.textIndent = f.spacing || '0px'; }
   } else {
     el.style.fontFamily = f.font;
     el.style.fontSize = f.sz;
@@ -784,7 +869,7 @@ function makeSlot(pi, si, d) {
     if (sel.has(`${pi}:${si}:${ct}`)) lbl.classList.add('on');
     lbl.style.cssText = cStyle(d.cells[ct], true);
     const inp = document.createElement('input'); inp.type='text'; inp.value=d[txtKey]||'';
-    inp.style.cssText = `background:none;border:none;outline:none;padding:0;margin:0;font:inherit;color:inherit;text-align:${d.cells[ct]?.align||'center'};width:100%;min-width:0;cursor:text`;
+    inp.style.cssText = `background:none;border:none;outline:none;padding:0;margin:0;font:inherit;color:inherit;text-align:${d.cells[ct]?.align||'center'};width:100%;min-width:0;cursor:text;letter-spacing:inherit;text-indent:${d.cells[ct]?.spacing||'0px'}`;
     inp.oninput = ev => { saveUndo(); d[txtKey]=ev.target.value; };
     inp.onfocus = ev => { ev.stopPropagation(); selCell(pi,si,ct,false); };
     lbl.appendChild(inp);
@@ -861,7 +946,7 @@ function renderAll() {
     const htop = document.createElement('div'); htop.className='shdr-top';
     const tEl = document.createElement('div'); tEl.className='stitle'; tEl.textContent=title;
     tEl.dataset.hdrPage=pi; tEl.dataset.hdrType='title';
-    const tf = pg.titleFmt||{}; tEl.style.fontFamily=tf.font||"'Malgun Gothic',sans-serif"; tEl.style.fontSize=tf.sz||'19px'; tEl.style.color=tf.color||'#111'; tEl.style.fontWeight=tf.bold===false?'400':'700';
+    const tf = pg.titleFmt||{}; tEl.style.fontFamily=tf.font||"'Malgun Gothic',sans-serif"; tEl.style.fontSize=tf.sz||'20px'; tEl.style.color=tf.color||'#002060'; tEl.style.fontWeight=tf.bold===false?'400':'700'; tEl.style.letterSpacing=tf.spacing||'4px'; tEl.style.textIndent=tf.spacing||'4px';
     tEl.addEventListener('click',e=>{e.stopPropagation();selHdr(pi,'title');});
     if (pi===0) {
       tEl.contentEditable = 'true';
@@ -877,12 +962,19 @@ function renderAll() {
     const slf=pg.siteLblFmt||{}; if(slf.font)mLbl.style.fontFamily=slf.font; if(slf.sz)mLbl.style.fontSize=slf.sz; if(slf.color)mLbl.style.color=slf.color; if(slf.bold===false)mLbl.style.fontWeight='400';
     mLbl.addEventListener('click',e=>{e.stopPropagation();selHdr(pi,'sitelabel');});
     if (pi===0) {
-      const sinp = document.createElement('input'); sinp.className='smeta-inp sync-site';
-      sinp.placeholder='현장명'; sinp.value=site;
+      const sinp = document.createElement('div'); sinp.className='smeta-inp sync-site';
+      sinp.contentEditable='true';
       sinp.dataset.hdrPage=pi; sinp.dataset.hdrType='site';
+      sinp.textContent = site||'';
+      if (!site) sinp.classList.add('sinp-empty');
       const sf=pg.siteFmt||{}; sinp.style.fontFamily=sf.font||"'Malgun Gothic',sans-serif"; sinp.style.fontSize=sf.sz||'12px'; sinp.style.color=sf.color||'#111'; sinp.style.fontWeight=sf.bold?'700':'400';
-      sinp.oninput = ()=>{ document.getElementById('siteName').value=sinp.value; syncSite(sinp.value); };
+      sinp.addEventListener('input',()=>{
+        const v=sinp.textContent;
+        document.getElementById('siteName').value=v; syncSite(v);
+        sinp.classList.toggle('sinp-empty',!v.trim());
+      });
       sinp.addEventListener('click',e=>{e.stopPropagation();selHdr(pi,'site');});
+      sinp.addEventListener('focus',e=>{e.stopPropagation();selHdr(pi,'site');});
       mDiv.append(mLbl, sinp);
     } else {
       const sv = document.createElement('div'); sv.className='smeta-txt sync-site'; sv.textContent=site;
@@ -957,12 +1049,12 @@ function removeSlot() { if(slotCount<=2) return; saveUndo(); slotCount-=2; rende
 //  초기화 / 저장
 // ══════════════════════════════════════════════
 function resetForm() {
-  if (!confirm('작성 내용을 모두 초기화할까요?')) return;
   saveUndo();
   pages.length=0; sel.clear();
   const pg={slots:[]}; ensureSlots(pg); pages.push(pg);
   document.getElementById('siteName').value='';
   document.getElementById('docTitle').value='사진대지';
+  syncSite(''); syncTitle('사진대지');
   renderAll(); toast('초기화됨');
 }
 function printPDF() { toast('인쇄 창에서 "PDF로 저장" 선택'); setTimeout(()=>window.print(),500); }
@@ -1022,6 +1114,209 @@ pages.push({slots:[]});
 ensureSlots(pages[0]);
 renderAll();
 setZoom(0.9);
+
+// ══════════════════════════════════════════════
+//  사이드패널 - 사진 큐
+// ══════════════════════════════════════════════
+let photoQueue = []; // {dataUrl, name}
+
+function updateSideStat() {
+  const total = pages.reduce((s,p)=>s+p.slots.length,0);
+  const filled = pages.reduce((s,p)=>s+p.slots.filter(d=>d.img).length,0);
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-filled').textContent = filled;
+  document.getElementById('stat-queue').textContent = photoQueue.length;
+  document.getElementById('spQlbl').textContent = `대기 사진 (${photoQueue.length})`;
+  const btn = document.getElementById('spAssignBtn');
+  btn.disabled = photoQueue.length === 0;
+}
+
+function addToQueue(files) {
+  const remaining = [...files];
+  function readNext() {
+    if (!remaining.length) { renderQueue(); updateSideStat(); return; }
+    const file = remaining.shift();
+    const r = new FileReader();
+    r.onload = ev => {
+      photoQueue.push({dataUrl: ev.target.result, name: file.name});
+      readNext();
+    };
+    r.readAsDataURL(file);
+  }
+  readNext();
+}
+
+function renderQueue() {
+  const ul = document.getElementById('spQueue');
+  ul.innerHTML = '';
+  photoQueue.forEach((item, idx) => {
+    const li = document.createElement('li'); li.className='sp-qitem';
+    li.draggable = true;
+    li.dataset.idx = idx;
+    const img = document.createElement('img'); img.src = item.dataUrl;
+    const name = document.createElement('span'); name.className='sp-qitem-name'; name.textContent = item.name;
+    const del = document.createElement('button'); del.className='sp-qitem-del'; del.textContent='×';
+    del.onclick = e => { e.stopPropagation(); photoQueue.splice(idx,1); renderQueue(); updateSideStat(); };
+    li.append(img, name, del);
+    // 드래그 순서 변경
+    li.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', idx); li.style.opacity='.4'; });
+    li.addEventListener('dragend', () => li.style.opacity='1');
+    li.addEventListener('dragover', e => { e.preventDefault(); li.style.background='var(--bg4)'; });
+    li.addEventListener('dragleave', () => li.style.background='');
+    li.addEventListener('drop', e => {
+      e.preventDefault(); li.style.background='';
+      const from = +e.dataTransfer.getData('text/plain');
+      const to = idx;
+      if (from===to) return;
+      const [moved] = photoQueue.splice(from,1); photoQueue.splice(to,0,moved);
+      renderQueue();
+    });
+    ul.appendChild(li);
+  });
+}
+
+function assignQueue() {
+  if (!photoQueue.length) return;
+  saveUndo();
+  let qi = 0;
+  for (const pg of pages) {
+    for (const slot of pg.slots) {
+      if (!slot.img && qi < photoQueue.length) {
+        slot.img = photoQueue[qi].dataUrl;
+        qi++;
+      }
+    }
+  }
+  photoQueue.splice(0, qi);
+  renderQueue(); renderAll(); updateSideStat();
+  toast(`${qi}장 배치 완료`);
+}
+
+// 사진 큐 파일 입력
+document.getElementById('spFileInput').addEventListener('change', e => {
+  addToQueue(e.target.files);
+  e.target.value='';
+});
+
+// 드래그&드롭 존
+const spDrop = document.getElementById('spDrop');
+spDrop.addEventListener('dragover', e => { e.preventDefault(); spDrop.style.borderColor='#f97316'; });
+spDrop.addEventListener('dragleave', () => spDrop.style.borderColor='');
+spDrop.addEventListener('drop', e => {
+  e.preventDefault(); spDrop.style.borderColor='';
+  const files = [...e.dataTransfer.files].filter(f=>f.type.startsWith('image/'));
+  if (files.length) addToQueue(files);
+});
+
+// renderAll 이후 stat 업데이트
+const _origRenderAll = renderAll;
+renderAll = function() { _origRenderAll(); updateSideStat(); };
+updateSideStat();
+
+
+// ══════════════════════════════════════════════
+//  화면 캡처 기능
+// ══════════════════════════════════════════════
+let captureStream = null;
+let captureDragging = false;
+let captureStart = {x:0, y:0};
+
+async function startCapture() {
+  try {
+    captureStream = await navigator.mediaDevices.getDisplayMedia({
+      video: {cursor:'always'},
+      audio: false
+    });
+  } catch(e) {
+    toast('화면 공유가 취소되었습니다'); return;
+  }
+  // 스트림을 video로 받아 캔버스에 렌더
+  const video = document.createElement('video');
+  video.srcObject = captureStream;
+  video.muted = true;
+  video.onloadedmetadata = () => {
+    video.play();
+    const overlay = document.getElementById('captureOverlay');
+    const canvas = document.getElementById('captureCanvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    // 한 프레임 그린 후 스트림 정지 (정지 스크린샷 방식)
+    setTimeout(() => {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      captureStream.getTracks().forEach(t=>t.stop());
+      captureStream = null;
+      // overlay 표시
+      overlay.style.display = 'block';
+      document.getElementById('captureHint').style.display = 'block';
+    }, 150);
+  };
+  video.onerror = () => { cancelCapture(); toast('캡처 실패'); };
+}
+
+function cancelCapture() {
+  if (captureStream) { captureStream.getTracks().forEach(t=>t.stop()); captureStream=null; }
+  document.getElementById('captureOverlay').style.display = 'none';
+  document.getElementById('captureSel').style.display = 'none';
+  document.getElementById('captureHint').style.display = 'block';
+  captureDragging = false;
+}
+
+const overlay = document.getElementById('captureOverlay');
+overlay.addEventListener('mousedown', e => {
+  if (e.target.id==='captureCancelBtn') return;
+  captureDragging = true;
+  const r = overlay.getBoundingClientRect();
+  captureStart = {x: e.clientX - r.left, y: e.clientY - r.top};
+  const sel = document.getElementById('captureSel');
+  sel.style.left = captureStart.x+'px';
+  sel.style.top  = captureStart.y+'px';
+  sel.style.width='0'; sel.style.height='0';
+  sel.style.display='block';
+  document.getElementById('captureHint').style.display='none';
+});
+overlay.addEventListener('mousemove', e => {
+  if (!captureDragging) return;
+  const r = overlay.getBoundingClientRect();
+  const cx = e.clientX - r.left, cy = e.clientY - r.top;
+  const sel = document.getElementById('captureSel');
+  sel.style.left   = Math.min(cx, captureStart.x)+'px';
+  sel.style.top    = Math.min(cy, captureStart.y)+'px';
+  sel.style.width  = Math.abs(cx - captureStart.x)+'px';
+  sel.style.height = Math.abs(cy - captureStart.y)+'px';
+});
+overlay.addEventListener('mouseup', e => {
+  if (!captureDragging) return;
+  captureDragging = false;
+  const canvas = document.getElementById('captureCanvas');
+  const sel = document.getElementById('captureSel');
+  const ow = overlay.offsetWidth, oh = overlay.offsetHeight;
+  const scaleX = canvas.width / ow, scaleY = canvas.height / oh;
+  const x = parseFloat(sel.style.left)*scaleX;
+  const y = parseFloat(sel.style.top)*scaleY;
+  const w = parseFloat(sel.style.width)*scaleX;
+  const h = parseFloat(sel.style.height)*scaleY;
+  if (w < 10 || h < 10) { cancelCapture(); return; }
+  // 영역 크롭
+  const out = document.createElement('canvas');
+  out.width = w; out.height = h;
+  const ctx2 = out.getContext('2d');
+  ctx2.drawImage(canvas, x, y, w, h, 0, 0, w, h);
+  const dataUrl = out.toDataURL('image/png');
+  cancelCapture();
+  const name = `캡처_${new Date().toLocaleTimeString('ko-KR').replace(/:/g,'-')}.png`;
+  photoQueue.push({dataUrl, name});
+  renderQueue(); updateSideStat();
+  toast('캡처 사진이 대기열에 추가됨');
+});
+document.addEventListener('keydown', e => { if (e.key==='Escape') cancelCapture(); });
+
 </script>
+<div id="captureOverlay">
+  <canvas id="captureCanvas"></canvas>
+  <div id="captureSel"></div>
+  <div id="captureHint">드래그하여 캡처 영역을 선택하세요<br><span style="font-size:11px;opacity:.7">ESC: 취소</span></div>
+  <button id="captureCancelBtn" onclick="cancelCapture()">✕ 취소</button>
+</div>
 </body>
 </html>
