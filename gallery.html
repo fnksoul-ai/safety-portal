@@ -242,7 +242,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
           <div class="tree" id="treeRoot"></div>
         </div>
         <div class="cal-card" id="calCard">
-          <div style="padding:11px 12px 9px;font-size:15px;font-weight:700;letter-spacing:.06em;color:var(--text);text-align:center;border-bottom:1px solid var(--border);">일자별 사진</div>
+          <div style="padding:11px 12px 9px;font-size:15px;font-weight:700;letter-spacing:.06em;color:var(--text);text-align:center;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:8px;">일자별 사진<button onclick="calForceRescan()" title="날짜 다시 스캔" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:2px 4px;border-radius:4px;transition:.15s;" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--muted)'">🔄</button></div>
           <div class="cal-head">
             <button class="cal-nav" onclick="calMove(-1)">‹</button>
             <span id="calTitle"></span>
@@ -647,6 +647,7 @@ let calDateFolders = new Set();
 let calDateFolderMap = {};
 let calSelected  = null;
 let calScanDone  = false;
+let calScanning  = false;
 
 // ── Drive API (공개 읽기 + 관리자 쓰기) ───────────────────────
 async function driveAPI(endpoint, opts = {}) {
@@ -720,7 +721,8 @@ function startGallery() {
   const savedName = localStorage.getItem('drive_root_name') || '석문호 수상태양광발전소 EPC공사';
   folderPath = [];
   navigateToFolder(rootFolderId, savedName);
-  // renderCal은 navigateToFolder 완료 후 호출됨
+  // 로그인 상태면 즉시 스캔, 아니면 로그인 콜백에서
+  setTimeout(() => renderCal(), 500);
 }
 
 // ── 네비게이션 ────────────────────────────────────────────────
@@ -750,7 +752,7 @@ function renderBreadcrumb() {
 
 // ── 트리 ─────────────────────────────────────────────────────
 async function refreshTree() {
-  treeCache = {}; calScanDone = false;
+  treeCache = {}; calScanDone = false; calScanning = false;
   Object.keys(calDateFolderMap).forEach(k => delete calDateFolderMap[k]);
   calDateFolders = new Set();
   renderTreeRoot(); renderCal();
@@ -793,8 +795,6 @@ function editRootName() {
 
 // ── 콘텐츠 ───────────────────────────────────────────────────
 async function renderContent() {
-  // 컨텐츠 렌더 후 캘린더 표시 업데이트 (이미 스캔 완료면 즉시)
-  setTimeout(() => { if(!calScanDone) renderCal(); }, 100);
   const content = document.getElementById('content');
   content.innerHTML = '<div class="loading-box"><span class="spin">⏳</span> 불러오는 중...</div>';
   renderTreeRoot();
@@ -1008,6 +1008,16 @@ function closeModal(e){if(e===null||e.target===document.getElementById('modal'))
 document.addEventListener('keydown',e=>{if(!document.getElementById('modal').classList.contains('open'))return;if(e.key==='Escape')closeModal(null);if(e.key==='ArrowLeft')moveModal(-1);if(e.key==='ArrowRight')moveModal(1);});
 
 // ── 캘린더 ───────────────────────────────────────────────────
+function calForceRescan(){
+  if(!AUTH.isLoggedIn()){showToast('로그인 후 사용 가능합니다');return;}
+  calScanDone=false; calScanning=false;
+  calDateFolders=new Set();
+  Object.keys(calDateFolderMap).forEach(k=>delete calDateFolderMap[k]);
+  const days=document.getElementById('calDays');
+  if(days) delete days.dataset.loginNotice;
+  renderCal();
+  showToast('날짜 스캔 중...');
+}
 function calMove(dir){calMonth+=dir;if(calMonth>11){calMonth=0;calYear++;}if(calMonth<0){calMonth=11;calYear--;}renderCal();}
 function drawCalDays(){
   const days=document.getElementById('calDays');if(!days)return;days.innerHTML='';
@@ -1037,15 +1047,33 @@ async function renderCal(){
   drawCalDays();
 }
 async function collectDateFolders(){
-  if(calScanDone)return;
+  if(calScanDone||calScanning)return;
+  if(!AUTH.isLoggedIn()){
+    // 비로그인: 스캔 불가 - 캘린더에 안내 표시
+    const days=document.getElementById('calDays');
+    if(days&&!days.dataset.loginNotice){
+      const notice=document.createElement('div');
+      notice.style.cssText='grid-column:1/-1;text-align:center;font-size:10px;color:var(--muted);padding:4px 0;';
+      notice.textContent='로그인 후 날짜별 사진 표시';
+      days.appendChild(notice);
+      days.dataset.loginNotice='1';
+    }
+    return;
+  }
+  calScanning=true;
+  // 스캔 중 표시
+  const calDaysEl=document.getElementById('calDays');
+  if(calDaysEl) calDaysEl.style.opacity='0.5';
   try{
     const rf=await listFolder(rootFolderId);
     const subs=rf.filter(f=>f.mimeType==='application/vnd.google-apps.folder');
     await Promise.all(subs.map(f=>scanForDateFolders(f.id,1)));
-    // 하나라도 찾았거나 토큰 있을 때만 완료로 표시
-    if(calDateFolders.size>0||AUTH.isLoggedIn()) calScanDone=true;
-  }catch{
-    // 실패 시 calScanDone 유지 false → 로그인 후 재시도 가능
+    calScanDone=true;
+  }catch(e){
+    console.error('캘린더 스캔 실패:',e);
+  }finally{
+    calScanning=false;
+    if(calDaysEl) calDaysEl.style.opacity='1';
   }
 }
 async function scanForDateFolders(folderId,depth=0){
@@ -1145,14 +1173,18 @@ window.onAdminLogin  = () => {
   if (changeFolderBtn) changeFolderBtn.style.display = '';
   if (currentFolderId) renderContent();
   // 로그인 후 캘린더 재스캔
-  calScanDone = false;
+  calScanDone = false; calScanning = false;
+  calDateFolders = new Set();
+  Object.keys(calDateFolderMap).forEach(k => delete calDateFolderMap[k]);
   renderCal();
 };
 window.onAdminLogout = () => {
   const editBtn       = document.getElementById('editBtn');
   if (editBtn) editBtn.style.display = 'none';
   if (currentFolderId) renderContent();
-  calScanDone = false;
+  calScanDone = false; calScanning = false;
+  calDateFolders = new Set();
+  Object.keys(calDateFolderMap).forEach(k => delete calDateFolderMap[k]);
   renderCal();
 };
 window.onAuthStateChange = () => {
