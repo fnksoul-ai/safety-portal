@@ -16,7 +16,7 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 
 /* ─ Side Panel ─ */
 .main-area{display:flex;flex:1;overflow:hidden}
-.preview{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:36px 36px 80px}
+.preview{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:36px 36px 80px;position:relative}
 .sidepanel{width:220px;min-width:220px;background:var(--bg2);border-left:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
 .sp-section{padding:12px 14px;border-bottom:1px solid var(--bdr)}
 .sp-title{font-size:11px;font-weight:600;color:var(--m);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
@@ -39,29 +39,87 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .sp-qitem-name{font-size:10px;color:var(--m2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sp-qitem-del{width:16px;height:16px;border-radius:50%;background:rgba(239,68,68,.7);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;line-height:1}
 .sp-qitem-del:hover{background:#ef4444}
+.sp-qitem.drag-over{border-color:#f97316;background:rgba(249,115,22,.12);}
+.sp-qitem-badge{min-width:36px;height:20px;border-radius:5px;background:#1e3a5f;border:1px solid #3b82f6;color:#93c5fd;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;white-space:nowrap;padding:0 4px}
+.sp-qitem-badge.empty{background:rgba(100,116,139,.15);border-color:var(--bdr);color:var(--m)}
+.sp-qitem-badge.filled{background:rgba(34,197,94,.1);border-color:#22c55e;color:#4ade80}
+.sp-qitem img{width:40px;height:30px;object-fit:cover;border-radius:3px;flex-shrink:0}
 .sp-assign-btn{margin:8px 14px 12px;width:calc(100% - 28px);padding:8px;border-radius:7px;background:var(--or);border:none;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:.15s}
 .sp-assign-btn:hover{background:#ea580c}
 .sp-assign-btn:disabled{background:var(--bg4);color:var(--m);cursor:not-allowed}
 
 
 
-.sp-cap-info{margin:6px 14px 0;padding:9px 10px 8px;border-radius:7px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.25)}
-.sp-cap-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
-.sp-cap-title{font-size:11px;font-weight:700;color:#93c5fd}
-.sp-cap-steps{display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--m2);margin-bottom:7px}
-.sp-cap-steps kbd{background:var(--bg4);border:1px solid var(--bdr);border-radius:3px;padding:0 3px;font-size:9px;color:#e2e8f0;font-family:monospace}
-.sp-paste-btn{width:100%;padding:5px;border-radius:5px;background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.4);color:#93c5fd;font-size:11px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:.15s}
-.sp-paste-btn:hover{background:rgba(59,130,246,.35)}
-/* 클립보드 붙여넣기 플래시 */
+.sp-paste-hint{margin:5px 14px 0;font-size:12px;color:#e2e8f0;font-weight:600;text-align:center;padding:7px 5px;background:var(--bg3);border-radius:6px;line-height:1.6;border:1px dashed var(--bdr)}
+.sp-paste-hint kbd{background:var(--bg4);border:1px solid #4a5568;border-radius:4px;padding:1px 5px;font-size:11px;color:#f1f5f9;font-family:monospace;font-weight:700}
+.sp-cap-btn{display:flex;align-items:center;justify-content:center;gap:8px;border:1.5px dashed #3b82f6;border-radius:8px;padding:10px;background:rgba(59,130,246,.05);color:#93c5fd;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;font-family:'Noto Sans KR',sans-serif;margin:6px 14px 0;width:calc(100% - 28px)}
+.sp-cap-btn:hover{border-color:#60a5fa;background:rgba(59,130,246,.15)}
+
+#capGuide{position:fixed;inset:0;z-index:9999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+#capGuide.active{display:flex}
+.capguide-box{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:28px 32px;text-align:center;max-width:320px;width:90%}
+.capguide-icon{font-size:36px;margin-bottom:12px}
+.capguide-title{font-size:15px;font-weight:700;color:#e2e8f0;margin-bottom:8px}
+.capguide-step{font-size:12px;color:var(--m2);line-height:2;margin-bottom:14px}
+.capguide-step kbd{background:var(--bg4);border:1px solid #4a5568;border-radius:4px;padding:2px 6px;color:#e2e8f0;font-family:monospace;font-size:11px}
+.capguide-wait{font-size:12px;color:#60a5fa;font-weight:600;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:6px}
+.capguide-wait::before{content:'';width:8px;height:8px;background:#3b82f6;border-radius:50%;animation:blink .9s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.capguide-cancel{background:var(--bg4);border:1px solid var(--bdr);color:var(--m2);padding:7px 20px;border-radius:7px;font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+.capguide-cancel:hover{color:#fff}
+
 .paste-flash{position:fixed;inset:0;background:rgba(59,130,246,.15);z-index:99998;pointer-events:none;opacity:0;transition:opacity .3s}
 
-.sp-cap-btn svg{flex-shrink:0}
 
+
+
+/* ─ Save Panel (left) ─ */
+.savepanel{width:220px;min-width:220px;background:var(--bg2);border-right:1px solid var(--bdr);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:transform .3s}
+.savepanel.hidden{display:none}
+.sp-hdr{padding:12px 14px 8px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between}
+.sp-hdr-title{font-size:11px;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:.8px}
+.sp-save-btn{padding:5px 10px;border-radius:6px;background:var(--or);border:none;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:.15s;white-space:nowrap}
+.sp-save-btn:hover{background:#ea580c}
+.sp-save-btn:disabled{background:var(--bg4);color:var(--m);cursor:not-allowed}
+.sp-login-prompt{padding:20px 14px;text-align:center;color:var(--m);font-size:12px;line-height:1.7}
+.sp-login-prompt-btn{margin-top:10px;width:100%;padding:8px;border-radius:7px;background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.4);color:#93c5fd;font-size:12px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:.15s}
+.sp-login-prompt-btn:hover{background:rgba(59,130,246,.3)}
+.sp-list{flex:1;overflow-y:auto;padding:6px 0}
+.sp-item{padding:9px 14px;cursor:pointer;border-bottom:1px solid rgba(46,52,72,.5);transition:.1s;position:relative}
+.sp-item:hover{background:var(--bg3)}
+.sp-item.active{background:rgba(249,115,22,.08);border-left:2px solid var(--or)}
+.sp-item-name{font-size:12px;font-weight:600;color:#e2e8f0;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:20px}
+.sp-item-meta{font-size:10px;color:var(--m)}
+.sp-item-del{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:18px;height:18px;border-radius:50%;background:rgba(239,68,68,.7);border:none;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:.1s}
+.sp-item:hover .sp-item-del{opacity:1}
+.sp-item-del:hover{background:#ef4444}
+.sp-empty{padding:20px 14px;text-align:center;color:var(--m);font-size:11px;line-height:1.8}
+.sp-new-btn{margin:8px 14px 10px;width:calc(100% - 28px);padding:7px;border-radius:7px;background:var(--bg3);border:1px dashed var(--bdr);color:var(--m2);font-size:11px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:.15s}
+.sp-new-btn:hover{border-color:#f97316;color:#f97316}
+/* 저장 이름 모달 */
+#saveModal{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:9999;display:none;align-items:center;justify-content:center}
+#saveModal.open{display:flex}
+.save-modal-box{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:24px;width:320px}
+.save-modal-title{font-size:14px;font-weight:700;margin-bottom:12px;color:#e2e8f0}
+.save-modal-inp{width:100%;padding:9px 12px;border-radius:7px;border:1px solid var(--bdr);background:var(--bg3);color:#e2e8f0;font-size:13px;font-family:'Noto Sans KR',sans-serif;margin-bottom:14px}
+.save-modal-inp:focus{outline:none;border-color:var(--or)}
+.save-modal-btns{display:flex;gap:8px}
+.save-modal-btns button{flex:1;padding:8px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;border:none;transition:.15s}
+.save-modal-ok{background:var(--or);color:#fff}
+.save-modal-ok:hover{background:#ea580c}
+.save-modal-cancel{background:var(--bg4);color:var(--m2)}
+.save-modal-cancel:hover{background:var(--bg3);color:#fff}
 
 /* ─ Nav ─ */
-.nav{height:48px;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 16px;gap:14px;flex-shrink:0;z-index:200}
-.logo{font-family:'Bebas Neue',sans-serif;font-size:21px;color:var(--or);letter-spacing:2px;display:flex;align-items:center;gap:7px}
-.nav a{color:var(--m2);font-size:13px;text-decoration:none}.nav a:hover{color:#fff}
+.nav{position:sticky;top:0;z-index:200;background:rgba(15,17,23,.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--bdr);padding:0 24px;display:flex;align-items:center;height:52px;gap:16px;flex-shrink:0}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.1em;color:var(--or);display:flex;align-items:center;gap:8px;text-decoration:none}
+.logo span{color:#e2e8f0}
+.logo span{color:#e2e8f0}
+.nav-back{font-size:12px;color:var(--m2)!important;text-decoration:none;display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:6px;transition:.15s}
+.nav-back:hover{color:#fff;background:var(--bg4)}
+.nav-sep{color:var(--bdr);font-size:16px}
+.nav-site{font-size:13px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
 /* ─ Toolbar ─ */
 .toolbar{height:50px;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 12px;gap:7px;flex-shrink:0;overflow-x:auto}
 .tl{flex:1;font-size:13px;color:var(--m2);font-weight:600}
@@ -110,6 +168,7 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;flex:1;align-content:stretch;grid-auto-rows:1fr;min-height:0}
 .slot{border:1.5px solid #222;display:flex;flex-direction:column;height:100%;min-height:0}
 /* photo */
+.photo.drop-hover{outline:3px solid #f97316!important;background:#fff3e0!important;}
 .photo{flex:1;min-height:0;background:#f0f0f0;border-bottom:1px solid #222;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;overflow:hidden;transition:background .15s}
 .photo:hover{background:#e8e8e8}
 .photo img{width:100%;height:100%;object-fit:cover;display:block}
@@ -140,7 +199,7 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .addpgbtn{background:var(--bg3);border:2px dashed var(--bdr);border-radius:10px;color:var(--m2);font-size:14px;padding:11px 40px;cursor:pointer;transition:.2s;font-family:'Noto Sans KR',sans-serif}
 .addpgbtn:hover{border-color:var(--or);color:var(--or);background:rgba(249,115,22,.07)}
 /* zoom */
-.zoompanel{position:fixed;bottom:18px;right:18px;z-index:300;background:rgba(23,27,36,.96);backdrop-filter:blur(12px);border:1px solid var(--bdr);border-radius:10px;padding:7px 11px;display:flex;align-items:center;gap:7px}
+.zoompanel{position:fixed;bottom:14px;right:234px;z-index:300;background:rgba(23,27,36,.88);backdrop-filter:blur(12px);border:1px solid var(--bdr);border-radius:10px;padding:5px 9px;display:flex;align-items:center;gap:6px}
 .zb{background:var(--bg4);border:1px solid var(--bdr);color:var(--m2);border-radius:6px;padding:3px 10px;cursor:pointer;font-size:13px;transition:.1s}.zb:hover{background:var(--bg3);color:#fff}
 #zdisp{font-size:13px;color:#fff;min-width:38px;text-align:center}
 /* toast */
@@ -156,15 +215,141 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
   @page{size:A4 portrait;margin:0}
 }
 </style>
+<script src="auth.js">
+// ══════════════════════════════════════════════
+//  양식 저장 / 불러오기 (localStorage, 사용자별)
+// ══════════════════════════════════════════════
+function getSaveKey() {
+  const p = AUTH.isUser() ? AUTH.getUserProfile() : (AUTH.isAdmin() ? AUTH.getProfile() : null);
+  if (!p || !p.email) return null;
+  return 'pb_saves_' + p.email.replace(/[^a-zA-Z0-9]/g,'_');
+}
+function loadSaves() {
+  const key = getSaveKey(); if (!key) return [];
+  try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
+}
+function writeSaves(list) {
+  const key = getSaveKey(); if (!key) return;
+  localStorage.setItem(key, JSON.stringify(list));
+}
+
+function renderSavePanel() {
+  const body = document.getElementById('savePanelBody');
+  const btn  = document.getElementById('spSaveBtn');
+  if (!body) return;
+  const loggedIn = AUTH.isLoggedIn();
+  btn.disabled = !loggedIn;
+  if (!loggedIn) {
+    body.innerHTML = `<div class="sp-login-prompt">
+      🔒 로그인하면<br>양식을 저장하고<br>언제든 불러올 수 있습니다.
+      <button class="sp-login-prompt-btn" onclick="AUTH.toggleUserDropdown()">구글로 로그인</button>
+    </div>`;
+    return;
+  }
+  const saves = loadSaves();
+  if (!saves.length) {
+    body.innerHTML = '<div class="sp-empty">저장된 양식이 없습니다.<br>+ 저장 버튼을 눌러<br>현재 양식을 저장하세요.</div>';
+  } else {
+    body.innerHTML = '';
+    const ul = document.createElement('div'); ul.className = 'sp-list';
+    saves.forEach((s, idx) => {
+      const item = document.createElement('div');
+      item.className = 'sp-item' + (s.active ? ' active' : '');
+      item.innerHTML = `
+        <div class="sp-item-name">${s.name}</div>
+        <div class="sp-item-meta">${s.date} · ${s.pages}페이지</div>
+        <button class="sp-item-del" onclick="deleteSave(${idx},event)" title="삭제">×</button>`;
+      item.addEventListener('click', () => loadSave(idx));
+      ul.appendChild(item);
+    });
+    body.appendChild(ul);
+  }
+  // 새 양식 버튼
+  const nb = document.createElement('button'); nb.className='sp-new-btn'; nb.textContent='+ 새 양식 시작';
+  nb.onclick = () => { resetForm(); };
+  body.appendChild(nb);
+}
+
+let pendingSaveName = '';
+function openSaveModal() {
+  if (!AUTH.isLoggedIn()) { AUTH.showMsg('로그인이 필요합니다'); AUTH.toggleUserDropdown(); return; }
+  const site = document.getElementById('siteName').value || '';
+  document.getElementById('saveModalInp').value = site || '';
+  document.getElementById('saveModal').classList.add('open');
+  document.getElementById('saveModalInp').focus();
+}
+function closeSaveModal() { document.getElementById('saveModal').classList.remove('open'); }
+document.getElementById('saveModal').addEventListener('click', e => { if(e.target.id==='saveModal') closeSaveModal(); });
+document.getElementById('saveModalInp').addEventListener('keydown', e => { if(e.key==='Enter') confirmSave(); if(e.key==='Escape') closeSaveModal(); });
+
+function confirmSave() {
+  const name = document.getElementById('saveModalInp').value.trim();
+  if (!name) { document.getElementById('saveModalInp').focus(); return; }
+  const saves = loadSaves();
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+  // pages 직렬화 (이미지는 base64 그대로)
+  const snapshot = JSON.parse(JSON.stringify(pages));
+  const entry = {
+    name, date: dateStr, pages: snapshot.length,
+    siteName: document.getElementById('siteName').value,
+    docTitle: document.getElementById('docTitle').value,
+    slotCount, showPN,
+    data: snapshot,
+    id: Date.now()
+  };
+  saves.unshift(entry);
+  if (saves.length > 30) saves.splice(30); // 최대 30개
+  writeSaves(saves);
+  closeSaveModal();
+  renderSavePanel();
+  toast(`"${name}" 저장됨`);
+}
+
+function loadSave(idx) {
+  const saves = loadSaves();
+  const entry = saves[idx]; if (!entry) return;
+  saveUndo();
+  pages.length = 0;
+  entry.data.forEach(pg => pages.push(pg));
+  slotCount = entry.slotCount || 6;
+  showPN = entry.showPN ?? true;
+  document.getElementById('siteName').value = entry.siteName || '';
+  document.getElementById('docTitle').value = entry.docTitle || '사진대지';
+  // slotCount 드롭다운 동기화
+  const sel = document.getElementById('slotSel');
+  if (sel) sel.value = String(slotCount);
+  syncSite(entry.siteName||''); syncTitle(entry.docTitle||'사진대지'); syncNavSite(entry.siteName||'');
+  sel?.dispatchEvent ? null : null;
+  renderAll(); renderSavePanel(); toast(`"${entry.name}" 불러옴`);
+}
+
+function deleteSave(idx, e) {
+  e.stopPropagation();
+  const saves = loadSaves();
+  const name = saves[idx]?.name || '';
+  saves.splice(idx, 1);
+  writeSaves(saves);
+  renderSavePanel();
+  toast(`"${name}" 삭제됨`);
+}
+
+// 로그인 상태 변경 시 패널 갱신
+window.onAuthStateChange = () => renderSavePanel();
+window.onUserLogin  = () => renderSavePanel();
+window.onUserLogout = () => renderSavePanel();
+
+</script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 </head>
 <body>
 
 <nav class="nav">
-  <div class="logo">
-    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-    SAFETY
-  </div>
-  <a href="index.html">← 홈</a>
+  <a class="logo" href="index.html"><span style="color:var(--or)">⚠</span> <span>SAFETY</span></a>
+  <a class="nav-back" href="index.html">← 홈</a>
+  <span class="nav-sep">|</span>
+  <div class="nav-site" id="navSite">사진대지 작성</div>
+  <div class="nav-right" id="navRight"></div>
 </nav>
 
 <div class="toolbar">
@@ -290,11 +475,36 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
   </div>
 </div>
 
+<!-- 저장 모달 -->
+<div id="saveModal">
+  <div class="save-modal-box">
+    <div class="save-modal-title">💾 양식 저장</div>
+    <input class="save-modal-inp" id="saveModalInp" placeholder="저장 이름 입력 (예: 석문호 3월)" maxlength="40">
+    <div class="save-modal-btns">
+      <button class="save-modal-ok" onclick="confirmSave()">저장</button>
+      <button class="save-modal-cancel" onclick="closeSaveModal()">취소</button>
+    </div>
+  </div>
+</div>
 <div class="main-area">
+<!-- 저장 패널 (좌측) -->
+<div class="savepanel" id="savePanel">
+  <div class="sp-hdr">
+    <div class="sp-hdr-title">📁 저장된 양식</div>
+    <button class="sp-save-btn" id="spSaveBtn" onclick="openSaveModal()">+ 저장</button>
+  </div>
+  <div id="savePanelBody"></div>
+</div>
 <div class="preview" id="preview">
   <div class="scalewrap" id="scalewrap">
     <div id="pgwrap"></div>
   </div>
+<div class="zoompanel">
+  <button class="zb" onclick="zOut()">−</button>
+  <span id="zdisp">90%</span>
+  <button class="zb" onclick="zIn()">+</button>
+  <button class="zb" onclick="zFit()">맞춤</button>
+</div>
 </div>
 <!-- Side Panel -->
 <div class="sidepanel">
@@ -310,10 +520,7 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
     <div class="sp-drop-sub">클릭하거나<br>드래그&amp;드롭</div>
     <input type="file" id="spFileInput" accept="image/*" multiple>
   </label>
-  <button class="sp-cap-btn" onclick="startCapture()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="4"/><line x1="12" y1="3" x2="12" y2="1"/><line x1="12" y1="23" x2="12" y2="21"/><line x1="3" y1="12" x2="1" y2="12"/><line x1="23" y1="12" x2="21" y2="12"/></svg>
-    캡처해서 추가
-  </button>
+  <div class="sp-paste-hint">🪟 <kbd>Win</kbd>+<kbd>V</kbd> 로 클립보드 사진 추가</div>
   <div class="sp-qwrap">
     <div class="sp-qlbl" id="spQlbl">대기 사진 (0)</div>
     <ul class="sp-queue" id="spQueue"></ul>
@@ -323,12 +530,7 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 </div><!-- /main-area -->
 </div>
 
-<div class="zoompanel">
-  <button class="zb" onclick="zOut()">−</button>
-  <span id="zdisp">90%</span>
-  <button class="zb" onclick="zIn()">+</button>
-  <button class="zb" onclick="zFit()">맞춤</button>
-</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -419,6 +621,10 @@ function undo() {
 //  동기화
 // ══════════════════════════════════════════════
 function syncTitle(v) { document.querySelectorAll('.sync-title').forEach(e=>e.textContent=v); }
+function syncNavSite(v) {
+  const ns = document.getElementById('navSite');
+  if (ns) ns.textContent = v ? `${v} — 사진대지` : '사진대지 작성';
+}
 function syncSite(v)  { document.querySelectorAll('.sync-site').forEach(e=>{ if(e.tagName==='INPUT') e.value=v; else if(e.contentEditable==='true'){if(e.textContent!==v)e.textContent=v;} else e.textContent=v; }); }
 
 // ══════════════════════════════════════════════
@@ -839,6 +1045,32 @@ function makeSlot(pi, si, d) {
     if (e.target.closest('input[type=file],button')) return;
     e.stopPropagation(); selCell(pi, si, 'photo', e.ctrlKey||e.metaKey);
   });
+  pa.addEventListener('dragover', e => {
+    if (e.dataTransfer.types.includes('queue-idx') || e.dataTransfer.types.includes('Files')) {
+      e.preventDefault(); pa.classList.add('drop-hover');
+    }
+  });
+  pa.addEventListener('dragleave', () => pa.classList.remove('drop-hover'));
+  pa.addEventListener('drop', e => {
+    e.preventDefault(); pa.classList.remove('drop-hover');
+    // 큐에서 드래그
+    const qi = e.dataTransfer.getData('queue-idx');
+    if (qi !== '') {
+      const item = photoQueue[+qi];
+      if (item) { saveUndo(); d.img = item.dataUrl; photoQueue.splice(+qi,1); renderQueue(); renderAll(); updateSideStat();
+const _initSite = document.getElementById('siteName').value;
+if (_initSite) syncNavSite(_initSite);
+renderSavePanel(); }
+      return;
+    }
+    // 파일 드래그
+    const file = [...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));
+    if (file) {
+      const r = new FileReader();
+      r.onload = ev => { saveUndo(); d.img=ev.target.result; renderAll(); updateSideStat(); };
+      r.readAsDataURL(file);
+    }
+  });
   const numEl = document.createElement('div');
   numEl.className = 'slotnum'; numEl.textContent = si+1;
   pa.appendChild(numEl);
@@ -974,7 +1206,7 @@ function renderAll() {
       const sf=pg.siteFmt||{}; sinp.style.fontFamily=sf.font||"'Malgun Gothic',sans-serif"; sinp.style.fontSize=sf.sz||'12px'; sinp.style.color=sf.color||'#111'; sinp.style.fontWeight=sf.bold?'700':'400';
       sinp.addEventListener('input',()=>{
         const v=sinp.textContent;
-        document.getElementById('siteName').value=v; syncSite(v);
+        document.getElementById('siteName').value=v; syncSite(v); syncNavSite(v);
         sinp.classList.toggle('sinp-empty',!v.trim());
       });
       sinp.addEventListener('click',e=>{e.stopPropagation();selHdr(pi,'site');});
@@ -1150,29 +1382,52 @@ function addToQueue(files) {
   readNext();
 }
 
+function getEmptySlots() {
+  const slots = [];
+  for (let pi=0; pi<pages.length; pi++) {
+    for (let si=0; si<pages[pi].slots.length; si++) {
+      if (!pages[pi].slots[si].img) slots.push({pi, si, global: slots.length+1});
+    }
+  }
+  return slots;
+}
 function renderQueue() {
   const ul = document.getElementById('spQueue');
   ul.innerHTML = '';
+  const emptySlots = getEmptySlots();
   photoQueue.forEach((item, idx) => {
     const li = document.createElement('li'); li.className='sp-qitem';
     li.draggable = true;
     li.dataset.idx = idx;
     const img = document.createElement('img'); img.src = item.dataUrl;
     const name = document.createElement('span'); name.className='sp-qitem-name'; name.textContent = item.name;
+    // 배치될 슬롯 정보
+    const badge = document.createElement('div');
+    if (idx < emptySlots.length) {
+      const s = emptySlots[idx];
+      const pageLabel = pages.length > 1 ? `P${s.pi+1}-` : '';
+      badge.className = 'sp-qitem-badge';
+      badge.textContent = `${pageLabel}${s.si+1}번`;
+    } else {
+      badge.className = 'sp-qitem-badge empty';
+      badge.textContent = '미배치';
+    }
     const del = document.createElement('button'); del.className='sp-qitem-del'; del.textContent='×';
     del.onclick = e => { e.stopPropagation(); photoQueue.splice(idx,1); renderQueue(); updateSideStat(); };
-    li.append(img, name, del);
+    li.append(img, badge, name, del);
     // 드래그 순서 변경
-    li.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', idx); li.style.opacity='.4'; });
+    li.addEventListener('dragstart', e => { e.dataTransfer.setData('queue-idx', idx); e.dataTransfer.setData('text/plain', 'queue'); li.style.opacity='.4'; });
     li.addEventListener('dragend', () => li.style.opacity='1');
-    li.addEventListener('dragover', e => { e.preventDefault(); li.style.background='var(--bg4)'; });
-    li.addEventListener('dragleave', () => li.style.background='');
+    li.addEventListener('dragover', e => {
+      if (e.dataTransfer.types.includes('queue-idx')) { e.preventDefault(); li.classList.add('drag-over'); }
+    });
+    li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
     li.addEventListener('drop', e => {
-      e.preventDefault(); li.style.background='';
-      const from = +e.dataTransfer.getData('text/plain');
+      e.preventDefault(); li.classList.remove('drag-over');
+      const from = +e.dataTransfer.getData('queue-idx');
       const to = idx;
-      if (from===to) return;
-      const [moved] = photoQueue.splice(from,1); photoQueue.splice(to,0,moved);
+      if (isNaN(from) || from === to) return;
+      const [moved] = photoQueue.splice(from, 1); photoQueue.splice(to, 0, moved);
       renderQueue();
     });
     ul.appendChild(li);
@@ -1214,7 +1469,7 @@ spDrop.addEventListener('drop', e => {
 
 // renderAll 이후 stat 업데이트
 const _origRenderAll = renderAll;
-renderAll = function() { _origRenderAll(); updateSideStat(); };
+renderAll = function() { _origRenderAll(); updateSideStat(); renderQueue(); };
 updateSideStat();
 
 
@@ -1237,19 +1492,7 @@ function clipboardImageToQueue(blob) {
   };
   r.readAsDataURL(blob);
 }
-async function pasteFromClipboard() {
-  try {
-    const items = await navigator.clipboard.read();
-    let found = false;
-    for (const item of items) {
-      const type = item.types.find(t=>t.startsWith('image/'));
-      if (type) { clipboardImageToQueue(await item.getType(type)); found=true; break; }
-    }
-    if (!found) toast('클립보드에 이미지가 없습니다');
-  } catch(e) {
-    toast('Ctrl+V 로 직접 붙여넣기 하세요');
-  }
-}
+function pasteFromClipboard() { /* Ctrl+V 사용 */ }
 // 전역 Ctrl+V 이벤트
 document.addEventListener('paste', e => {
   const items = e.clipboardData?.items;
@@ -1265,5 +1508,6 @@ document.addEventListener('paste', e => {
 
 </script>
 <div class="paste-flash" id="pasteFlash"></div>
+
 </body>
 </html>

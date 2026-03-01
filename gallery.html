@@ -202,7 +202,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
   <a class="nav-back" href="index.html">← 홈</a>
   <span style="color:var(--border)">|</span>
   <div class="breadcrumb" id="breadcrumb"></div>
-  <div class="nav-right">
+  <div class="nav-right" id="navRight">
     <button class="btn sm" onclick="showFolderSetup()" id="changeFolderBtn" style="display:none">📁 폴더변경</button>
     <button class="btn sm" onclick="toggleEditMode()" id="editBtn" style="display:none">✏️ 편집</button>
   </div>
@@ -378,8 +378,7 @@ function startGallery() {
   const savedName = localStorage.getItem('drive_root_name') || '석문호 수상태양광발전소 EPC공사';
   folderPath = [];
   navigateToFolder(rootFolderId, savedName);
-  // 화면 렌더 후 캘린더 스캔 시작 (500ms로 단축)
-  setTimeout(() => { renderCal(); }, 500);
+  setTimeout(() => renderCal(), 2000);
 }
 
 // ── 네비게이션 ────────────────────────────────────────────────
@@ -651,8 +650,7 @@ function drawCalDays(){
   }
 }
 async function renderCal(){
-  const t=document.getElementById('calTitle');
-  if(!t){ setTimeout(()=>renderCal(),300); return; } // 엘리먼트 대기
+  const t=document.getElementById('calTitle');if(!t)return;
   t.textContent=`${calYear}년 ${calMonth+1}월`;
   drawCalDays();
   await collectDateFolders();
@@ -660,27 +658,7 @@ async function renderCal(){
 }
 async function collectDateFolders(){
   if(calScanDone)return;
-  console.log('[캘린더] 스캔 시작. 루트ID:', rootFolderId);
-  try{
-    const rf=await listFolder(rootFolderId);
-    const subs=rf.filter(f=>f.mimeType==='application/vnd.google-apps.folder');
-    console.log('[캘린더] 루트 직하위 폴더 수:', subs.length, subs.map(f=>f.name));
-    const nonDate=[];
-    for(const f of subs){
-      if(/^\d{4}-\d{2}-\d{2}$/.test(f.name)){
-        calDateFolders.add(f.name);
-        if(!calDateFolderMap[f.name])calDateFolderMap[f.name]=[];
-        if(!calDateFolderMap[f.name].includes(f.id))calDateFolderMap[f.name].push(f.id);
-        console.log('[캘린더] 루트 직하위 날짜폴더 발견:', f.name);
-      } else {
-        nonDate.push(f);
-      }
-    }
-    await Promise.all(nonDate.map(f=>scanForDateFolders(f.id,1)));
-    console.log('[캘린더] 스캔 완료. 날짜 수:', calDateFolders.size, [...calDateFolders].slice(0,10));
-  }catch(e){
-    console.error('[캘린더] 스캔 오류:', e.message);
-  }
+  try{const rf=await listFolder(rootFolderId);const subs=rf.filter(f=>f.mimeType==='application/vnd.google-apps.folder');await Promise.all(subs.map(f=>scanForDateFolders(f.id,1)));}catch{}
   calScanDone=true;
 }
 async function scanForDateFolders(folderId,depth=0){
@@ -693,7 +671,6 @@ async function scanForDateFolders(folderId,depth=0){
         calDateFolders.add(f.name);
         if(!calDateFolderMap[f.name])calDateFolderMap[f.name]=[];
         if(!calDateFolderMap[f.name].includes(f.id))calDateFolderMap[f.name].push(f.id);
-        console.log('[캘린더] 날짜폴더 발견 (depth '+depth+'):', f.name);
       }else{subs.push(f);}
     }
     await Promise.all(subs.map(f=>scanForDateFolders(f.id,depth+1)));
