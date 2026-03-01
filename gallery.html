@@ -747,9 +747,10 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
     document.getElementById('setupScreen').style.display = 'flex';
   }
 })();
-</script>
-</body>
-</html>function showFolderSetup() {
+
+
+// ── 폴더변경 ─────────────────────────────────────────────────────
+function showFolderSetup() {
   if (!AUTH.isAdmin()) { showToast('관리자만 변경 가능합니다'); return; }
   const cur = rootFolderId;
   const n = prompt('구글 드라이브 폴더 ID 또는 URL:', cur);
@@ -761,5 +762,6 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
   showToast('✅ 폴더 변경됨 - 새로고침합니다');
   setTimeout(() => location.reload(), 1000);
 }
-
-
+</script>
+</body>
+</html>
