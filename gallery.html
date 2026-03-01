@@ -81,14 +81,14 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 .tree{padding:8px 0;max-height:calc(50vh - 80px);overflow-y:auto;}
 .tree::-webkit-scrollbar{width:3px;}
 .tree::-webkit-scrollbar-thumb{background:var(--border);}
-.tree-item{display:flex;align-items:center;padding:6px 10px;font-size:12px;color:var(--muted2);cursor:pointer;gap:5px;transition:all .15s;border-left:2px solid transparent;user-select:none;min-width:0;}
+.tree-item{display:flex;align-items:center;padding:6px 8px;font-size:12px;color:var(--muted2);cursor:pointer;gap:5px;transition:all .15s;border-left:2px solid transparent;user-select:none;min-width:0;}
 .tree-item:hover{color:var(--text);background:rgba(255,255,255,.04);}
 .tree-item.active{color:var(--orange);background:rgba(249,115,22,.07);border-left-color:var(--orange);}
 .tree-item .ti-icon{font-size:13px;flex-shrink:0;}
 .tree-item .ti-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .tree-item .ti-toggle{font-size:10px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
 .tree-item.open .ti-toggle{transform:rotate(90deg);}
-.tree-children{padding-left:14px;border-left:1px solid var(--border);margin-left:20px;}
+.tree-children{padding-left:8px;border-left:1px solid var(--border);margin-left:14px;}
 .tree-children.hidden{display:none;}
 .content{flex:1;min-width:0;margin-left:340px;}
 
@@ -242,7 +242,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
           <div class="tree" id="treeRoot"></div>
         </div>
         <div class="cal-card" id="calCard">
-          <div style="padding:11px 12px 9px;font-size:15px;font-weight:700;letter-spacing:.06em;color:var(--text);text-align:center;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:8px;">일자별 사진<button onclick="calForceRescan()" title="날짜 다시 스캔" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:2px 4px;border-radius:4px;transition:.15s;" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--muted)'">🔄</button></div>
+          <div style="padding:11px 12px 9px;font-size:15px;font-weight:700;letter-spacing:.06em;color:var(--text);border-bottom:1px solid var(--border);display:grid;grid-template-columns:24px 1fr 24px;align-items:center;"><span></span><span style="text-align:center;">일자별 사진</span><button onclick="calForceRescan()" title="날짜 다시 스캔" style="background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:2px 4px;border-radius:4px;transition:.15s;justify-self:end;" onmouseover="this.style.color='var(--orange)'" onmouseout="this.style.color='var(--muted)'">🔄</button></div>
           <div class="cal-head">
             <button class="cal-nav" onclick="calMove(-1)">‹</button>
             <span id="calTitle"></span>
