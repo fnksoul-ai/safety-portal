@@ -33,7 +33,8 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .fb:hover{background:var(--bg3);color:#fff;border-color:#4b5563}
 .fb.on{background:rgba(249,115,22,.22);color:var(--or);border-color:var(--or)}
 .fsel{background:var(--bg4);border:1px solid var(--bdr);color:var(--m2);border-radius:5px;padding:0 4px;height:22px;font-size:12px;cursor:pointer}
-.fnum{background:var(--bg4);border:1px solid var(--bdr);color:var(--m2);border-radius:5px;padding:0 4px;height:22px;font-size:12px;width:38px;text-align:center}
+.fnum{background:var(--bg4);border:1px solid var(--bdr);color:var(--m2);border-radius:5px;padding:0;height:22px;font-size:11px;width:32px;text-align:center;-moz-appearance:textfield}
+.fnum::-webkit-inner-spin-button,.fnum::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .fhint{font-size:10px;color:var(--m);white-space:nowrap;margin-left:4px;flex-shrink:0}
 /* ─ Settings ─ */
 .settings{background:var(--bg3);border-bottom:1px solid var(--bdr);padding:8px 14px;display:flex;align-items:center;gap:14px;flex-shrink:0;flex-wrap:wrap}
@@ -159,6 +160,11 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
   <input class="fnum" type="number" id="fmtSize" value="11" min="6" max="72" onchange="applyFmt('fontSize',this.value+'px')">
   <button class="fb" style="min-width:20px;font-size:14px;font-weight:700" onclick="qFont(1)">+</button>
   <div class="fsep"></div>
+  <span class="flbl">자간</span>
+  <button class="fb" style="min-width:20px;font-size:14px;font-weight:700" onclick="qSpacing(-0.5)">−</button>
+  <input class="fnum" type="number" id="fmtSpacing" value="0" min="-5" max="20" step="0.5" onchange="applyFmt('spacing',this.value+'px')" style="width:36px">
+  <button class="fb" style="min-width:20px;font-size:14px;font-weight:700" onclick="qSpacing(0.5)">+</button>
+  <div class="fsep"></div>
   <span class="flbl">가로</span>
   <button class="fb" id="AL" onclick="applyFmt('align','left')" title="왼쪽">
     <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="0" width="13" height="2" rx=".8"/><rect x="0" y="3.5" width="8" height="2" rx=".8"/><rect x="0" y="7" width="10" height="2" rx=".8"/><rect x="0" y="10.5" width="6" height="2" rx=".8"/></svg>
@@ -267,10 +273,10 @@ let zoom = 0.9;
 //  기본 데이터 생성
 // ══════════════════════════════════════════════
 function defCell() {
-  return {font:"'Malgun Gothic',sans-serif",sz:'11px',align:'left',bold:false,va:'middle',bt:0,bb:0,bl:0,br:0,color:'#111'};
+  return {font:"'Malgun Gothic',sans-serif",sz:'11px',align:'left',bold:false,va:'middle',bt:0,bb:0,bl:0,br:0,color:'#111',spacing:'0px'};
 }
 function defLbl() {
-  return {font:"'Malgun Gothic',sans-serif",sz:'10px',align:'center',bold:true,va:'middle',bt:0,bb:0,bl:0,br:0,color:'#444'};
+  return {font:"'Malgun Gothic',sans-serif",sz:'10px',align:'center',bold:true,va:'middle',bt:0,bb:0,bl:0,br:0,color:'#444',spacing:'0px'};
 }
 function newSlot() {
   return {
@@ -444,6 +450,7 @@ function refreshFmtBar() {
     if (!f) return;
     document.getElementById('fmtFont').value = f.font||"'Malgun Gothic',sans-serif";
     document.getElementById('fmtSize').value = parseInt(f.sz)||11;
+    document.getElementById('fmtSpacing').value = parseFloat(f.spacing)||0;
     document.getElementById('colorBar').style.background = f.color||'#111111';
     const hintMap={title:'문서 제목 선택됨',site:'현장명 선택됨',sitelabel:'현장명 라벨 선택됨'};
     document.getElementById('fhint').textContent = hintMap[ct]||'';
@@ -458,6 +465,7 @@ function refreshFmtBar() {
   // 폰트/크기
   document.getElementById('fmtFont').value = f.font;
   document.getElementById('fmtSize').value = parseInt(f.sz) || 11;
+  document.getElementById('fmtSpacing').value = parseFloat(f.spacing)||0;
 
   // 가로 정렬
   const aMap = {left:'AL', center:'AC', right:'AR'};
@@ -511,6 +519,7 @@ function applyFmt(type, value) {
       if (type==='font')    { f.font=value; }
       if (type==='fontSize') { f.sz=value; }
       if (type==='bold')    { f.bold=!f.bold; }
+      if (type==='spacing') { f.spacing=value; }
       if (type==='color')   { f.color=value; }
       // DOM 즉시 반영
       const el = document.querySelector(`[data-hdr-page="${pi}"][data-hdr-type="${ct}"]`);
@@ -519,6 +528,7 @@ function applyFmt(type, value) {
         el.style.fontSize=f.sz;
         el.style.fontWeight=f.bold?'700':'400';
         el.style.color=f.color;
+        el.style.letterSpacing=f.spacing||'0px';
       }
       return;
     }
@@ -546,16 +556,18 @@ function applyFmtDOM(pi, si, ct, f) {
     el.style.fontSize = f.sz;
     el.style.fontWeight = f.bold ? '700' : '400';
     el.style.color = f.color || '';
+    el.style.letterSpacing = f.spacing || '0px';
     el.style.justifyContent = jc[f.align] || 'center';
     el.style.alignItems = ai[f.va] || 'center';
     const inp = el.querySelector('input');
-    if (inp) { inp.style.textAlign = f.align || 'center'; inp.style.color = f.color || ''; }
+    if (inp) { inp.style.textAlign = f.align || 'center'; inp.style.color = f.color || ''; inp.style.letterSpacing = f.spacing || '0px'; }
   } else {
     el.style.fontFamily = f.font;
     el.style.fontSize = f.sz;
     el.style.fontWeight = f.bold ? '700' : '400';
     el.style.textAlign = f.align;
     el.style.color = f.color || '';
+    el.style.letterSpacing = f.spacing || '0px';
   }
   applyBdrDOM(el, f);
 }
@@ -584,6 +596,22 @@ function qFont(d) {
   const n = Math.max(6, Math.min(72, (parseInt(f.sz)||11) + d));
   applyFmt('fontSize', n+'px');
   document.getElementById('fmtSize').value = n;
+}
+
+function qSpacing(d) {
+  if (!sel.size) return;
+  const [pi,si,ct] = [...sel][0].split(':');
+  let f;
+  if (si === 'hdr') {
+    const pg = pages[+pi];
+    f = ct==='title' ? pg?.titleFmt : ct==='sitelabel' ? pg?.siteLblFmt : pg?.siteFmt;
+  } else {
+    f = pages[+pi]?.slots[+si]?.cells[ct];
+  }
+  if (!f) return;
+  const n = Math.max(-5, Math.min(20, Math.round(((parseFloat(f.spacing)||0) + d)*10)/10));
+  applyFmt('spacing', n+'px');
+  document.getElementById('fmtSpacing').value = n;
 }
 
 // ══════════════════════════════════════════════
@@ -699,8 +727,8 @@ function cStyle(f, isLbl) {
   const ai = {top:'flex-start',middle:'center',bottom:'flex-end'};
   const b = '1.5px solid #333';
   const bdr = `border-top:${f.bt?b:''};border-bottom:${f.bb?b:''};border-left:${f.bl?b:''};border-right:${f.br?b:''}`;
-  if (isLbl) return `display:flex;font-family:${f.font};font-size:${f.sz};font-weight:${f.bold?'700':'400'};justify-content:${jc[f.align]||'center'};align-items:${ai[f.va||'middle']||'center'};overflow:hidden;box-sizing:border-box;${bdr}`;
-  return `font-family:${f.font};font-size:${f.sz};text-align:${f.align};font-weight:${f.bold?'700':'400'};${bdr}`;
+  if (isLbl) return `display:flex;font-family:${f.font};font-size:${f.sz};font-weight:${f.bold?'700':'400'};letter-spacing:${f.spacing||'0px'};justify-content:${jc[f.align]||'center'};align-items:${ai[f.va||'middle']||'center'};overflow:hidden;box-sizing:border-box;${bdr}`;
+  return `font-family:${f.font};font-size:${f.sz};text-align:${f.align};font-weight:${f.bold?'700':'400'};letter-spacing:${f.spacing||'0px'};${bdr}`;
 }
 
 // ══════════════════════════════════════════════
