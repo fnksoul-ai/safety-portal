@@ -378,7 +378,8 @@ function startGallery() {
   const savedName = localStorage.getItem('drive_root_name') || '석문호 수상태양광발전소 EPC공사';
   folderPath = [];
   navigateToFolder(rootFolderId, savedName);
-  setTimeout(() => renderCal(), 2000);
+  // 화면 렌더 후 캘린더 스캔 시작 (500ms로 단축)
+  setTimeout(() => { renderCal(); }, 500);
 }
 
 // ── 네비게이션 ────────────────────────────────────────────────
@@ -650,7 +651,8 @@ function drawCalDays(){
   }
 }
 async function renderCal(){
-  const t=document.getElementById('calTitle');if(!t)return;
+  const t=document.getElementById('calTitle');
+  if(!t){ setTimeout(()=>renderCal(),300); return; } // 엘리먼트 대기
   t.textContent=`${calYear}년 ${calMonth+1}월`;
   drawCalDays();
   await collectDateFolders();
@@ -658,7 +660,23 @@ async function renderCal(){
 }
 async function collectDateFolders(){
   if(calScanDone)return;
-  try{const rf=await listFolder(rootFolderId);const subs=rf.filter(f=>f.mimeType==='application/vnd.google-apps.folder');await Promise.all(subs.map(f=>scanForDateFolders(f.id,1)));}catch{}
+  try{
+    const rf=await listFolder(rootFolderId);
+    const subs=rf.filter(f=>f.mimeType==='application/vnd.google-apps.folder');
+    const nonDate=[];
+    // 루트 직하위 폴더도 날짜패턴 체크
+    for(const f of subs){
+      if(/^\d{4}-\d{2}-\d{2}$/.test(f.name)){
+        calDateFolders.add(f.name);
+        if(!calDateFolderMap[f.name])calDateFolderMap[f.name]=[];
+        if(!calDateFolderMap[f.name].includes(f.id))calDateFolderMap[f.name].push(f.id);
+      } else {
+        nonDate.push(f);
+      }
+    }
+    // 날짜가 아닌 폴더 안을 재귀 스캔
+    await Promise.all(nonDate.map(f=>scanForDateFolders(f.id,1)));
+  }catch{}
   calScanDone=true;
 }
 async function scanForDateFolders(folderId,depth=0){
