@@ -660,23 +660,27 @@ async function renderCal(){
 }
 async function collectDateFolders(){
   if(calScanDone)return;
+  console.log('[캘린더] 스캔 시작. 루트ID:', rootFolderId);
   try{
     const rf=await listFolder(rootFolderId);
     const subs=rf.filter(f=>f.mimeType==='application/vnd.google-apps.folder');
+    console.log('[캘린더] 루트 직하위 폴더 수:', subs.length, subs.map(f=>f.name));
     const nonDate=[];
-    // 루트 직하위 폴더도 날짜패턴 체크
     for(const f of subs){
       if(/^\d{4}-\d{2}-\d{2}$/.test(f.name)){
         calDateFolders.add(f.name);
         if(!calDateFolderMap[f.name])calDateFolderMap[f.name]=[];
         if(!calDateFolderMap[f.name].includes(f.id))calDateFolderMap[f.name].push(f.id);
+        console.log('[캘린더] 루트 직하위 날짜폴더 발견:', f.name);
       } else {
         nonDate.push(f);
       }
     }
-    // 날짜가 아닌 폴더 안을 재귀 스캔
     await Promise.all(nonDate.map(f=>scanForDateFolders(f.id,1)));
-  }catch{}
+    console.log('[캘린더] 스캔 완료. 날짜 수:', calDateFolders.size, [...calDateFolders].slice(0,10));
+  }catch(e){
+    console.error('[캘린더] 스캔 오류:', e.message);
+  }
   calScanDone=true;
 }
 async function scanForDateFolders(folderId,depth=0){
@@ -689,6 +693,7 @@ async function scanForDateFolders(folderId,depth=0){
         calDateFolders.add(f.name);
         if(!calDateFolderMap[f.name])calDateFolderMap[f.name]=[];
         if(!calDateFolderMap[f.name].includes(f.id))calDateFolderMap[f.name].push(f.id);
+        console.log('[캘린더] 날짜폴더 발견 (depth '+depth+'):', f.name);
       }else{subs.push(f);}
     }
     await Promise.all(subs.map(f=>scanForDateFolders(f.id,depth+1)));
