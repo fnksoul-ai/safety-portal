@@ -44,15 +44,19 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .sp-assign-btn:disabled{background:var(--bg4);color:var(--m);cursor:not-allowed}
 
 
-.sp-cap-btn{display:flex;align-items:center;gap:7px;margin:6px 14px 0;padding:8px 10px;border-radius:7px;background:rgba(59,130,246,.1);border:1.5px dashed #3b82f6;color:#93c5fd;font-size:11px;font-weight:600;cursor:pointer;transition:.15s;font-family:'Noto Sans KR',sans-serif;width:calc(100% - 28px)}
-.sp-cap-btn:hover{background:rgba(59,130,246,.2);border-color:#60a5fa}
+
+.sp-cap-info{margin:6px 14px 0;padding:9px 10px 8px;border-radius:7px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.25)}
+.sp-cap-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.sp-cap-title{font-size:11px;font-weight:700;color:#93c5fd}
+.sp-cap-steps{display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--m2);margin-bottom:7px}
+.sp-cap-steps kbd{background:var(--bg4);border:1px solid var(--bdr);border-radius:3px;padding:0 3px;font-size:9px;color:#e2e8f0;font-family:monospace}
+.sp-paste-btn{width:100%;padding:5px;border-radius:5px;background:rgba(59,130,246,.2);border:1px solid rgba(59,130,246,.4);color:#93c5fd;font-size:11px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:.15s}
+.sp-paste-btn:hover{background:rgba(59,130,246,.35)}
+/* 클립보드 붙여넣기 플래시 */
+.paste-flash{position:fixed;inset:0;background:rgba(59,130,246,.15);z-index:99998;pointer-events:none;opacity:0;transition:opacity .3s}
+
 .sp-cap-btn svg{flex-shrink:0}
-/* 캡처 오버레이 */
-#captureOverlay{position:fixed;inset:0;z-index:99999;cursor:crosshair;display:none;user-select:none}
-#captureOverlay canvas{position:absolute;inset:0;width:100%;height:100%}
-#captureSel{position:absolute;border:2px solid #3b82f6;background:rgba(59,130,246,.1);pointer-events:none;display:none}
-#captureHint{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.75);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;text-align:center;pointer-events:none;font-family:'Noto Sans KR',sans-serif;line-height:1.6}
-#captureCancelBtn{position:absolute;top:16px;right:16px;background:#ef4444;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;z-index:100000}
+
 
 /* ─ Nav ─ */
 .nav{height:48px;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 16px;gap:14px;flex-shrink:0;z-index:200}
@@ -1214,109 +1218,52 @@ renderAll = function() { _origRenderAll(); updateSideStat(); };
 updateSideStat();
 
 
-// ══════════════════════════════════════════════
-//  화면 캡처 기능
-// ══════════════════════════════════════════════
-let captureStream = null;
-let captureDragging = false;
-let captureStart = {x:0, y:0};
 
-async function startCapture() {
-  try {
-    captureStream = await navigator.mediaDevices.getDisplayMedia({
-      video: {cursor:'always'},
-      audio: false
-    });
-  } catch(e) {
-    toast('화면 공유가 취소되었습니다'); return;
-  }
-  // 스트림을 video로 받아 캔버스에 렌더
-  const video = document.createElement('video');
-  video.srcObject = captureStream;
-  video.muted = true;
-  video.onloadedmetadata = () => {
-    video.play();
-    const overlay = document.getElementById('captureOverlay');
-    const canvas = document.getElementById('captureCanvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    // 한 프레임 그린 후 스트림 정지 (정지 스크린샷 방식)
-    setTimeout(() => {
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      captureStream.getTracks().forEach(t=>t.stop());
-      captureStream = null;
-      // overlay 표시
-      overlay.style.display = 'block';
-      document.getElementById('captureHint').style.display = 'block';
-    }, 150);
+
+// ══════════════════════════════════════════════
+//  클립보드 붙여넣기 캡처
+// ══════════════════════════════════════════════
+function flashPaste() {
+  const f = document.getElementById('pasteFlash');
+  f.style.opacity='1'; setTimeout(()=>f.style.opacity='0',300);
+}
+function clipboardImageToQueue(blob) {
+  const r = new FileReader();
+  r.onload = ev => {
+    const name=`캡처_${new Date().toLocaleTimeString('ko-KR').replace(/:/g,'-')}.png`;
+    photoQueue.push({dataUrl:ev.target.result, name});
+    renderQueue(); updateSideStat(); flashPaste();
+    toast('캡처 사진이 대기열에 추가됨');
   };
-  video.onerror = () => { cancelCapture(); toast('캡처 실패'); };
+  r.readAsDataURL(blob);
 }
-
-function cancelCapture() {
-  if (captureStream) { captureStream.getTracks().forEach(t=>t.stop()); captureStream=null; }
-  document.getElementById('captureOverlay').style.display = 'none';
-  document.getElementById('captureSel').style.display = 'none';
-  document.getElementById('captureHint').style.display = 'block';
-  captureDragging = false;
+async function pasteFromClipboard() {
+  try {
+    const items = await navigator.clipboard.read();
+    let found = false;
+    for (const item of items) {
+      const type = item.types.find(t=>t.startsWith('image/'));
+      if (type) { clipboardImageToQueue(await item.getType(type)); found=true; break; }
+    }
+    if (!found) toast('클립보드에 이미지가 없습니다');
+  } catch(e) {
+    toast('Ctrl+V 로 직접 붙여넣기 하세요');
+  }
 }
-
-const overlay = document.getElementById('captureOverlay');
-overlay.addEventListener('mousedown', e => {
-  if (e.target.id==='captureCancelBtn') return;
-  captureDragging = true;
-  const r = overlay.getBoundingClientRect();
-  captureStart = {x: e.clientX - r.left, y: e.clientY - r.top};
-  const sel = document.getElementById('captureSel');
-  sel.style.left = captureStart.x+'px';
-  sel.style.top  = captureStart.y+'px';
-  sel.style.width='0'; sel.style.height='0';
-  sel.style.display='block';
-  document.getElementById('captureHint').style.display='none';
+// 전역 Ctrl+V 이벤트
+document.addEventListener('paste', e => {
+  const items = e.clipboardData?.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      e.preventDefault();
+      clipboardImageToQueue(item.getAsFile());
+      return;
+    }
+  }
 });
-overlay.addEventListener('mousemove', e => {
-  if (!captureDragging) return;
-  const r = overlay.getBoundingClientRect();
-  const cx = e.clientX - r.left, cy = e.clientY - r.top;
-  const sel = document.getElementById('captureSel');
-  sel.style.left   = Math.min(cx, captureStart.x)+'px';
-  sel.style.top    = Math.min(cy, captureStart.y)+'px';
-  sel.style.width  = Math.abs(cx - captureStart.x)+'px';
-  sel.style.height = Math.abs(cy - captureStart.y)+'px';
-});
-overlay.addEventListener('mouseup', e => {
-  if (!captureDragging) return;
-  captureDragging = false;
-  const canvas = document.getElementById('captureCanvas');
-  const sel = document.getElementById('captureSel');
-  const ow = overlay.offsetWidth, oh = overlay.offsetHeight;
-  const scaleX = canvas.width / ow, scaleY = canvas.height / oh;
-  const x = parseFloat(sel.style.left)*scaleX;
-  const y = parseFloat(sel.style.top)*scaleY;
-  const w = parseFloat(sel.style.width)*scaleX;
-  const h = parseFloat(sel.style.height)*scaleY;
-  if (w < 10 || h < 10) { cancelCapture(); return; }
-  // 영역 크롭
-  const out = document.createElement('canvas');
-  out.width = w; out.height = h;
-  const ctx2 = out.getContext('2d');
-  ctx2.drawImage(canvas, x, y, w, h, 0, 0, w, h);
-  const dataUrl = out.toDataURL('image/png');
-  cancelCapture();
-  const name = `캡처_${new Date().toLocaleTimeString('ko-KR').replace(/:/g,'-')}.png`;
-  photoQueue.push({dataUrl, name});
-  renderQueue(); updateSideStat();
-  toast('캡처 사진이 대기열에 추가됨');
-});
-document.addEventListener('keydown', e => { if (e.key==='Escape') cancelCapture(); });
 
 </script>
-<div id="captureOverlay">
-  <canvas id="captureCanvas"></canvas>
-  <div id="captureSel"></div>
-  <div id="captureHint">드래그하여 캡처 영역을 선택하세요<br><span style="font-size:11px;opacity:.7">ESC: 취소</span></div>
-  <button id="captureCancelBtn" onclick="cancelCapture()">✕ 취소</button>
-</div>
+<div class="paste-flash" id="pasteFlash"></div>
 </body>
 </html>
