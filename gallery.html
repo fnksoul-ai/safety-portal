@@ -1014,7 +1014,6 @@ function calForceRescan(){
   calDateFolders=new Set();
   Object.keys(calDateFolderMap).forEach(k=>delete calDateFolderMap[k]);
   const days=document.getElementById('calDays');
-  if(days) delete days.dataset.loginNotice;
   renderCal();
   showToast('날짜 스캔 중...');
 }
@@ -1048,20 +1047,7 @@ async function renderCal(){
 }
 async function collectDateFolders(){
   if(calScanDone||calScanning)return;
-  if(!AUTH.isLoggedIn()){
-    // 비로그인: 스캔 불가 - 캘린더에 안내 표시
-    const days=document.getElementById('calDays');
-    if(days&&!days.dataset.loginNotice){
-      const notice=document.createElement('div');
-      notice.style.cssText='grid-column:1/-1;text-align:center;font-size:10px;color:var(--muted);padding:4px 0;';
-      notice.textContent='로그인 후 날짜별 사진 표시';
-      days.appendChild(notice);
-      days.dataset.loginNotice='1';
-    }
-    return;
-  }
   calScanning=true;
-  // 스캔 중 표시
   const calDaysEl=document.getElementById('calDays');
   if(calDaysEl) calDaysEl.style.opacity='0.5';
   try{
