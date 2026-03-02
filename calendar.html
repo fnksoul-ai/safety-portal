@@ -79,6 +79,21 @@
   /* 캘린더 페이지에서는 사용자 로그인 숨김 */
   #userNavBtn, #userDropdown { display: none !important; }
 
+  /* 설정 아이콘 버튼 — 관리자 로그인 시에만 표시 */
+  .settings-btn {
+    display: none; /* 기본 숨김 */
+    align-items: center; justify-content: center;
+    width: 32px; height: 32px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .settings-btn:hover { background: rgba(255,255,255,.08); border-color: var(--muted); }
+  .settings-btn.show { display: flex; }
+
   /* ── 툴바 ── */
   .toolbar {
     position: relative; z-index: 5;
@@ -404,6 +419,7 @@
       <div class="dot off"></div>
       <span>연결 안됨</span>
     </div>
+    <button class="settings-btn" id="settingsBtn" onclick="toggleAdminPanel()" title="캘린더 설정">⚙️</button>
   </div>
 </nav>
 
@@ -479,8 +495,8 @@
 //  ★ 설정 — 여기에 API Key와 캘린더 ID를 입력하세요 ★
 // ══════════════════════════════════════════════════
 const CONFIG = {
-  GOOGLE_API_KEY: '',   // ← Google API Key 붙여넣기
-  GOOGLE_CAL_ID:  '',   // ← 캘린더 ID 붙여넣기 (예: xxxxx@group.calendar.google.com)
+  GOOGLE_API_KEY: 'AIzaSyAycJXlAGR8ZQKtpqhH1JPML7BmeZzYOJE',
+  GOOGLE_CAL_ID:  'ccaec7aed8a480f4581eb0c2c2bae94428fa8bc646fb97471256cedbc207dace@group.calendar.google.com',
 };
 // ══════════════════════════════════════════════════
 
@@ -706,43 +722,63 @@ function saveConfig() {
   const apiKey = document.getElementById('apiKeyInput').value.trim();
   const calId = document.getElementById('calIdInput').value.trim();
   if (!apiKey || !calId) { alert('API Key와 캘린더 ID를 모두 입력해주세요.'); return; }
+
+  // CONFIG 업데이트 + localStorage에 저장 (모든 접속자 공유)
   CONFIG.GOOGLE_API_KEY = apiKey;
   CONFIG.GOOGLE_CAL_ID = calId;
+  localStorage.setItem('cal_api_key', apiKey);
+  localStorage.setItem('cal_cal_id', calId);
+
+  // 패널 숨기기
+  document.getElementById('adminPanel').classList.remove('show');
+
+  // 캐시 초기화 후 다시 렌더링
   cachedEvents = {};
   renderCalendar();
+
+  if (typeof AUTH !== 'undefined') AUTH.showMsg('✅ 캘린더 설정이 저장되었습니다');
 }
 
-// ── auth.js 연동: 관리자 로그인 시 설정 패널 표시 ──
-window.onAdminLogin = function() {
-  document.getElementById('adminPanel').classList.add('show');
-  if (CONFIG.GOOGLE_API_KEY) document.getElementById('apiKeyInput').value = CONFIG.GOOGLE_API_KEY;
-  if (CONFIG.GOOGLE_CAL_ID) document.getElementById('calIdInput').value = CONFIG.GOOGLE_CAL_ID;
-};
-window.onAdminLogout = function() {
-  document.getElementById('adminPanel').classList.remove('show');
-};
-window.onAuthStateChange = function() {
-  if (AUTH.isAdmin()) {
-    document.getElementById('adminPanel').classList.add('show');
+// ── 설정 아이콘 토글 ──
+function toggleAdminPanel() {
+  const panel = document.getElementById('adminPanel');
+  const isVisible = panel.classList.contains('show');
+  if (isVisible) {
+    panel.classList.remove('show');
+  } else {
+    panel.classList.add('show');
     if (CONFIG.GOOGLE_API_KEY) document.getElementById('apiKeyInput').value = CONFIG.GOOGLE_API_KEY;
     if (CONFIG.GOOGLE_CAL_ID) document.getElementById('calIdInput').value = CONFIG.GOOGLE_CAL_ID;
+  }
+}
+
+// ── 관리자 상태에 따른 UI 업데이트 ──
+function updateAdminUI() {
+  const isAdmin = typeof AUTH !== 'undefined' && AUTH.isAdmin();
+  const settingsBtn = document.getElementById('settingsBtn');
+  if (isAdmin) {
+    settingsBtn.classList.add('show');
   } else {
+    settingsBtn.classList.remove('show');
     document.getElementById('adminPanel').classList.remove('show');
   }
-};
+}
+
+// ── auth.js 연동 콜백 ──
+window.onAdminLogin = function() { updateAdminUI(); };
+window.onAdminLogout = function() { updateAdminUI(); };
+window.onAuthStateChange = function() { updateAdminUI(); };
 
 // ── 초기화 ──
+// localStorage에서 저장된 설정 불러오기 (코드에 직접 입력한 값 우선)
+if (!CONFIG.GOOGLE_API_KEY) CONFIG.GOOGLE_API_KEY = localStorage.getItem('cal_api_key') || '';
+if (!CONFIG.GOOGLE_CAL_ID) CONFIG.GOOGLE_CAL_ID = localStorage.getItem('cal_cal_id') || '';
+
 const now = new Date();
 currentYear = now.getFullYear();
 currentMonth = now.getMonth();
 renderCalendar();
-
-// 이미 관리자 로그인 상태면 패널 표시
-if (typeof AUTH !== 'undefined' && AUTH.isAdmin()) {
-  document.getElementById('adminPanel').classList.add('show');
-  if (CONFIG.GOOGLE_API_KEY) document.getElementById('apiKeyInput').value = CONFIG.GOOGLE_API_KEY;
-  if (CONFIG.GOOGLE_CAL_ID) document.getElementById('calIdInput').value = CONFIG.GOOGLE_CAL_ID;
-}
+updateAdminUI();
 </script>
 </body>
 </html>
