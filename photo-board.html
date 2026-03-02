@@ -220,15 +220,23 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .toast{position:fixed;bottom:74px;left:50%;transform:translateX(-50%) translateY(18px);background:#1e293b;color:#e2e8f0;padding:7px 17px;border-radius:20px;font-size:13px;opacity:0;transition:.28s;pointer-events:none;z-index:9999;border:1px solid var(--bdr)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media print{
-  body{overflow:visible!important;height:auto}
-  .nav,.toolbar,.fmtbar,.settings,.zoompanel,.toast,.delpg,.addpgwrap,.sidepanel{display:none!important}
-  .preview{padding:0!important;overflow:visible!important;display:flex!important;}.main-area{overflow:visible!important}
-  .scalewrap{transform:none!important}
-  .sheet{box-shadow:none;width:210mm;height:297mm;padding:15mm}
-  .pagewrap{break-after:page}
+  body{overflow:visible!important;height:auto!important;margin:0!important;padding:0!important}
+  .nav,.toolbar,.fmtbar,.settings,.zoompanel,.toast,.delpg,.addpgwrap,.sidepanel,.savepanel,.addSlotBtn,.rmSlotBtn{display:none!important}
+  .main-area{display:block!important;overflow:visible!important}
+  .preview{display:block!important;padding:0!important;overflow:visible!important;width:100%!important;flex:none!important}
+  .scalewrap{transform:none!important;width:auto!important}
+  .sheet{box-shadow:none!important;margin:0!important;width:210mm!important;min-height:297mm!important;padding:15mm!important;box-sizing:border-box!important}
+  .pagewrap{break-after:page;page-break-after:always;margin:0!important}
+  .pagewrap:last-child{break-after:auto;page-break-after:auto}
   @page{size:A4 portrait;margin:0}
   .ic-hdr-val:focus,.ic-hdr-lbl:focus,.ic-hdr-title:focus{outline:none!important;background:transparent!important}
   [contenteditable]:focus{outline:none!important;background:transparent!important}
+  .pgnum{position:absolute;bottom:8mm;left:0;right:0}
+  /* 사진 영역 */
+  .pa{-webkit-print-color-adjust:exact;print-color-adjust:exact;break-inside:avoid}
+  img{max-width:100%!important}
+  /* 슬롯 넘침 방지 */
+  .slot,.ic-slot{break-inside:avoid}
 }
 /* ─ id-cert template ─ */
 .ic-hdr{width:100%;font-family:'Malgun Gothic',sans-serif;font-size:11px;border:1px solid #222;display:grid;grid-template-columns:60px 1fr 60px 1fr;grid-template-rows:auto auto auto auto}
@@ -1888,10 +1896,18 @@ function resetForm() {
   renderAll(); toast('초기화됨');
 }
 function printPDF() {
-  toast('인쇄 창에서 "PDF로 저장"을 선택하세요');
   // 선택 하이라이트 제거
   sel.clear(); refreshSel(); refreshFmtBar();
-  setTimeout(()=>window.print(), 400);
+  // 사이드패널 임시 숨김
+  document.querySelectorAll('.savepanel,.sidepanel').forEach(el => el.style.display = 'none');
+  toast('인쇄 창에서 "PDF로 저장"을 선택하세요');
+  setTimeout(()=>{
+    window.print();
+    // 인쇄 후 복원
+    document.querySelectorAll('.sidepanel').forEach(el => el.style.display = '');
+    const sp = document.getElementById('savePanel');
+    if (sp && !sp.classList.contains('hidden')) sp.style.display = '';
+  }, 400);
 }
 
 // ══════════════════════════════════════════════
@@ -1962,7 +1978,7 @@ async function addImg(wb, ws, b64, r1, c1, r2, c2) {
 
 // ── 기본 양식 엑셀 ──
 async function buildDefaultExcel(wb, title, site) {
-  const cols = slotCount <= 2 ? 1 : 2;
+  const cols = slotCount <= 2 ? 1 : 2; // 1열 또는 2열 배치
 
   for (let pi = 0; pi < pages.length; pi++) {
     const pg = pages[pi];
@@ -1972,80 +1988,83 @@ async function buildDefaultExcel(wb, title, site) {
       pageSetup: {paperSize:9, orientation:'portrait', fitToPage:true, margins:{top:0.4,bottom:0.4,left:0.5,right:0.5,header:0.2,footer:0.2}}
     });
 
-    // 열 너비 설정 (1열: A~D, 2열: E~H)
+    // 열 구조: 각 슬롯 = [라벨(4), 값(14), 라벨(4), 값(14)] = 4열
+    // 2열 배치: 좌 4열 + 우 4열 = 8열
     if (cols === 1) {
-      ws.columns = [
-        {width:30}, // 사진
-        {width:8},  // 라벨
-        {width:30}, // 값
-      ];
+      ws.columns = [{width:5},{width:18},{width:5},{width:18}];
     } else {
-      ws.columns = [
-        {width:22}, {width:6}, {width:22}, // 좌
-        {width:22}, {width:6}, {width:22}, // 우
-      ];
+      ws.columns = [{width:5},{width:16},{width:5},{width:16},{width:5},{width:16},{width:5},{width:16}];
     }
-    const totalCols = cols === 1 ? 3 : 6;
+    const colsPerSlot = 4;
+    const totalCols = cols * colsPerSlot;
+
+    let row = 1;
 
     // 제목
-    let row = 1;
-    mergeFill(ws, row, 1, row, totalCols, title, {size:16, bold:true, color:'FF002060', fill:'FFFFFFFF'});
-    ws.getRow(row).height = 36;
+    mergeFill(ws, row, 1, row, totalCols, title, {size:16, bold:true, color:'FF002060'});
+    ws.getRow(row).height = 34;
     row++;
 
     // 현장명
-    if (site) {
-      mergeFill(ws, row, 1, row, totalCols, `현장명 : ${site}`, {size:11, bold:false, align:'left'});
-      ws.getRow(row).height = 22;
-      row++;
-    }
-
-    // 빈 행
+    mergeFill(ws, row, 1, row, totalCols, `현장명 : ${site||''}`, {size:11, bold:false, align:'right', border:false});
+    ws.getRow(row).height = 20;
     row++;
 
-    // 슬롯
-    const photoRows = 3;
-    for (let i = 0; i < pg.slots.length; i++) {
-      const d = pg.slots[i];
-      let c1; // 시작 열
-      let startRow;
+    // 구분선
+    for (let c = 1; c <= totalCols; c++) {
+      const cell = ws.getCell(row, c);
+      cell.border = {bottom:{style:'medium', color:{argb:'FF002060'}}};
+    }
+    ws.getRow(row).height = 4;
+    row++;
 
-      if (cols === 1) {
-        c1 = 1;
-        startRow = row;
-      } else {
-        // 2열 배치: 짝수=왼쪽, 홀수=오른쪽
-        if (i % 2 === 0) {
-          c1 = 1;
-          startRow = row;
-        } else {
-          c1 = 4;
-          startRow = row; // 같은 행
-        }
+    // 슬롯 렌더링
+    const photoRowCount = 8; // 사진 영역 행 수
+    const slotsArr = pg.slots;
+
+    for (let i = 0; i < slotsArr.length; i++) {
+      const d = slotsArr[i];
+      const isLeft = cols === 1 || i % 2 === 0;
+      const c1 = isLeft ? 1 : colsPerSlot + 1; // 시작 열
+
+      if (isLeft) {
+        // 좌측 슬롯 시작 = 새 행 시작
+        var slotStartRow = row;
       }
 
-      // 사진 영역
-      mergeFill(ws, startRow, c1, startRow + photoRows - 1, c1, '', {fill:'FFF0F0F0'});
-      for (let pr = startRow; pr < startRow + photoRows; pr++) {
+      const sr = slotStartRow;
+
+      // ── 사진 영역 (4열 병합) ──
+      mergeFill(ws, sr, c1, sr + photoRowCount - 1, c1 + colsPerSlot - 1, '', {fill:'FFF5F5F5'});
+      for (let pr = sr; pr < sr + photoRowCount; pr++) {
         const r = ws.getRow(pr);
-        if (r.height < 55) r.height = 55;
+        if (!r.height || r.height < 22) r.height = 22;
       }
-      if (d.img) await addImg(wb, ws, d.img, startRow, c1, startRow + photoRows - 1, c1);
+      // 슬롯 번호
+      const numCell = ws.getCell(sr, c1);
+      numCell.value = (pi * slotCount) + i + 1;
+      numCell.font = {name:'맑은 고딕', size:11, color:{argb:'FF999999'}};
+      numCell.alignment = {horizontal:'left', vertical:'top'};
 
-      // 메타 라벨+값
-      const metaData = [
-        [d.locLbl || '위치', d.loc || ''],
-        [d.dateLbl || '일시', d.date || ''],
-        [d.descLbl || '내용', d.desc || '']
-      ];
-      for (let m = 0; m < 3; m++) {
-        setCell(ws, startRow + m, c1 + 1, metaData[m][0], {size:9, bold:true, fill:'FFE8E8E8'});
-        setCell(ws, startRow + m, c1 + 2, metaData[m][1], {size:10, align:'left', wrap:true});
-      }
+      if (d.img) await addImg(wb, ws, d.img, sr, c1, sr + photoRowCount - 1, c1 + colsPerSlot - 1);
 
-      // 행 전진 (1열이면 매번, 2열이면 오른쪽 끝났을 때)
-      if (cols === 1 || i % 2 === 1 || i === pg.slots.length - 1) {
-        row = startRow + photoRows + 1; // +1 간격
+      // ── 메타행 1: 위치 | 값 | 일시 | 값 ──
+      const mr1 = sr + photoRowCount;
+      setCell(ws, mr1, c1, d.locLbl||'위치', {size:8, bold:true, fill:'FFE8E8E8'});
+      setCell(ws, mr1, c1+1, d.loc||'', {size:9, align:'left'});
+      setCell(ws, mr1, c1+2, d.dateLbl||'일시', {size:8, bold:true, fill:'FFE8E8E8'});
+      setCell(ws, mr1, c1+3, d.date||'', {size:9, align:'left'});
+      ws.getRow(mr1).height = 18;
+
+      // ── 메타행 2: 내용 | 값(3열 병합) ──
+      const mr2 = sr + photoRowCount + 1;
+      setCell(ws, mr2, c1, d.descLbl||'내용', {size:8, bold:true, fill:'FFE8E8E8'});
+      mergeFill(ws, mr2, c1+1, mr2, c1+3, d.desc||'', {size:9, align:'left', wrap:true});
+      ws.getRow(mr2).height = 18;
+
+      // 행 전진
+      if (cols === 1 || i % 2 === 1 || i === slotsArr.length - 1) {
+        row = sr + photoRowCount + 2 + 1; // 사진+메타2행+간격1행
       }
     }
   }
