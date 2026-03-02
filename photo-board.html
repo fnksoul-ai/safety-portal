@@ -1680,7 +1680,7 @@ function renderAllIdCert() {
     const hdr = document.createElement('div'); hdr.className = 'ic-hdr';
     const esc = s => (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     hdr.innerHTML =
-      `<div class="ic-hdr-title" contenteditable="${pi===0?'true':'false'}">${esc(title)}</div>`+
+      `<div class="ic-hdr-title" contenteditable="${pi===0?'true':'false'}" data-key="title" data-pi="${pi}">${esc(title)}</div>`+
       `<div class="ic-hdr-lbl" contenteditable="true" data-key="projectNameLbl" data-pi="${pi}">공사명</div>`+
       `<div class="ic-hdr-val" contenteditable="true" data-key="projectName" data-pi="${pi}" data-placeholder="공사명 입력" style="border-right:1px solid #222">${esc(meta.projectName||site)}</div>`+
       `<div class="ic-hdr-lbl" contenteditable="true" data-key="companyLbl" data-pi="${pi}">업체명</div>`+
