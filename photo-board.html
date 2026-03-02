@@ -167,6 +167,7 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .scalewrap{transform-origin:top center;flex-shrink:0}
 /* ─ Sheet ─ */
 .sheet{width:794px;height:1123px;background:#fff;color:#111;box-shadow:0 8px 40px rgba(0,0,0,.6);font-family:'Malgun Gothic',sans-serif;padding:56.7px;position:relative;display:flex;flex-direction:column}
+.sheet.landscape{width:1123px;height:794px;padding:40px 50px}
 .shdr{margin-bottom:7px;flex-shrink:0}
 .shdr-top{position:relative;display:flex;align-items:baseline;margin-bottom:4px}
 .stitle{font-size:20px;font-weight:700;cursor:text;font-family:'Malgun Gothic',sans-serif;color:#002060;letter-spacing:4px}
@@ -226,9 +227,10 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
   .preview{display:block!important;padding:0!important;overflow:visible!important;width:100%!important;flex:none!important}
   .scalewrap{transform:none!important;width:auto!important}
   .sheet{box-shadow:none!important;margin:0!important;width:210mm!important;min-height:297mm!important;padding:15mm!important;box-sizing:border-box!important}
+  .sheet.landscape{width:297mm!important;min-height:210mm!important;height:210mm!important}
   .pagewrap{break-after:page;page-break-after:always;margin:0!important}
   .pagewrap:last-child{break-after:auto;page-break-after:auto}
-  @page{size:A4 portrait;margin:0}
+  @page{size:A4;margin:0}
   .ic-hdr-val:focus,.ic-hdr-lbl:focus,.ic-hdr-title:focus{outline:none!important;background:transparent!important}
   [contenteditable]:focus{outline:none!important;background:transparent!important}
   .pgnum{position:absolute;bottom:8mm;left:0;right:0}
@@ -758,10 +760,13 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
   <div class="sg"><label>양식</label>
     <select id="slotSel" onchange="onTemplateChange(this)">
-      <option value="2">2칸 (2×1)</option>
-      <option value="4">4칸 (2×2)</option>
-      <option value="6" selected>6칸 기본</option>
-      <option value="8">8칸 (4×2)</option>
+      <option value="2">2칸 세로</option>
+      <option value="4">4칸 세로</option>
+      <option value="6" selected>6칸 세로 (기본)</option>
+      <option value="8">8칸 세로</option>
+      <option value="2" data-orient="landscape">2칸 가로</option>
+      <option value="4" data-orient="landscape">4칸 가로</option>
+      <option value="6" data-orient="landscape">6칸 가로</option>
       <option value="5" data-template="id-cert">신분증,이수증 관리</option>
     </select>
   </div>
@@ -835,6 +840,7 @@ document.addEventListener('DOMContentLoaded', () => {
 let slotCount = 6;
 let showPN = true;
 let currentTemplate = 'default'; // 'default' or 'id-cert'
+let pageOrientation = 'portrait'; // 'portrait' or 'landscape'
 const pages = [];
 const sel = new Set();   // "pi:si:ct" 형식
 const hist = [];         // undo stack
@@ -844,9 +850,11 @@ let zoom = 0.9;
 function onTemplateChange(selectEl) {
   const opt = selectEl.options[selectEl.selectedIndex];
   const tpl = opt.dataset.template || 'default';
+  const orient = opt.dataset.orient || 'portrait';
   const n = +selectEl.value;
   saveUndo();
   currentTemplate = tpl;
+  pageOrientation = orient;
   slotCount = n;
   // 템플릿 전환 시 페이지 초기화
   pages.length = 0;
@@ -863,7 +871,8 @@ function onTemplateChange(selectEl) {
   }
   pages.push(pg);
   renderAll();
-  toast(tpl === 'id-cert' ? '신분증,이수증 관리 양식 적용' : '기본 양식 적용');
+  const orientLabel = orient === 'landscape' ? '가로' : '세로';
+  toast(tpl === 'id-cert' ? '신분증,이수증 관리 양식 적용' : `${n}칸 ${orientLabel} 양식 적용`);
 }
 
 // ══════════════════════════════════════════════
@@ -942,8 +951,8 @@ function ensureSlots(pg) {
 // ══════════════════════════════════════════════
 function saveUndo() {
   hist.push(JSON.stringify({
-    slotCount,
-    pgs: pages.map(p=>({slots:p.slots})),
+    slotCount, currentTemplate, pageOrientation,
+    pgs: pages.map(p=>({slots:p.slots, titleFmt:p.titleFmt, siteFmt:p.siteFmt, siteLblFmt:p.siteLblFmt, idCertMeta:p.idCertMeta})),
     title: document.getElementById('docTitle').value,
     site: document.getElementById('siteName').value
   }));
@@ -958,8 +967,10 @@ function undo() {
   if (!hist.length) { toast('되돌릴 내용이 없습니다'); return; }
   const s = JSON.parse(hist.pop());
   slotCount = s.slotCount;
+  if (s.currentTemplate) currentTemplate = s.currentTemplate;
+  if (s.pageOrientation) pageOrientation = s.pageOrientation;
   pages.length = 0;
-  s.pgs.forEach(p => pages.push({slots:p.slots}));
+  s.pgs.forEach(p => pages.push(p));
   document.getElementById('docTitle').value = s.title;
   document.getElementById('siteName').value = s.site;
   sel.clear();
@@ -1761,7 +1772,8 @@ function renderAll() {
       db.textContent='×'; db.title=`${pi+1}페이지 삭제`;
       db.onclick = ()=>delPage(pi); pw.appendChild(db);
     }
-    const sheet = document.createElement('div'); sheet.className='sheet';
+    const sheet = document.createElement('div');
+    sheet.className = pageOrientation === 'landscape' ? 'sheet landscape' : 'sheet';
 
     // 헤더
     const hdr = document.createElement('div'); hdr.className='shdr';
@@ -1811,9 +1823,17 @@ function renderAll() {
 
     // 그리드
     const grid = document.createElement('div'); grid.className='grid';
-    if (slotCount === 2) grid.style.gridTemplateColumns = '1fr';
+    if (pageOrientation === 'landscape') {
+      // 가로: 2칸=2열, 4칸=2열, 6칸=3열
+      if (slotCount >= 6) grid.style.gridTemplateColumns = '1fr 1fr 1fr';
+      else grid.style.gridTemplateColumns = '1fr 1fr';
+    } else {
+      // 세로: 2칸=1열, 나머지=2열
+      if (slotCount === 2) grid.style.gridTemplateColumns = '1fr';
+    }
     for (let i=0; i<slotCount; i++) grid.appendChild(makeSlot(pi, i, pg.slots[i]));
-    if (slotCount%2!==0) {
+    const gridCols = pageOrientation==='landscape' ? (slotCount>=6?3:2) : (slotCount===2?1:2);
+    if (slotCount % gridCols !== 0) {
       const em = document.createElement('div');
       em.style.cssText='border:1.5px dashed #ddd;display:flex;align-items:center;justify-content:center;color:#ccc;font-size:12px';
       em.textContent='빈 칸'; grid.appendChild(em);
@@ -1885,25 +1905,33 @@ function removeSlot() { if(slotCount<=2) return; saveUndo(); slotCount-=2; rende
 function resetForm() {
   saveUndo();
   currentTemplate = 'default';
+  pageOrientation = 'portrait';
   pages.length=0; sel.clear();
   const pg={slots:[]}; ensureSlots(pg); pages.push(pg);
   document.getElementById('siteName').value='';
   document.getElementById('docTitle').value='사진대지';
   slotCount = 6;
   const slotSel = document.getElementById('slotSel');
-  if (slotSel) slotSel.selectedIndex = 2; // 6칸 기본
+  if (slotSel) slotSel.selectedIndex = 2; // 6칸 세로 (기본)
   syncSite(''); syncTitle('사진대지');
   renderAll(); toast('초기화됨');
 }
 function printPDF() {
-  // 선택 하이라이트 제거
   sel.clear(); refreshSel(); refreshFmtBar();
-  // 사이드패널 임시 숨김
   document.querySelectorAll('.savepanel,.sidepanel').forEach(el => el.style.display = 'none');
+  // 동적 @page 방향 설정
+  const pageStyle = document.createElement('style');
+  pageStyle.id = 'printOrient';
+  pageStyle.textContent = pageOrientation === 'landscape'
+    ? '@page{size:A4 landscape;margin:0}'
+    : '@page{size:A4 portrait;margin:0}';
+  document.head.appendChild(pageStyle);
   toast('인쇄 창에서 "PDF로 저장"을 선택하세요');
   setTimeout(()=>{
     window.print();
-    // 인쇄 후 복원
+    // 복원
+    const ps = document.getElementById('printOrient');
+    if (ps) ps.remove();
     document.querySelectorAll('.sidepanel').forEach(el => el.style.display = '');
     const sp = document.getElementById('savePanel');
     if (sp && !sp.classList.contains('hidden')) sp.style.display = '';
@@ -1978,25 +2006,31 @@ async function addImg(wb, ws, b64, r1, c1, r2, c2) {
 
 // ── 기본 양식 엑셀 ──
 async function buildDefaultExcel(wb, title, site) {
-  const cols = slotCount <= 2 ? 1 : 2; // 1열 또는 2열 배치
+  const isLand = pageOrientation === 'landscape';
+  // 열 수 결정
+  let gridCols;
+  if (isLand) {
+    gridCols = slotCount >= 6 ? 3 : 2;
+  } else {
+    gridCols = slotCount <= 2 ? 1 : 2;
+  }
 
   for (let pi = 0; pi < pages.length; pi++) {
     const pg = pages[pi];
     ensureSlots(pg);
     const wsName = pages.length > 1 ? `${pi+1}페이지` : '사진대지';
     const ws = wb.addWorksheet(wsName, {
-      pageSetup: {paperSize:9, orientation:'portrait', fitToPage:true, margins:{top:0.4,bottom:0.4,left:0.5,right:0.5,header:0.2,footer:0.2}}
+      pageSetup: {paperSize:9, orientation: isLand?'landscape':'portrait', fitToPage:true, margins:{top:0.4,bottom:0.4,left:0.5,right:0.5,header:0.2,footer:0.2}}
     });
 
-    // 열 구조: 각 슬롯 = [라벨(4), 값(14), 라벨(4), 값(14)] = 4열
-    // 2열 배치: 좌 4열 + 우 4열 = 8열
-    if (cols === 1) {
-      ws.columns = [{width:5},{width:18},{width:5},{width:18}];
-    } else {
-      ws.columns = [{width:5},{width:16},{width:5},{width:16},{width:5},{width:16},{width:5},{width:16}];
-    }
+    // 열 구조: 각 슬롯 = [라벨, 값, 라벨, 값] = 4열
     const colsPerSlot = 4;
-    const totalCols = cols * colsPerSlot;
+    const totalCols = gridCols * colsPerSlot;
+    const colW = isLand ? (gridCols===3 ? [{width:4},{width:12},{width:4},{width:12}] : [{width:5},{width:18},{width:5},{width:18}])
+                        : (gridCols===1 ? [{width:5},{width:18},{width:5},{width:18}] : [{width:5},{width:16},{width:5},{width:16}]);
+    const allCols = [];
+    for (let g=0; g<gridCols; g++) allCols.push(...colW);
+    ws.columns = allCols;
 
     let row = 1;
 
@@ -2019,16 +2053,15 @@ async function buildDefaultExcel(wb, title, site) {
     row++;
 
     // 슬롯 렌더링
-    const photoRowCount = 8; // 사진 영역 행 수
+    const photoRowCount = isLand ? 6 : 8;
     const slotsArr = pg.slots;
 
     for (let i = 0; i < slotsArr.length; i++) {
       const d = slotsArr[i];
-      const isLeft = cols === 1 || i % 2 === 0;
-      const c1 = isLeft ? 1 : colsPerSlot + 1; // 시작 열
+      const colIdx = i % gridCols; // 0, 1, (2)
+      const c1 = colIdx * colsPerSlot + 1; // 시작 열
 
-      if (isLeft) {
-        // 좌측 슬롯 시작 = 새 행 시작
+      if (colIdx === 0) {
         var slotStartRow = row;
       }
 
@@ -2062,9 +2095,9 @@ async function buildDefaultExcel(wb, title, site) {
       mergeFill(ws, mr2, c1+1, mr2, c1+3, d.desc||'', {size:9, align:'left', wrap:true});
       ws.getRow(mr2).height = 18;
 
-      // 행 전진
-      if (cols === 1 || i % 2 === 1 || i === slotsArr.length - 1) {
-        row = sr + photoRowCount + 2 + 1; // 사진+메타2행+간격1행
+      // 행 전진: 한 줄의 마지막 슬롯이거나 전체 마지막
+      if (colIdx === gridCols - 1 || i === slotsArr.length - 1) {
+        row = sr + photoRowCount + 2 + 1;
       }
     }
   }
@@ -2500,6 +2533,7 @@ function confirmSave() {
     docTitle: document.getElementById('docTitle').value,
     slotCount, showPN,
     template: currentTemplate,
+    orientation: pageOrientation,
     data: snapshot,
     id: Date.now()
   };
@@ -2520,6 +2554,7 @@ function loadSave(idx) {
   slotCount = entry.slotCount || 6;
   showPN = entry.showPN ?? true;
   currentTemplate = entry.template || 'default';
+  pageOrientation = entry.orientation || 'portrait';
   document.getElementById('siteName').value = entry.siteName || '';
   document.getElementById('docTitle').value = entry.docTitle || '사진대지';
   // slotCount 드롭다운 동기화
