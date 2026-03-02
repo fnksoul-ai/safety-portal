@@ -144,11 +144,20 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .fnum{background:var(--bg4);border:1px solid var(--bdr);color:var(--m2);border-radius:5px;padding:0;height:22px;font-size:11px;width:32px;text-align:center;-moz-appearance:textfield}
 .fnum::-webkit-inner-spin-button,.fnum::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .fhint{font-size:10px;color:var(--m);white-space:nowrap;margin-left:4px;flex-shrink:0}
+/* fmt groups */
+.fmt-group{display:flex;align-items:center;gap:3px}
+.fmt-btnset{display:flex;align-items:center;gap:1px;background:var(--bg1);border:1px solid var(--bdr);border-radius:5px;padding:1px}
+.fmt-btnset .fb{border:none;background:transparent;border-radius:4px;margin:0}
+.fmt-btnset .fb:hover{background:rgba(255,255,255,.08)}
+.fmt-btnset .fb.on{background:rgba(249,115,22,.22);color:var(--or)}
+.fmt-vdiv{width:1px;height:14px;background:var(--bdr);margin:0 2px;flex-shrink:0}
+.fb.ficon{width:24px;height:22px;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.fb.fsm{min-width:18px;width:18px;height:20px;padding:0;font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
 /* ─ Settings ─ */
 .settings{background:var(--bg3);border-bottom:1px solid var(--bdr);padding:8px 14px;display:flex;align-items:center;gap:14px;flex-shrink:0;flex-wrap:wrap}
 .sg{display:flex;flex-direction:column;gap:3px}.sg label{font-size:10px;color:var(--m);font-weight:500}
 .sg input,.sg select{background:var(--bg4);border:1px solid var(--bdr);color:#e2e8f0;border-radius:6px;padding:5px 9px;font-size:12px;font-family:'Noto Sans KR',sans-serif;outline:none}
-.sg input{width:190px}.sg select{width:140px;cursor:pointer}.sg input:focus{border-color:var(--or)}
+.sg input{width:190px}.sg select{width:170px;cursor:pointer}.sg input:focus{border-color:var(--or)}
 .pntoggle{background:var(--bg4);border:1px solid var(--bdr);color:var(--m2);border-radius:6px;padding:5px 11px;font-size:12px;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:.15s}
 .pntoggle.on{background:rgba(249,115,22,.18);border-color:var(--or);color:var(--or)}
 .csw{width:22px;height:22px;border-radius:3px;cursor:pointer;border:2px solid transparent;flex-shrink:0}
@@ -182,7 +191,7 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .photo input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
 .delp{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1}
 .photo:hover .delp{display:flex}
-.slotnum{position:absolute;top:5px;left:6px;font-size:17px;font-weight:700;color:rgba(0,0,0,.15);pointer-events:none;font-family:'Malgun Gothic',sans-serif;user-select:none}
+.slotnum{position:absolute;top:5px;left:6px;font-size:17px;font-weight:700;color:rgba(0,0,0,.18);pointer-events:none;font-family:'Malgun Gothic',sans-serif;user-select:none;z-index:1;text-shadow:0 0 3px rgba(255,255,255,.5)}
 /* meta row */
 .metarow{display:grid;border-bottom:1px solid #222;min-height:22px}
 .mlbl{font-size:10px;font-weight:700;padding:3px 5px;border-right:1px solid #222;background:#f5f5f5;display:flex;align-items:center;justify-content:center;overflow:hidden;white-space:nowrap;color:#444;flex-shrink:0;cursor:pointer;box-sizing:border-box}
@@ -219,6 +228,33 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
   .pagewrap{break-after:page}
   @page{size:A4 portrait;margin:0}
 }
+/* ─ id-cert template ─ */
+.ic-hdr-table{width:100%;border-collapse:collapse;margin-bottom:0;font-family:'Malgun Gothic',sans-serif;font-size:11px;table-layout:fixed}
+.ic-hdr-table td{border:1px solid #222;padding:4px 8px;height:25px;vertical-align:middle}
+.ic-hdr-table .ic-lbl{background:#e8e8e8;font-weight:700;text-align:center;font-size:10px;color:#222}
+.ic-hdr-table .ic-val{color:#111;font-size:11px;position:relative}
+.ic-hdr-table .ic-val input{display:block;width:100%;height:100%;border:none;outline:none;background:transparent;padding:0 2px;box-sizing:border-box;cursor:text;font-family:inherit;font-size:inherit;color:inherit}
+.ic-title-row td{border:1px solid #222;text-align:center;font-size:16px;font-weight:700;color:#002060;padding:10px 8px;letter-spacing:2px;cursor:text}
+.ic-col-hdr td{border:1px solid #222;text-align:center;font-weight:700;font-size:10px;background:#e8e8e8;color:#222;padding:5px 4px}
+.ic-grid{display:flex;flex-direction:column;flex:1;min-height:0}
+.ic-slot{display:grid;grid-template-columns:28px 1fr 1fr;grid-template-rows:1fr auto;border-left:1px solid #222;border-right:1px solid #222;border-bottom:1px solid #222;min-height:0;flex:1}
+.ic-num{grid-row:1/3;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#333;border-right:1px solid #222;background:#fff}
+.ic-photo{background:#f0f0f0;display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;overflow:hidden;min-height:80px;transition:background .15s}
+.ic-photo:hover{background:#e8e8e8}
+.ic-photo.drop-hover{outline:3px solid #f97316!important;background:#fff3e0!important}
+.ic-photo img{width:100%;height:100%;object-fit:contain;display:block}
+.ic-slot > .ic-photo:nth-child(2){border-right:1px solid #222}
+.ic-photo input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.ic-photo .delp{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1}
+.ic-photo:hover .delp{display:flex}
+.ic-photo .uphint{display:flex;flex-direction:column;align-items:center;gap:3px;color:#aaa;font-size:9px;pointer-events:none}
+.ic-photo .uphint svg{opacity:.3;width:22px;height:22px}
+.ic-meta{grid-column:2/4;display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #222;min-height:20px}
+.ic-meta-cell{display:grid;grid-template-columns:42px 1fr;font-size:10px}
+.ic-meta-cell:first-child{border-right:1px solid #222}
+.ic-meta-lbl{background:#e8e8e8;font-weight:700;display:flex;align-items:center;justify-content:center;border-right:1px solid #222;color:#222;padding:2px;font-size:9px}
+.ic-meta-inp{border:none;outline:none;padding:2px 5px;font-family:'Malgun Gothic',sans-serif;font-size:10px;background:transparent;color:#111;width:100%;min-width:0}
+.ic-meta-lbl.sel.on,.ic-meta-inp.sel.on{outline:2px solid #f97316;outline-offset:-1px;background:rgba(249,115,22,.06)}
 </style>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script>
@@ -592,9 +628,9 @@ document.addEventListener('DOMContentLoaded', () => {
     <option value="Arial,sans-serif">Arial</option>
     <option value="'Times New Roman',serif">Times</option>
   </select>
-  <button class="fb" id="colorBtn" onclick="togglePalette(event)" title="글꼴 색상" style="padding:0 6px;flex-direction:column;gap:1px;height:26px">
-    <span style="font-size:14px;font-weight:700;font-family:'Malgun Gothic',sans-serif;line-height:1.3;color:currentColor">가</span>
-    <span id="colorBar" style="display:block;width:18px;height:4px;background:#e84040;border-radius:1px"></span>
+  <button class="fb" id="colorBtn" onclick="togglePalette(event)" title="글꼴 색상" style="padding:0 5px;flex-direction:column;gap:0px;height:22px">
+    <span style="font-size:12px;font-weight:700;font-family:'Malgun Gothic',sans-serif;line-height:1.2;color:currentColor">가</span>
+    <span id="colorBar" style="display:block;width:16px;height:3px;background:#e84040;border-radius:1px"></span>
   </button>
   <div id="colorPalette" style="display:none;position:fixed;z-index:9000;background:#1e2330;border:1px solid #2e3448;border-radius:8px;padding:10px;box-shadow:0 8px 32px rgba(0,0,0,.7)">
     <div style="font-size:10px;color:#94a3b8;margin-bottom:6px">자동</div>
@@ -609,70 +645,88 @@ document.addEventListener('DOMContentLoaded', () => {
     <div id="recentColors" style="display:grid;grid-template-columns:repeat(10,22px);gap:3px"></div>
   </div>
   <span class="flbl">크기</span>
-  <button class="fb" style="min-width:20px;font-size:14px;font-weight:700" onclick="qFont(-1)">−</button>
-  <input class="fnum" type="number" id="fmtSize" value="11" min="6" max="72" onchange="applyFmt('fontSize',this.value+'px')">
-  <button class="fb" style="min-width:20px;font-size:14px;font-weight:700" onclick="qFont(1)">+</button>
+  <button class="fb fsm" onclick="qFont(-1)">−</button>
+  <input class="fnum" type="number" id="fmtSize" value="11" min="6" max="72" onchange="applyFmt('fontSize',this.value+'px')" title="글꼴 크기" style="width:30px">
+  <button class="fb fsm" onclick="qFont(1)">+</button>
+  <button class="fb" id="BOLD" onclick="applyFmt('bold',null)" title="굵게" style="font-size:11px;padding:0 6px">굵게</button>
   <div class="fsep"></div>
   <span class="flbl">자간</span>
-  <button class="fb" style="min-width:20px;font-size:14px;font-weight:700" onclick="qSpacing(-0.5)">−</button>
-  <input class="fnum" type="number" id="fmtSpacing" value="0" min="-5" max="20" step="0.5" onchange="applyFmt('spacing',this.value+'px')" style="width:36px">
-  <button class="fb" style="min-width:20px;font-size:14px;font-weight:700" onclick="qSpacing(0.5)">+</button>
+  <button class="fb fsm" onclick="qSpacing(-0.5)">−</button>
+  <input class="fnum" type="number" id="fmtSpacing" value="0" min="-5" max="20" step="0.5" onchange="applyFmt('spacing',this.value+'px')" style="width:34px">
+  <button class="fb fsm" onclick="qSpacing(0.5)">+</button>
   <div class="fsep"></div>
-  <span class="flbl">가로</span>
-  <button class="fb" id="AL" onclick="applyFmt('align','left')" title="왼쪽">
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="0" width="13" height="2" rx=".8"/><rect x="0" y="3.5" width="8" height="2" rx=".8"/><rect x="0" y="7" width="10" height="2" rx=".8"/><rect x="0" y="10.5" width="6" height="2" rx=".8"/></svg>
-  </button>
-  <button class="fb" id="AC" onclick="applyFmt('align','center')" title="가운데">
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="0" width="13" height="2" rx=".8"/><rect x="2.5" y="3.5" width="8" height="2" rx=".8"/><rect x="1.5" y="7" width="10" height="2" rx=".8"/><rect x="3.5" y="10.5" width="6" height="2" rx=".8"/></svg>
-  </button>
-  <button class="fb" id="AR" onclick="applyFmt('align','right')" title="오른쪽">
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="currentColor"><rect x="0" y="0" width="13" height="2" rx=".8"/><rect x="5" y="3.5" width="8" height="2" rx=".8"/><rect x="3" y="7" width="10" height="2" rx=".8"/><rect x="7" y="10.5" width="6" height="2" rx=".8"/></svg>
-  </button>
-  <div style="width:1px;height:13px;background:#3e4559;margin:0 3px;flex-shrink:0"></div>
-  <button class="fb" id="VT" onclick="applyFmt('valign','top')" title="위">
-    <svg width="13" height="13" viewBox="0 0 13 13"><rect x="0" y="0" width="13" height="1.5" fill="currentColor" rx=".5"/><rect x="1" y="3" width="4" height="8" rx=".8" fill="currentColor" opacity=".5"/><rect x="8" y="3" width="4" height="5" rx=".8" fill="currentColor" opacity=".5"/></svg>
-  </button>
-  <button class="fb" id="VM" onclick="applyFmt('valign','middle')" title="가운데">
-    <svg width="13" height="13" viewBox="0 0 13 13"><rect x="0" y="5.75" width="13" height="1.5" fill="currentColor" rx=".5"/><rect x="1" y="1" width="4" height="11" rx=".8" fill="currentColor" opacity=".5"/><rect x="8" y="3" width="4" height="7" rx=".8" fill="currentColor" opacity=".5"/></svg>
-  </button>
-  <button class="fb" id="VB" onclick="applyFmt('valign','bottom')" title="아래">
-    <svg width="13" height="13" viewBox="0 0 13 13"><rect x="0" y="11.5" width="13" height="1.5" fill="currentColor" rx=".5"/><rect x="1" y="2" width="4" height="8" rx=".8" fill="currentColor" opacity=".5"/><rect x="8" y="5" width="4" height="5" rx=".8" fill="currentColor" opacity=".5"/></svg>
-  </button>
+
+  <!-- 정렬 그룹 -->
+  <div class="fmt-group">
+    <span class="flbl">정렬</span>
+    <div class="fmt-btnset">
+      <button class="fb ficon" id="AL" onclick="applyFmt('align','left')" title="왼쪽 정렬">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="1" y1="2" x2="13" y2="2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="1" y1="5.5" x2="9" y2="5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="1" y1="9" x2="11" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="1" y1="12.5" x2="7" y2="12.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+      <button class="fb ficon" id="AC" onclick="applyFmt('align','center')" title="가운데 정렬">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="1" y1="2" x2="13" y2="2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="3" y1="5.5" x2="11" y2="5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="2" y1="9" x2="12" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="4" y1="12.5" x2="10" y2="12.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+      <button class="fb ficon" id="AR" onclick="applyFmt('align','right')" title="오른쪽 정렬">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="1" y1="2" x2="13" y2="2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="5" y1="5.5" x2="13" y2="5.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="3" y1="9" x2="13" y2="9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><line x1="7" y1="12.5" x2="13" y2="12.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="fmt-vdiv"></div>
+    <div class="fmt-btnset">
+      <button class="fb ficon" id="VT" onclick="applyFmt('valign','top')" title="위쪽 맞춤">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="1" y1="1.5" x2="13" y2="1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="3" y="3.5" width="3" height="7" rx=".8" fill="currentColor" opacity=".45"/><rect x="8" y="3.5" width="3" height="4.5" rx=".8" fill="currentColor" opacity=".45"/></svg>
+      </button>
+      <button class="fb ficon" id="VM" onclick="applyFmt('valign','middle')" title="가운데 맞춤">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="1" y1="7" x2="13" y2="7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="3" y="2" width="3" height="10" rx=".8" fill="currentColor" opacity=".45"/><rect x="8" y="3.5" width="3" height="7" rx=".8" fill="currentColor" opacity=".45"/></svg>
+      </button>
+      <button class="fb ficon" id="VB" onclick="applyFmt('valign','bottom')" title="아래쪽 맞춤">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="1" y1="12.5" x2="13" y2="12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="3" y="3.5" width="3" height="7" rx=".8" fill="currentColor" opacity=".45"/><rect x="8" y="6" width="3" height="4.5" rx=".8" fill="currentColor" opacity=".45"/></svg>
+      </button>
+    </div>
+  </div>
   <div class="fsep"></div>
-  <button class="fb" id="BOLD" onclick="applyFmt('bold',null)" style="font-weight:800;font-size:13px;padding:0 8px">B</button>
+
+  <!-- 테두리 그룹 -->
+  <div class="fmt-group">
+    <span class="flbl">테두리</span>
+    <div class="fmt-btnset">
+      <button class="fb ficon" id="BT" onclick="togBdr('bt')" title="위 테두리">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width=".5" opacity=".3"/><line x1="1" y1="1.5" x2="13" y2="1.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="fb ficon" id="BB" onclick="togBdr('bb')" title="아래 테두리">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width=".5" opacity=".3"/><line x1="1" y1="12.5" x2="13" y2="12.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="fb ficon" id="BL" onclick="togBdr('bl')" title="왼쪽 테두리">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width=".5" opacity=".3"/><line x1="1.5" y1="1" x2="1.5" y2="13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="fb ficon" id="BR" onclick="togBdr('br')" title="오른쪽 테두리">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width=".5" opacity=".3"/><line x1="12.5" y1="1" x2="12.5" y2="13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="fmt-vdiv"></div>
+    <div class="fmt-btnset">
+      <button class="fb ficon" id="BALL" onclick="togBdr('all')" title="전체 테두리">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width="2"/></svg>
+      </button>
+      <button class="fb ficon" id="BNONE" onclick="togBdr('none')" title="테두리 없음">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1.5" y="1.5" width="11" height="11" rx="1" stroke="currentColor" stroke-width=".5" opacity=".3"/><line x1="3" y1="3" x2="11" y2="11" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/><line x1="11" y1="3" x2="3" y2="11" stroke="#ef4444" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </div>
   <div class="fsep"></div>
-  <span class="flbl">테두리</span>
-  <button class="fb" id="BT" onclick="togBdr('bt')" title="위">
-    <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width=".6" stroke-dasharray="1.5 1"/><line x1="1" y1="1" x2="13" y2="1" stroke="currentColor" stroke-width="2.5"/></svg>
-  </button>
-  <button class="fb" id="BB" onclick="togBdr('bb')" title="아래">
-    <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width=".6" stroke-dasharray="1.5 1"/><line x1="1" y1="13" x2="13" y2="13" stroke="currentColor" stroke-width="2.5"/></svg>
-  </button>
-  <button class="fb" id="BL" onclick="togBdr('bl')" title="왼">
-    <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width=".6" stroke-dasharray="1.5 1"/><line x1="1" y1="1" x2="1" y2="13" stroke="currentColor" stroke-width="2.5"/></svg>
-  </button>
-  <button class="fb" id="BR" onclick="togBdr('br')" title="오른">
-    <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width=".6" stroke-dasharray="1.5 1"/><line x1="13" y1="1" x2="13" y2="13" stroke="currentColor" stroke-width="2.5"/></svg>
-  </button>
-  <button class="fb" id="BALL" onclick="togBdr('all')" title="전체">
-    <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2.5"/></svg>
-  </button>
-  <button class="fb" id="BNONE" onclick="togBdr('none')" title="없음">
-    <svg width="14" height="14" viewBox="0 0 14 14"><rect x="1" y="1" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width=".6" stroke-dasharray="1.5 1"/><line x1="3" y1="3" x2="11" y2="11" stroke="#ef4444" stroke-width="1.8"/><line x1="11" y1="3" x2="3" y2="11" stroke="#ef4444" stroke-width="1.8"/></svg>
-  </button>
+
+  <button class="fb" onclick="mergeSelected()" title="셀 병합" style="font-size:11px;padding:0 6px">⊞ 병합</button>
+  <button class="fb" onclick="splitSelected()" title="셀 분할" style="font-size:11px;padding:0 6px">⊟ 분할</button>
   <div class="fsep"></div>
-  <button class="fb" onclick="mergeSelected()">⊞ 병합</button>
-  <button class="fb" onclick="splitSelected()">⊟ 분할</button>
-  <div class="fsep"></div>
+
   <span class="flbl">세로</span>
-  <button class="fb" style="min-width:20px" onclick="adjSz('h',-5)">−</button>
-  <span id="sizeH" style="font-size:10px;color:var(--m2);min-width:32px;text-align:center">—</span>
-  <button class="fb" style="min-width:20px" onclick="adjSz('h',5)">+</button>
+  <button class="fb fsm" onclick="adjSz('h',-5)">−</button>
+  <span id="sizeH" style="font-size:10px;color:var(--m2);min-width:30px;text-align:center">—</span>
+  <button class="fb fsm" onclick="adjSz('h',5)">+</button>
   <div class="fsep"></div>
   <span class="flbl">가로</span>
-  <button class="fb" style="min-width:20px" onclick="adjSz('w',-2)">−</button>
-  <span id="sizeW" style="font-size:10px;color:var(--m2);min-width:32px;text-align:center">—</span>
-  <button class="fb" style="min-width:20px" onclick="adjSz('w',2)">+</button>
+  <button class="fb fsm" onclick="adjSz('w',-2)">−</button>
+  <span id="sizeW" style="font-size:10px;color:var(--m2);min-width:30px;text-align:center">—</span>
+  <button class="fb fsm" onclick="adjSz('w',2)">+</button>
   <div class="fsep"></div>
   <span id="fhint" class="fhint">셀을 클릭하여 선택</span>
 </div>
@@ -684,12 +738,13 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="sg"><label>문서 제목</label>
     <input type="text" id="docTitle" value="사진대지" oninput="syncTitle(this.value)">
   </div>
-  <div class="sg"><label>칸 수</label>
-    <select onchange="setSlotCount(+this.value)">
-      <option value="2">2칸 (1×2)</option>
+  <div class="sg"><label>양식</label>
+    <select id="slotSel" onchange="onTemplateChange(this)">
+      <option value="2">2칸 (2×1)</option>
       <option value="4">4칸 (2×2)</option>
-      <option value="6" selected>6칸 (3×2)</option>
+      <option value="6" selected>6칸 기본</option>
       <option value="8">8칸 (4×2)</option>
+      <option value="5" data-template="id-cert">신분증,이수증 관리</option>
     </select>
   </div>
   <div class="sg"><label>쪽 표시</label>
@@ -761,10 +816,37 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════════════
 let slotCount = 6;
 let showPN = true;
+let currentTemplate = 'default'; // 'default' or 'id-cert'
 const pages = [];
 const sel = new Set();   // "pi:si:ct" 형식
 const hist = [];         // undo stack
 let zoom = 0.9;
+
+// 템플릿 변경 핸들러
+function onTemplateChange(selectEl) {
+  const opt = selectEl.options[selectEl.selectedIndex];
+  const tpl = opt.dataset.template || 'default';
+  const n = +selectEl.value;
+  saveUndo();
+  currentTemplate = tpl;
+  slotCount = n;
+  // 템플릿 전환 시 페이지 초기화
+  pages.length = 0;
+  sel.clear();
+  const pg = {slots:[]};
+  if (tpl === 'id-cert') {
+    ensureSlotsIdCert(pg);
+    document.getElementById('docTitle').value = '신분증/건설업 기초안전보건교육 이수증 관리';
+    syncTitle('신분증/건설업 기초안전보건교육 이수증 관리');
+  } else {
+    ensureSlots(pg);
+    document.getElementById('docTitle').value = '사진대지';
+    syncTitle('사진대지');
+  }
+  pages.push(pg);
+  renderAll();
+  toast(tpl === 'id-cert' ? '신분증,이수증 관리 양식 적용' : '기본 양식 적용');
+}
 
 // ══════════════════════════════════════════════
 //  기본 데이터 생성
@@ -800,6 +882,30 @@ function newSlot() {
       locLabel:defLbl(),dateLabel:defLbl(),descLabel:defLbl()
     }
   };
+}
+// id-cert 슬롯
+function newSlotIdCert() {
+  return {
+    img1:'', img2:'', name:'', note:'',
+    nameLbl:'성명 :', noteLbl:'비고 :',
+    cells:{
+      name:defCell(), note:defCell(),
+      nameLabel:defLbl(), noteLabel:defLbl()
+    }
+  };
+}
+function ensureSlotsIdCert(pg) {
+  while (pg.slots.length < slotCount) pg.slots.push(newSlotIdCert());
+  // 기존 슬롯에 cells 없으면 보충
+  pg.slots.forEach(s => {
+    if (!s.cells) s.cells = { name:defCell(), note:defCell(), nameLabel:defLbl(), noteLabel:defLbl() };
+  });
+  if (!pg.idCertMeta) pg.idCertMeta = {projectName:'', company:'', hireDate:'', headcount:'',
+    cells:{title:defCell(),projectName:defCell(),company:defCell(),hireDate:defCell(),headcount:defCell(),
+           projectNameLbl:defLbl(),companyLbl:defLbl(),hireDateLbl:defLbl(),headcountLbl:defLbl()}};
+  if (!pg.idCertMeta.cells) pg.idCertMeta.cells = {title:defCell(),projectName:defCell(),company:defCell(),hireDate:defCell(),headcount:defCell(),
+    projectNameLbl:defLbl(),companyLbl:defLbl(),hireDateLbl:defLbl(),headcountLbl:defLbl()};
+  if (!pg.idCertMeta.cells.title) pg.idCertMeta.cells.title = defCell();
 }
 function ensureSlots(pg) {
   while (pg.slots.length < slotCount) pg.slots.push(newSlot());
@@ -935,6 +1041,12 @@ function refreshSel() {
     el.style.outlineOffset = active ? '-1px' : '';
     if (el.tagName==='INPUT'||el.tagName==='DIV') el.style.background = active ? '#fff3e0' : '';
   });
+  // icmeta 요소 하이라이트
+  document.querySelectorAll('[data-icmeta="1"]').forEach(el => {
+    const active = sel.has(`${el.dataset.page}:icmeta:${el.dataset.ct}`);
+    el.style.outline = active ? '2px solid #f97316' : '';
+    el.style.outlineOffset = active ? '-1px' : '';
+  });
 }
 
 // ══════════════════════════════════════════════
@@ -971,6 +1083,22 @@ function refreshFmtBar() {
     return;
   }
 
+  // id-cert 헤더 메타 처리
+  if (si === 'icmeta') {
+    const pg = pages[+pi]; if (!pg?.idCertMeta?.cells) return;
+    const f = pg.idCertMeta.cells[ct]; if (!f) return;
+    document.getElementById('fmtFont').value = f.font||"'Malgun Gothic',sans-serif";
+    document.getElementById('fmtSize').value = parseInt(f.sz)||11;
+    document.getElementById('fmtSpacing').value = parseFloat(f.spacing)||0;
+    document.getElementById('colorBar').style.background = f.color||'#111111';
+    if (f.bold) document.getElementById('BOLD').classList.add('on');
+    if (f.align) { const am={left:'AL',center:'AC',right:'AR'}; if(am[f.align]) document.getElementById(am[f.align]).classList.add('on'); }
+    const hintMap={title:'문서 제목',projectName:'공사명',company:'업체명',hireDate:'채용일자',headcount:'인원',
+      projectNameLbl:'공사명 라벨',companyLbl:'업체명 라벨',hireDateLbl:'채용일자 라벨',headcountLbl:'인원 라벨'};
+    document.getElementById('fhint').textContent = (hintMap[ct]||ct) + ' 선택됨';
+    return;
+  }
+
   const d = pages[+pi]?.slots[+si];
   const f = d?.cells[ct];
   if (!f) return;
@@ -1004,7 +1132,8 @@ function refreshFmtBar() {
   if (!f.bt && !f.bb && !f.bl && !f.br) document.getElementById('BNONE').classList.add('on');
 
   // 힌트 & 크기
-  const lbl = {loc:'위치',date:'일시',desc:'내용',photo:'사진',locLabel:'위치라벨',dateLabel:'일시라벨',descLabel:'내용라벨'};
+  const lbl = {loc:'위치',date:'일시',desc:'내용',photo:'사진',locLabel:'위치라벨',dateLabel:'일시라벨',descLabel:'내용라벨',
+    name:'성명',note:'비고',nameLabel:'성명라벨',noteLabel:'비고라벨'};
   document.getElementById('fhint').textContent =
     [...sel].map(k=>{const p=k.split(':');return `${+p[0]+1}p-${+p[1]+1}번 ${lbl[p[2]]||p[2]}`;}).join(', ') + ' 선택됨';
 
@@ -1044,6 +1173,26 @@ function applyFmt(type, value) {
         el.style.letterSpacing=f.spacing||'0px';
         if (ct==='site') el.style.textIndent=f.spacing||'0px';
         if (el.dataset.hdrType==='title') el.style.textIndent=f.spacing||'0px';
+      }
+      return;
+    }
+    if (si === 'icmeta') {
+      const pg = pages[+pi]; if (!pg || !pg.idCertMeta?.cells) return;
+      const f = pg.idCertMeta.cells[ct]; if (!f) return;
+      if (type==='font')     f.font=value;
+      if (type==='fontSize') f.sz=value;
+      if (type==='align')    f.align=value;
+      if (type==='bold')     f.bold=!f.bold;
+      if (type==='spacing')  f.spacing=value;
+      if (type==='color')    f.color=value;
+      // DOM 반영
+      const el = document.querySelector(`[data-icmeta="1"][data-page="${pi}"][data-ct="${ct}"]`);
+      if (el) {
+        const inp = el.querySelector('input') || el;
+        inp.style.fontFamily=f.font; inp.style.fontSize=f.sz;
+        inp.style.fontWeight=f.bold?'700':'400'; inp.style.color=f.color;
+        inp.style.letterSpacing=f.spacing||'0px';
+        if (f.align) inp.style.textAlign=f.align;
       }
       return;
     }
@@ -1378,11 +1527,236 @@ renderSavePanel(); }
 }
 
 // ══════════════════════════════════════════════
-//  전체 렌더
+//  id-cert 슬롯 DOM 생성
+// ══════════════════════════════════════════════
+function makeSlotIdCert(pi, si, d, globalIdx) {
+  d = d || newSlotIdCert();
+  const wrap = document.createElement('div');
+  wrap.className = 'ic-slot'; wrap.dataset.idx = si; wrap.dataset.page = pi;
+
+  // 번호
+  const num = document.createElement('div');
+  num.className = 'ic-num'; num.textContent = globalIdx != null ? globalIdx : si+1;
+  wrap.appendChild(num);
+
+  // 사진 생성 헬퍼
+  function mkPhoto(imgKey, label) {
+    const pa = document.createElement('div'); pa.className = 'ic-photo';
+    pa.addEventListener('dragover', e => {
+      if (e.dataTransfer.types.includes('queue-idx') || e.dataTransfer.types.includes('Files')) {
+        e.preventDefault(); pa.classList.add('drop-hover');
+      }
+    });
+    pa.addEventListener('dragleave', () => pa.classList.remove('drop-hover'));
+    pa.addEventListener('drop', e => {
+      e.preventDefault(); pa.classList.remove('drop-hover');
+      const qi = e.dataTransfer.getData('queue-idx');
+      if (qi !== '') {
+        const item = photoQueue[+qi];
+        if (item) { saveUndo(); d[imgKey] = item.dataUrl; photoQueue.splice(+qi,1); renderQueue(); renderAll(); updateSideStat(); try{renderSavePanel();}catch(e){} }
+        return;
+      }
+      const file = [...e.dataTransfer.files].find(f=>f.type.startsWith('image/'));
+      if (file) {
+        const r = new FileReader();
+        r.onload = ev => { saveUndo(); d[imgKey]=ev.target.result; renderAll(); updateSideStat(); };
+        r.readAsDataURL(file);
+      }
+    });
+    if (d[imgKey]) {
+      const img = document.createElement('img'); img.src = d[imgKey];
+      const del = document.createElement('button'); del.className='delp'; del.textContent='✕';
+      del.onclick = e => { e.stopPropagation(); saveUndo(); d[imgKey]=''; renderAll(); };
+      pa.append(img, del);
+    } else {
+      const hint = document.createElement('div'); hint.className='uphint';
+      hint.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>${label}</span>`;
+      const fi = document.createElement('input'); fi.type='file'; fi.accept='image/*';
+      fi.onchange = e => {
+        const file = e.target.files[0]; if (!file) return;
+        const r = new FileReader();
+        r.onload = ev => { saveUndo(); d[imgKey]=ev.target.result; renderAll(); };
+        r.readAsDataURL(file);
+      };
+      pa.append(hint, fi);
+    }
+    return pa;
+  }
+
+  wrap.appendChild(mkPhoto('img1', '신분증'));
+  wrap.appendChild(mkPhoto('img2', '이수증'));
+
+  // 하단 메타 (성명/비고) - 서식 시스템 연동
+  const meta = document.createElement('div'); meta.className = 'ic-meta';
+  function mkMeta(lblCt, lblTextKey, valCt, valKey, placeholder) {
+    const cell = document.createElement('div'); cell.className = 'ic-meta-cell';
+    // 라벨
+    const lbl = document.createElement('div');
+    lbl.className = 'ic-meta-lbl sel'; lbl.dataset.ct = lblCt;
+    if (sel.has(`${pi}:${si}:${lblCt}`)) lbl.classList.add('on');
+    const lblF = d.cells[lblCt];
+    if (lblF) lbl.style.cssText += `;font-family:${lblF.font};font-size:${lblF.sz};font-weight:${lblF.bold?'700':'400'};color:${lblF.color||'#222'};letter-spacing:${lblF.spacing||'0px'}`;
+    lbl.textContent = d[lblTextKey] || placeholder;
+    lbl.addEventListener('click', e => { e.stopPropagation(); selCell(pi, si, lblCt, e.ctrlKey||e.metaKey); });
+    // 값 입력
+    const inp = document.createElement('input');
+    inp.className = 'ic-meta-inp sel'; inp.dataset.ct = valCt;
+    if (sel.has(`${pi}:${si}:${valCt}`)) inp.classList.add('on');
+    const valF = d.cells[valCt];
+    if (valF) inp.style.cssText += `;font-family:${valF.font};font-size:${valF.sz};font-weight:${valF.bold?'700':'400'};text-align:${valF.align||'left'};color:${valF.color||'#111'};letter-spacing:${valF.spacing||'0px'}`;
+    inp.value = d[valKey] || ''; inp.placeholder = placeholder === '성명 :' ? '이름' : '';
+    inp.oninput = e => { d[valKey] = e.target.value; };
+    inp.addEventListener('mousedown', e => { e.stopPropagation(); });
+    inp.addEventListener('click', e => { e.stopPropagation(); selCell(pi, si, valCt, e.ctrlKey||e.metaKey); });
+    cell.append(lbl, inp);
+    return cell;
+  }
+  meta.appendChild(mkMeta('nameLabel', 'nameLbl', 'name', 'name', '성명 :'));
+  meta.appendChild(mkMeta('noteLabel', 'noteLbl', 'note', 'note', '비고 :'));
+  wrap.appendChild(meta);
+  return wrap;
+}
+
+// ══════════════════════════════════════════════
+//  id-cert 전체 렌더
+// ══════════════════════════════════════════════
+function renderAllIdCert() {
+  const title = document.getElementById('docTitle').value || '신분증/건설업 기초안전보건교육 이수증 관리';
+  const site  = document.getElementById('siteName').value || '';
+  const wrap  = document.getElementById('pgwrap');
+  wrap.innerHTML = '';
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:22px;align-items:center';
+
+  pages.forEach((pg, pi) => {
+    ensureSlotsIdCert(pg);
+    const meta = pg.idCertMeta || (pg.idCertMeta = {projectName:'', company:'', hireDate:'', headcount:''});
+    const pw = document.createElement('div'); pw.className='pagewrap';
+    if (pages.length > 1) {
+      const db = document.createElement('button'); db.className='delpg';
+      db.textContent='×'; db.title=`${pi+1}페이지 삭제`;
+      db.onclick = ()=>delPage(pi); pw.appendChild(db);
+    }
+    const sheet = document.createElement('div'); sheet.className='sheet';
+    sheet.style.padding = '40px 65px';
+
+    // ─ 헤더 테이블 (엑셀 A~U 비율 반영) ─
+    // A=3.625, B~K=130(10×13), L~U=130(10×13) → 비율 ~1.4% : 49.3% : 49.3%
+    // 헤더행: 라벨1(A~B)=6.3%, 값1(C~K)=44.4%, 라벨2(L~M)=9.9%, 값2(N~U)=39.4%
+    const tbl = document.createElement('table'); tbl.className = 'ic-hdr-table';
+    // colgroup for 21 equal sub-columns (A~U)
+    const cg = document.createElement('colgroup');
+    // col A = narrow
+    const colA = document.createElement('col'); colA.style.width = '28px'; cg.appendChild(colA);
+    // cols B~U = 20 equal columns
+    for (let c=0; c<20; c++) { const col = document.createElement('col'); col.style.width = `${(100-4)/20}%`; cg.appendChild(col); }
+    tbl.appendChild(cg);
+
+    const mc = meta.cells || {};
+
+    // Row 1-2: 타이틀 (A1:U2)
+    const tr1 = document.createElement('tr'); tr1.className = 'ic-title-row';
+    const tdTitle = document.createElement('td'); tdTitle.colSpan = 21;
+    tdTitle.textContent = title;
+    tdTitle.dataset.ct = 'title'; tdTitle.dataset.page = pi; tdTitle.dataset.icmeta = '1';
+    const titleF = mc.title;
+    tdTitle.style.cssText = 'height:42px;cursor:text';
+    if (titleF) { tdTitle.style.fontFamily=titleF.font; tdTitle.style.fontSize=titleF.sz; tdTitle.style.fontWeight=titleF.bold?'700':'400'; tdTitle.style.color=titleF.color||'#002060'; tdTitle.style.letterSpacing=titleF.spacing||'2px'; }
+    tdTitle.contentEditable = pi===0 ? 'true' : 'false';
+    if (pi===0) {
+      tdTitle.addEventListener('input', ()=>{ document.getElementById('docTitle').value=tdTitle.textContent; syncTitle(tdTitle.textContent); });
+    }
+    tdTitle.addEventListener('mousedown', e => { e.stopPropagation(); });
+    tdTitle.addEventListener('click', e => { e.stopPropagation(); sel.clear(); sel.add(`${pi}:icmeta:title`); refreshSel(); refreshFmtBar(); });
+    if (sel.has(`${pi}:icmeta:title`)) { tdTitle.style.outline='2px solid #f97316'; tdTitle.style.outlineOffset='-1px'; }
+    tr1.appendChild(tdTitle); tbl.appendChild(tr1);
+
+    // Row 3: 공사명(A~B) | 값(C~K) | 업체명(L~M) | 값(N~U)
+    const tr2 = document.createElement('tr');
+    function mkLbl(text, cs, cellKey) {
+      const td = document.createElement('td'); td.className='ic-lbl sel'; td.colSpan=cs; td.textContent=text;
+      td.dataset.ct = cellKey; td.dataset.page = pi; td.dataset.icmeta = '1';
+      if (sel.has(`${pi}:icmeta:${cellKey}`)) td.classList.add('on');
+      const f = mc[cellKey];
+      if (f) { td.style.fontFamily=f.font; td.style.fontSize=f.sz; td.style.fontWeight=f.bold?'700':'400'; td.style.color=f.color||'#222'; td.style.letterSpacing=f.spacing||'0px'; }
+      td.addEventListener('click', e => { e.stopPropagation(); sel.clear(); sel.add(`${pi}:icmeta:${cellKey}`); refreshSel(); refreshFmtBar(); });
+      return td;
+    }
+    function mkVal(val, key, ph, cs) {
+      const td = document.createElement('td'); td.className='ic-val'; td.colSpan=cs;
+      td.dataset.ct = key; td.dataset.page = pi; td.dataset.icmeta = '1';
+      if (pi===0) {
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        inp.style.cssText = 'border:none;outline:none;background:transparent;width:100%;height:100%;padding:0 2px;box-sizing:border-box;cursor:text;position:relative;z-index:1;font-family:inherit;font-size:inherit;color:inherit';
+        const f = mc[key];
+        if (f) { inp.style.fontFamily=f.font; inp.style.fontSize=f.sz; inp.style.fontWeight=f.bold?'700':'400'; inp.style.color=f.color||'#111'; inp.style.letterSpacing=f.spacing||'0px'; inp.style.textAlign=f.align||'left'; }
+        inp.value = val; inp.placeholder = ph;
+        inp.oninput = e => { meta[key] = e.target.value; };
+        inp.addEventListener('mousedown', e => { e.stopPropagation(); });
+        inp.addEventListener('click', e => { e.stopPropagation(); sel.clear(); sel.add(`${pi}:icmeta:${key}`); refreshSel(); refreshFmtBar(); });
+        td.appendChild(inp);
+      } else { td.textContent = val; }
+      return td;
+    }
+    tr2.append(
+      mkLbl('공사명', 2, 'projectNameLbl'),
+      mkVal(meta.projectName||site, 'projectName', '공사명 입력', 9),
+      mkLbl('업체명', 2, 'companyLbl'),
+      mkVal(meta.company, 'company', '업체명 입력', 8)
+    );
+    tbl.appendChild(tr2);
+
+    // Row 4: 채용일자(A~B) | 값(C~K) | 인원(L~M) | 값(N~U)
+    const tr3 = document.createElement('tr');
+    tr3.append(
+      mkLbl('채용일자', 2, 'hireDateLbl'),
+      mkVal(meta.hireDate, 'hireDate', '날짜 입력', 9),
+      mkLbl('인원', 2, 'headcountLbl'),
+      mkVal(meta.headcount, 'headcount', '인원 수', 8)
+    );
+    tbl.appendChild(tr3);
+
+    // Row 5: No.(A) | 신분증(B~K) | 건설업 기초안전보건교육 이수증(L~U)
+    const tr4 = document.createElement('tr'); tr4.className = 'ic-col-hdr';
+    const th1 = document.createElement('td'); th1.colSpan=1; th1.textContent='No.';
+    const th2 = document.createElement('td'); th2.colSpan=10; th2.textContent='신분증';
+    const th3 = document.createElement('td'); th3.colSpan=10; th3.textContent='건설업 기초안전보건교육 이수증';
+    tr4.append(th1, th2, th3); tbl.appendChild(tr4);
+    sheet.appendChild(tbl);
+
+    // ─ 슬롯 그리드 ─
+    const grid = document.createElement('div'); grid.className = 'ic-grid';
+    const baseIdx = pi * slotCount;
+    for (let i=0; i<slotCount; i++) {
+      grid.appendChild(makeSlotIdCert(pi, i, pg.slots[i], baseIdx + i + 1));
+    }
+    grid.style.borderTop = 'none';
+    sheet.appendChild(grid);
+
+    const pn = document.createElement('div'); pn.className='pgnum';
+    pn.textContent=`${pi+1} / ${pages.length}`;
+    if (!showPN) pn.style.display='none';
+    sheet.appendChild(pn);
+    pw.appendChild(sheet); wrap.appendChild(pw);
+  });
+
+  // 페이지 추가 버튼
+  const apw = document.createElement('div'); apw.className='addpgwrap';
+  const apb = document.createElement('button'); apb.className='addpgbtn';
+  apb.textContent='＋ 페이지 추가'; apb.onclick=addPage;
+  apw.appendChild(apb); wrap.appendChild(apw);
+  document.getElementById('addSlotBtn').textContent=`+ 칸 추가 (현재 ${slotCount}칸)`;
+  document.getElementById('rmSlotBtn').style.display = slotCount>2 ? '' : 'none';
+  refreshSel();
+}
+
+// ══════════════════════════════════════════════
+//  전체 렌더 (기본 템플릿)
 // ══════════════════════════════════════════════
 const DECO='data:image/png;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAAKB9ADASIAAhEBAxEB/8QAGAABAQEBAQAAAAAAAAAAAAAAAAYHBQj/xAAmEAEAAQIEBgIDAAAAAAAAAAAAAQIDBAUGEQcSEyEiURRBMWGB/8QAGQEBAAMBAQAAAAAAAAAAAAAAAAQFBgcD/8QAIREBAAIBAwQDAAAAAAAAAAAAAAECAwQFESExQnEVQZH/2gAMAwEAAhEDEQA/APOOlMy+dgIt3Kt79rxq/cfUuyhNEzMZzERMxE0Tuu3RNm1N9Rpa2v3jp+MfuWGuHPMV7T1AFoggAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJ7V2cXMFFvD4W5NF+aormqJ70xH4aZozO7ee5HaxcTHWiOW9T6qhhupJmc7xO8zPn9rjgfVV8zH0c08vJTO2/bfdzDf8ANbU572t4zxHpM3nbsXxkZfKvE8+/pqgDNsCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJjiLqCMiyOvo17Yu/4WvdPur+KdjfGeqqdTW6ZqmaYsxtG/aHtgpF7xErjYtJTVa2tMnaOvvh/9k=';
 
 function renderAll() {
+  if (currentTemplate === 'id-cert') { renderAllIdCert(); return; }
   const title = document.getElementById('docTitle').value || '사진대지';
   const site  = document.getElementById('siteName').value || '';
   const wrap  = document.getElementById('pgwrap');
@@ -1447,6 +1821,7 @@ function renderAll() {
 
     // 그리드
     const grid = document.createElement('div'); grid.className='grid';
+    if (slotCount === 2) grid.style.gridTemplateColumns = '1fr';
     for (let i=0; i<slotCount; i++) grid.appendChild(makeSlot(pi, i, pg.slots[i]));
     if (slotCount%2!==0) {
       const em = document.createElement('div');
@@ -1478,7 +1853,10 @@ function renderAll() {
 // ══════════════════════════════════════════════
 function addPage() {
   saveUndo();
-  const pg={slots:[]}; ensureSlots(pg); pages.push(pg);
+  const pg={slots:[]};
+  if (currentTemplate === 'id-cert') ensureSlotsIdCert(pg);
+  else ensureSlots(pg);
+  pages.push(pg);
   renderAll();
   setTimeout(()=>{
     const pws=document.querySelectorAll('.pagewrap');
@@ -1494,11 +1872,19 @@ function delPage(pi) {
 // ══════════════════════════════════════════════
 //  칸 수
 // ══════════════════════════════════════════════
-function setSlotCount(n) { saveUndo(); slotCount=n; pages.forEach(ensureSlots); renderAll(); }
+function setSlotCount(n) {
+  saveUndo(); slotCount=n;
+  if (currentTemplate === 'id-cert') pages.forEach(ensureSlotsIdCert);
+  else pages.forEach(ensureSlots);
+  renderAll();
+}
 function addSlot() {
   if (slotCount>=12) { toast('최대 12칸'); return; }
   saveUndo(); slotCount+=2;
-  pages.forEach(pg=>{ pg.slots.push(newSlot()); pg.slots.push(newSlot()); });
+  pages.forEach(pg=>{
+    if (currentTemplate === 'id-cert') { pg.slots.push(newSlotIdCert()); pg.slots.push(newSlotIdCert()); }
+    else { pg.slots.push(newSlot()); pg.slots.push(newSlot()); }
+  });
   renderAll();
 }
 function removeSlot() { if(slotCount<=2) return; saveUndo(); slotCount-=2; renderAll(); }
@@ -1508,10 +1894,14 @@ function removeSlot() { if(slotCount<=2) return; saveUndo(); slotCount-=2; rende
 // ══════════════════════════════════════════════
 function resetForm() {
   saveUndo();
+  currentTemplate = 'default';
   pages.length=0; sel.clear();
   const pg={slots:[]}; ensureSlots(pg); pages.push(pg);
   document.getElementById('siteName').value='';
   document.getElementById('docTitle').value='사진대지';
+  slotCount = 6;
+  const slotSel = document.getElementById('slotSel');
+  if (slotSel) slotSel.selectedIndex = 2; // 6칸 기본
   syncSite(''); syncTitle('사진대지');
   renderAll(); toast('초기화됨');
 }
@@ -1557,7 +1947,7 @@ function toast(m) {
 //  전역 이벤트
 // ══════════════════════════════════════════════
 document.addEventListener('click', e=>{
-  if (!e.target.closest('[data-idx],[data-ct],[data-hdr-page],.fmtbar')) {
+  if (!e.target.closest('[data-idx],[data-ct],[data-hdr-page],[data-icmeta],.fmtbar')) {
     sel.clear(); refreshSel(); refreshFmtBar();
   }
 });
@@ -1573,14 +1963,26 @@ ensureSlots(pages[0]);
 renderAll();
 setZoom(0.9);
 
+// 글꼴 크기 스크롤 조절
+document.getElementById('fmtSize').addEventListener('wheel', e => {
+  e.preventDefault();
+  qFont(e.deltaY < 0 ? 1 : -1);
+});
+
 // ══════════════════════════════════════════════
 //  사이드패널 - 사진 큐
 // ══════════════════════════════════════════════
 let photoQueue = []; // {dataUrl, name}
 
 function updateSideStat() {
-  const total = pages.reduce((s,p)=>s+p.slots.length,0);
-  const filled = pages.reduce((s,p)=>s+p.slots.filter(d=>d.img).length,0);
+  let total, filled;
+  if (currentTemplate === 'id-cert') {
+    total = pages.reduce((s,p)=>s+p.slots.length*2,0); // 각 슬롯에 2장
+    filled = pages.reduce((s,p)=>s+p.slots.filter(d=>d.img1).length+p.slots.filter(d=>d.img2).length,0);
+  } else {
+    total = pages.reduce((s,p)=>s+p.slots.length,0);
+    filled = pages.reduce((s,p)=>s+p.slots.filter(d=>d.img).length,0);
+  }
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-filled').textContent = filled;
   document.getElementById('stat-queue').textContent = photoQueue.length;
@@ -1606,9 +2008,19 @@ function addToQueue(files) {
 
 function getEmptySlots() {
   const slots = [];
-  for (let pi=0; pi<pages.length; pi++) {
-    for (let si=0; si<pages[pi].slots.length; si++) {
-      if (!pages[pi].slots[si].img) slots.push({pi, si, global: slots.length+1});
+  if (currentTemplate === 'id-cert') {
+    for (let pi=0; pi<pages.length; pi++) {
+      for (let si=0; si<pages[pi].slots.length; si++) {
+        const d = pages[pi].slots[si];
+        if (!d.img1) slots.push({pi, si, key:'img1', global: slots.length+1, label:'신분증'});
+        if (!d.img2) slots.push({pi, si, key:'img2', global: slots.length+1, label:'이수증'});
+      }
+    }
+  } else {
+    for (let pi=0; pi<pages.length; pi++) {
+      for (let si=0; si<pages[pi].slots.length; si++) {
+        if (!pages[pi].slots[si].img) slots.push({pi, si, global: slots.length+1});
+      }
     }
   }
   return slots;
@@ -1629,7 +2041,7 @@ function renderQueue() {
       const s = emptySlots[idx];
       const pageLabel = pages.length > 1 ? `P${s.pi+1}-` : '';
       badge.className = 'sp-qitem-badge';
-      badge.textContent = `${pageLabel}${s.si+1}번`;
+      badge.textContent = s.label ? `${pageLabel}${s.si+1}-${s.label}` : `${pageLabel}${s.si+1}번`;
     } else {
       badge.className = 'sp-qitem-badge empty';
       badge.textContent = '미배치';
@@ -1660,11 +2072,17 @@ function assignQueue() {
   if (!photoQueue.length) return;
   saveUndo();
   let qi = 0;
-  for (const pg of pages) {
-    for (const slot of pg.slots) {
-      if (!slot.img && qi < photoQueue.length) {
-        slot.img = photoQueue[qi].dataUrl;
-        qi++;
+  if (currentTemplate === 'id-cert') {
+    for (const pg of pages) {
+      for (const slot of pg.slots) {
+        if (!slot.img1 && qi < photoQueue.length) { slot.img1 = photoQueue[qi].dataUrl; qi++; }
+        if (!slot.img2 && qi < photoQueue.length) { slot.img2 = photoQueue[qi].dataUrl; qi++; }
+      }
+    }
+  } else {
+    for (const pg of pages) {
+      for (const slot of pg.slots) {
+        if (!slot.img && qi < photoQueue.length) { slot.img = photoQueue[qi].dataUrl; qi++; }
       }
     }
   }
@@ -1837,6 +2255,7 @@ function confirmSave() {
     siteName: document.getElementById('siteName').value,
     docTitle: document.getElementById('docTitle').value,
     slotCount, showPN,
+    template: currentTemplate,
     data: snapshot,
     id: Date.now()
   };
@@ -1856,6 +2275,7 @@ function loadSave(idx) {
   entry.data.forEach(pg => pages.push(pg));
   slotCount = entry.slotCount || 6;
   showPN = entry.showPN ?? true;
+  currentTemplate = entry.template || 'default';
   document.getElementById('siteName').value = entry.siteName || '';
   document.getElementById('docTitle').value = entry.docTitle || '사진대지';
   // slotCount 드롭다운 동기화
