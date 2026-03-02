@@ -221,12 +221,14 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media print{
   body{overflow:visible!important;height:auto}
-  .nav,.toolbar,.fmtbar,.settings,.zoompanel,.toast,.delpg,.addpgwrap{display:none!important}
+  .nav,.toolbar,.fmtbar,.settings,.zoompanel,.toast,.delpg,.addpgwrap,.sidepanel{display:none!important}
   .preview{padding:0!important;overflow:visible!important;display:flex!important;}.main-area{overflow:visible!important}
   .scalewrap{transform:none!important}
   .sheet{box-shadow:none;width:210mm;height:297mm;padding:15mm}
   .pagewrap{break-after:page}
   @page{size:A4 portrait;margin:0}
+  .ic-hdr-val:focus,.ic-hdr-lbl:focus,.ic-hdr-title:focus{outline:none!important;background:transparent!important}
+  [contenteditable]:focus{outline:none!important;background:transparent!important}
 }
 /* ─ id-cert template ─ */
 .ic-hdr{width:100%;font-family:'Malgun Gothic',sans-serif;font-size:11px;border:1px solid #222;display:grid;grid-template-columns:60px 1fr 60px 1fr;grid-template-rows:auto auto auto auto}
@@ -264,6 +266,7 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .ic-meta-lbl.sel.on,.ic-meta-inp.sel.on{outline:2px solid #f97316;outline-offset:-1px;background:rgba(249,115,22,.06)}
 </style>
 <script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <script>
 // ── Safety Portal 공통 인증 모듈 ──────────────────────────────
 // 관리자(Admin) + 일반 사용자(User) Google OAuth 로그인
@@ -1884,8 +1887,250 @@ function resetForm() {
   syncSite(''); syncTitle('사진대지');
   renderAll(); toast('초기화됨');
 }
-function printPDF() { toast('인쇄 창에서 "PDF로 저장" 선택'); setTimeout(()=>window.print(),500); }
-function saveExcel() { toast('엑셀 저장 기능 준비 중'); }
+function printPDF() {
+  toast('인쇄 창에서 "PDF로 저장"을 선택하세요');
+  // 선택 하이라이트 제거
+  sel.clear(); refreshSel(); refreshFmtBar();
+  setTimeout(()=>window.print(), 400);
+}
+
+// ══════════════════════════════════════════════
+//  엑셀 저장 (ExcelJS)
+// ══════════════════════════════════════════════
+async function saveExcel() {
+  if (typeof ExcelJS === 'undefined') { toast('ExcelJS 라이브러리 로딩 중... 잠시 후 다시 시도'); return; }
+  toast('엑셀 파일 생성 중...');
+
+  try {
+    const wb = new ExcelJS.Workbook();
+    wb.creator = '사진대지';
+    wb.created = new Date();
+
+    const title = document.getElementById('docTitle').value || '사진대지';
+    const site = document.getElementById('siteName').value || '';
+
+    if (currentTemplate === 'id-cert') {
+      await buildIdCertExcel(wb, title, site);
+    } else {
+      await buildDefaultExcel(wb, title, site);
+    }
+
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.replace(/[\\/:*?"<>|]/g,'_')}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('엑셀 저장 완료');
+  } catch(e) {
+    console.error(e);
+    toast('엑셀 저장 실패: ' + e.message);
+  }
+}
+
+// ── 공통 유틸 ──
+const thinBorder = {style:'thin', color:{argb:'FF222222'}};
+const allBorders = {top:thinBorder, bottom:thinBorder, left:thinBorder, right:thinBorder};
+function setCell(ws, r, c, val, opts={}) {
+  const cell = ws.getCell(r, c);
+  cell.value = val;
+  cell.font = {name:'맑은 고딕', size: opts.size||10, bold:!!opts.bold, color:{argb:opts.color||'FF111111'}};
+  cell.alignment = {horizontal:opts.align||'center', vertical:opts.va||'middle', wrapText:!!opts.wrap};
+  if (opts.border !== false) cell.border = allBorders;
+  if (opts.fill) cell.fill = {type:'pattern', pattern:'solid', fgColor:{argb:opts.fill}};
+  return cell;
+}
+function mergeFill(ws, r1, c1, r2, c2, val, opts={}) {
+  ws.mergeCells(r1, c1, r2, c2);
+  setCell(ws, r1, c1, val, opts);
+}
+async function addImg(wb, ws, b64, r1, c1, r2, c2) {
+  if (!b64 || !b64.startsWith('data:image')) return;
+  try {
+    const ext = b64.startsWith('data:image/png') ? 'png' : 'jpeg';
+    const raw = b64.split(',')[1];
+    const imgId = wb.addImage({base64: raw, extension: ext});
+    ws.addImage(imgId, {
+      tl: {col: c1-1, row: r1-1},
+      br: {col: c2, row: r2},
+      editAs: 'oneCell'
+    });
+  } catch(e) { console.warn('이미지 삽입 실패:', e); }
+}
+
+// ── 기본 양식 엑셀 ──
+async function buildDefaultExcel(wb, title, site) {
+  const cols = slotCount <= 2 ? 1 : 2;
+
+  for (let pi = 0; pi < pages.length; pi++) {
+    const pg = pages[pi];
+    ensureSlots(pg);
+    const wsName = pages.length > 1 ? `${pi+1}페이지` : '사진대지';
+    const ws = wb.addWorksheet(wsName, {
+      pageSetup: {paperSize:9, orientation:'portrait', fitToPage:true, margins:{top:0.4,bottom:0.4,left:0.5,right:0.5,header:0.2,footer:0.2}}
+    });
+
+    // 열 너비 설정 (1열: A~D, 2열: E~H)
+    if (cols === 1) {
+      ws.columns = [
+        {width:30}, // 사진
+        {width:8},  // 라벨
+        {width:30}, // 값
+      ];
+    } else {
+      ws.columns = [
+        {width:22}, {width:6}, {width:22}, // 좌
+        {width:22}, {width:6}, {width:22}, // 우
+      ];
+    }
+    const totalCols = cols === 1 ? 3 : 6;
+
+    // 제목
+    let row = 1;
+    mergeFill(ws, row, 1, row, totalCols, title, {size:16, bold:true, color:'FF002060', fill:'FFFFFFFF'});
+    ws.getRow(row).height = 36;
+    row++;
+
+    // 현장명
+    if (site) {
+      mergeFill(ws, row, 1, row, totalCols, `현장명 : ${site}`, {size:11, bold:false, align:'left'});
+      ws.getRow(row).height = 22;
+      row++;
+    }
+
+    // 빈 행
+    row++;
+
+    // 슬롯
+    const photoRows = 3;
+    for (let i = 0; i < pg.slots.length; i++) {
+      const d = pg.slots[i];
+      let c1; // 시작 열
+      let startRow;
+
+      if (cols === 1) {
+        c1 = 1;
+        startRow = row;
+      } else {
+        // 2열 배치: 짝수=왼쪽, 홀수=오른쪽
+        if (i % 2 === 0) {
+          c1 = 1;
+          startRow = row;
+        } else {
+          c1 = 4;
+          startRow = row; // 같은 행
+        }
+      }
+
+      // 사진 영역
+      mergeFill(ws, startRow, c1, startRow + photoRows - 1, c1, '', {fill:'FFF0F0F0'});
+      for (let pr = startRow; pr < startRow + photoRows; pr++) {
+        const r = ws.getRow(pr);
+        if (r.height < 55) r.height = 55;
+      }
+      if (d.img) await addImg(wb, ws, d.img, startRow, c1, startRow + photoRows - 1, c1);
+
+      // 메타 라벨+값
+      const metaData = [
+        [d.locLbl || '위치', d.loc || ''],
+        [d.dateLbl || '일시', d.date || ''],
+        [d.descLbl || '내용', d.desc || '']
+      ];
+      for (let m = 0; m < 3; m++) {
+        setCell(ws, startRow + m, c1 + 1, metaData[m][0], {size:9, bold:true, fill:'FFE8E8E8'});
+        setCell(ws, startRow + m, c1 + 2, metaData[m][1], {size:10, align:'left', wrap:true});
+      }
+
+      // 행 전진 (1열이면 매번, 2열이면 오른쪽 끝났을 때)
+      if (cols === 1 || i % 2 === 1 || i === pg.slots.length - 1) {
+        row = startRow + photoRows + 1; // +1 간격
+      }
+    }
+  }
+}
+
+// ── 신분증/이수증 양식 엑셀 ──
+async function buildIdCertExcel(wb, title, site) {
+  for (let pi = 0; pi < pages.length; pi++) {
+    const pg = pages[pi];
+    ensureSlotsIdCert(pg);
+    const meta = pg.idCertMeta || {};
+    const wsName = pages.length > 1 ? `${pi+1}페이지` : '신분증이수증';
+    const ws = wb.addWorksheet(wsName, {
+      pageSetup: {paperSize:9, orientation:'portrait', fitToPage:true, margins:{top:0.4,bottom:0.4,left:0.5,right:0.5,header:0.2,footer:0.2}}
+    });
+
+    // A=No(4), B~F=신분증(30), G~K=이수증(30), L=성명(8), M=비고(8)
+    ws.columns = [
+      {width:4},  // A: No.
+      {width:30}, // B: 신분증
+      {width:30}, // C: 이수증
+      {width:12}, // D: 성명
+      {width:12}, // E: 비고
+    ];
+
+    let row = 1;
+
+    // 타이틀
+    mergeFill(ws, row, 1, row, 5, title, {size:14, bold:true, color:'FF002060'});
+    ws.getRow(row).height = 34;
+    row++;
+
+    // 공사명 / 업체명
+    setCell(ws, row, 1, '공사명', {size:9, bold:true, fill:'FFE8E8E8'});
+    mergeFill(ws, row, 2, row, 3, meta.projectName || site || '', {size:10, align:'left'});
+    setCell(ws, row, 4, '업체명', {size:9, bold:true, fill:'FFE8E8E8'});
+    setCell(ws, row, 5, meta.company || '', {size:10, align:'left'});
+    ws.getRow(row).height = 22;
+    row++;
+
+    // 채용일자 / 인원
+    setCell(ws, row, 1, '채용일자', {size:9, bold:true, fill:'FFE8E8E8'});
+    mergeFill(ws, row, 2, row, 3, meta.hireDate || '', {size:10, align:'left'});
+    setCell(ws, row, 4, '인원', {size:9, bold:true, fill:'FFE8E8E8'});
+    setCell(ws, row, 5, meta.headcount || '', {size:10, align:'left'});
+    ws.getRow(row).height = 22;
+    row++;
+
+    // 컬럼 헤더
+    setCell(ws, row, 1, 'No.', {size:9, bold:true, fill:'FFE8E8E8'});
+    setCell(ws, row, 2, meta.colHdr1 || '신분증', {size:9, bold:true, fill:'FFE8E8E8'});
+    setCell(ws, row, 3, meta.colHdr2 || '건설업 기초안전보건교육 이수증', {size:9, bold:true, fill:'FFE8E8E8', wrap:true});
+    setCell(ws, row, 4, '성명', {size:9, bold:true, fill:'FFE8E8E8'});
+    setCell(ws, row, 5, '비고', {size:9, bold:true, fill:'FFE8E8E8'});
+    ws.getRow(row).height = 28;
+    row++;
+
+    // 슬롯
+    for (let si = 0; si < pg.slots.length; si++) {
+      const d = pg.slots[si];
+      const imgRows = 4; // 이미지 높이
+      const startRow = row;
+
+      // No.
+      mergeFill(ws, startRow, 1, startRow + imgRows - 1, 1, si + 1 + (pi * slotCount), {size:10, bold:true});
+
+      // 신분증 이미지
+      mergeFill(ws, startRow, 2, startRow + imgRows - 1, 2, '', {fill:'FFF5F5F5'});
+      if (d.img1) await addImg(wb, ws, d.img1, startRow, 2, startRow + imgRows - 1, 2);
+
+      // 이수증 이미지
+      mergeFill(ws, startRow, 3, startRow + imgRows - 1, 3, '', {fill:'FFF5F5F5'});
+      if (d.img2) await addImg(wb, ws, d.img2, startRow, 3, startRow + imgRows - 1, 3);
+
+      // 성명
+      mergeFill(ws, startRow, 4, startRow + imgRows - 1, 4, `${d.nameLbl||'성명 :'} ${d.name||''}`, {size:10, wrap:true});
+
+      // 비고
+      mergeFill(ws, startRow, 5, startRow + imgRows - 1, 5, `${d.noteLbl||'비고 :'} ${d.note||''}`, {size:10, wrap:true});
+
+      for (let ir = startRow; ir < startRow + imgRows; ir++) ws.getRow(ir).height = 40;
+      row = startRow + imgRows;
+    }
+  }
+}
 
 // ══════════════════════════════════════════════
 //  쪽 표시
