@@ -47,8 +47,8 @@
     pointer-events: none;
   }
 
-  /* ── 헤더 ── */
-  .header {
+  /* ── 네비게이션 ── */
+  nav {
     position: relative; z-index: 10;
     background: rgba(15,17,23,.92);
     backdrop-filter: blur(16px);
@@ -58,19 +58,22 @@
     height: 56px; gap: 16px;
     flex-shrink: 0;
   }
-  .header-logo {
+  .nav-logo {
     font-family: 'Bebas Neue', sans-serif;
     font-size: 20px; letter-spacing: .1em;
     color: var(--orange);
     display: flex; align-items: center; gap: 8px;
     text-decoration: none;
   }
-  .header-logo span { color: var(--text); }
-  .header-sep { width: 1px; height: 24px; background: var(--border); }
-  .header-title { font-size: 14px; font-weight: 500; color: var(--muted2); }
-  .header-right {
-    margin-left: auto;
-    display: flex; align-items: center; gap: 8px;
+  .nav-logo span { color: var(--text); }
+  .nav-links {
+    display: flex; align-items: center; gap: 12px;
+    margin-left: 0;
+  }
+  .nav-title {
+    font-size: 14px; font-weight: 500; color: var(--muted2);
+    padding-left: 16px;
+    border-left: 1px solid var(--border);
   }
 
   /* ── 툴바 ── */
@@ -139,40 +142,6 @@
   }
   .connect-indicator .dot.on { background: var(--green); box-shadow: 0 0 6px var(--green); }
   .connect-indicator .dot.off { background: var(--red); box-shadow: 0 0 6px var(--red); }
-
-  .admin-login-btn {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 11px; font-weight: 400;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all .15s;
-    display: flex; align-items: center; gap: 6px;
-  }
-  .admin-login-btn:hover { color: var(--text); border-color: var(--muted); background: rgba(255,255,255,.05); }
-  .admin-dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--muted);
-    flex-shrink: 0;
-  }
-  .admin-user {
-    display: flex; align-items: center; gap: 8px;
-  }
-  .admin-logout-btn {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    border-radius: 6px;
-    padding: 4px 10px;
-    font-size: 11px;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all .15s;
-  }
-  .admin-logout-btn:hover { color: var(--text); border-color: var(--muted); }
 
   /* ── 캘린더 본체 ── */
   .calendar-wrap {
@@ -406,7 +375,7 @@
   }
 
   @media (max-width: 768px) {
-    .header { padding: 0 12px; }
+    nav { padding: 0 12px; }
     .toolbar { padding: 10px 12px; flex-wrap: wrap; }
     .toolbar-month { font-size: 22px; min-width: auto; }
     .legend { display: none; }
@@ -419,26 +388,21 @@
   }
 </style>
 <script src="auth.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
 </head>
 <body>
 
-<!-- 헤더 -->
-<div class="header">
-  <a class="header-logo" href="index.html">⚠ <span>SAFETY</span> PORTAL</a>
-  <div class="header-sep"></div>
-  <div class="header-title">안전보건 월간계획</div>
-  <div class="header-right">
+<!-- 네비게이션 — auth.js가 로그인 버튼 자동 주입 -->
+<nav>
+  <a class="nav-logo" href="index.html">⚠ <span>SAFETY</span> PORTAL</a>
+  <div class="nav-links">
+    <span class="nav-title">안전보건 월간계획</span>
     <div class="connect-indicator" id="statusIndicator">
       <div class="dot off"></div>
       <span>연결 안됨</span>
     </div>
-    <button class="admin-login-btn" id="adminLoginBtn" onclick="openLoginModal()"><span class="admin-dot"></span>관리자 로그인</button>
-    <div class="admin-user" id="adminUser" style="display:none;">
-      <span class="admin-badge">ADMIN</span>
-      <button class="admin-logout-btn" onclick="adminLogout()">로그아웃</button>
-    </div>
   </div>
-</div>
+</nav>
 
 <!-- 에러 배너 -->
 <div class="error-banner" id="errorBanner">
@@ -491,23 +455,6 @@
   <input class="admin-input" id="apiKeyInput" type="text" placeholder="Google API Key">
   <input class="admin-input" id="calIdInput" type="text" placeholder="캘린더 ID">
   <button class="admin-btn" onclick="saveConfig()">저장 및 연결</button>
-</div>
-
-<!-- 관리자 로그인 모달 -->
-<div class="modal-overlay" id="loginOverlay" onclick="if(event.target===this)closeLoginModal()">
-  <div class="modal" style="width:360px;">
-    <div class="modal-header">
-      <div class="modal-cat-bar" style="background:var(--orange);"></div>
-      <div><div class="modal-title">관리자 로그인</div></div>
-      <button class="modal-close" onclick="closeLoginModal()">✕</button>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:14px;">
-      <div style="font-size:13px;color:var(--muted2);">캘린더 설정을 변경하려면 관리자 비밀번호를 입력하세요.</div>
-      <input class="admin-input" id="adminPwInput" type="password" placeholder="비밀번호 입력" onkeydown="if(event.key==='Enter')adminLogin()">
-      <div id="loginError" style="font-size:12px;color:var(--red);display:none;">비밀번호가 일치하지 않습니다.</div>
-      <button class="admin-btn" style="width:100%;padding:10px;" onclick="adminLogin()">로그인</button>
-    </div>
-  </div>
 </div>
 
 <!-- 이벤트 상세 모달 -->
@@ -762,65 +709,37 @@ function saveConfig() {
   renderCalendar();
 }
 
-// ── 관리자 로그인 ──
-// ★ 관리자 비밀번호 설정 (원하는 비밀번호로 변경하세요) ★
-const ADMIN_PASSWORD = 'admin1234';
-
-function openLoginModal() {
-  document.getElementById('loginOverlay').classList.add('show');
-  document.getElementById('adminPwInput').value = '';
-  document.getElementById('loginError').style.display = 'none';
-  setTimeout(() => document.getElementById('adminPwInput').focus(), 100);
-}
-function closeLoginModal() {
-  document.getElementById('loginOverlay').classList.remove('show');
-}
-
-function adminLogin() {
-  const pw = document.getElementById('adminPwInput').value;
-  if (pw === ADMIN_PASSWORD) {
-    sessionStorage.setItem('calendarAdmin', 'true');
-    closeLoginModal();
-    showAdminUI();
-  } else {
-    document.getElementById('loginError').style.display = 'block';
-    document.getElementById('adminPwInput').value = '';
-    document.getElementById('adminPwInput').focus();
-  }
-}
-
-function adminLogout() {
-  sessionStorage.removeItem('calendarAdmin');
-  hideAdminUI();
-}
-
-function showAdminUI() {
-  document.getElementById('adminLoginBtn').style.display = 'none';
-  document.getElementById('adminUser').style.display = 'flex';
+// ── auth.js 연동: 관리자 로그인 시 설정 패널 표시 ──
+window.onAdminLogin = function() {
   document.getElementById('adminPanel').classList.add('show');
   if (CONFIG.GOOGLE_API_KEY) document.getElementById('apiKeyInput').value = CONFIG.GOOGLE_API_KEY;
   if (CONFIG.GOOGLE_CAL_ID) document.getElementById('calIdInput').value = CONFIG.GOOGLE_CAL_ID;
-}
-
-function hideAdminUI() {
-  document.getElementById('adminLoginBtn').style.display = '';
-  document.getElementById('adminUser').style.display = 'none';
+};
+window.onAdminLogout = function() {
   document.getElementById('adminPanel').classList.remove('show');
-}
-
-// ── 관리자 로그인 감지 ──
-function checkAdmin() {
-  if (sessionStorage.getItem('calendarAdmin') === 'true') {
-    showAdminUI();
+};
+window.onAuthStateChange = function() {
+  if (AUTH.isAdmin()) {
+    document.getElementById('adminPanel').classList.add('show');
+    if (CONFIG.GOOGLE_API_KEY) document.getElementById('apiKeyInput').value = CONFIG.GOOGLE_API_KEY;
+    if (CONFIG.GOOGLE_CAL_ID) document.getElementById('calIdInput').value = CONFIG.GOOGLE_CAL_ID;
+  } else {
+    document.getElementById('adminPanel').classList.remove('show');
   }
-}
+};
 
 // ── 초기화 ──
 const now = new Date();
 currentYear = now.getFullYear();
 currentMonth = now.getMonth();
 renderCalendar();
-checkAdmin();
+
+// 이미 관리자 로그인 상태면 패널 표시
+if (typeof AUTH !== 'undefined' && AUTH.isAdmin()) {
+  document.getElementById('adminPanel').classList.add('show');
+  if (CONFIG.GOOGLE_API_KEY) document.getElementById('apiKeyInput').value = CONFIG.GOOGLE_API_KEY;
+  if (CONFIG.GOOGLE_CAL_ID) document.getElementById('calIdInput').value = CONFIG.GOOGLE_CAL_ID;
+}
 </script>
 </body>
 </html>
