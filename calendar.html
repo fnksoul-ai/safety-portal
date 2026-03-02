@@ -68,13 +68,16 @@
   .nav-logo span { color: var(--text); }
   .nav-links {
     display: flex; align-items: center; gap: 12px;
-    margin-left: 0;
+    margin-left: auto;
   }
   .nav-title {
     font-size: 14px; font-weight: 500; color: var(--muted2);
     padding-left: 16px;
     border-left: 1px solid var(--border);
   }
+
+  /* 캘린더 페이지에서는 사용자 로그인 숨김 */
+  #userNavBtn, #userDropdown { display: none !important; }
 
   /* ── 툴바 ── */
   .toolbar {
@@ -392,11 +395,11 @@
 </head>
 <body>
 
-<!-- 네비게이션 — auth.js가 로그인 버튼 자동 주입 -->
+<!-- 네비게이션 — auth.js가 로그인 버튼 자동 주입 (우측) -->
 <nav>
   <a class="nav-logo" href="index.html">⚠ <span>SAFETY</span> PORTAL</a>
+  <span class="nav-title">안전보건 월간계획</span>
   <div class="nav-links">
-    <span class="nav-title">안전보건 월간계획</span>
     <div class="connect-indicator" id="statusIndicator">
       <div class="dot off"></div>
       <span>연결 안됨</span>
