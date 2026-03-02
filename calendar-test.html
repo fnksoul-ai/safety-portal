@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>안전보건 월간계획 — 테스트</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:       #0f1117;
+    --bg2:      #171b24;
+    --bg3:      #1e2330;
+    --border:   #2c3347;
+    --orange:   #f97316;
+    --orange2:  #fb923c;
+    --blue:     #3b82f6;
+    --green:    #22c55e;
+    --red:      #ef4444;
+    --yellow:   #eab308;
+    --purple:   #a855f7;
+    --cyan:     #06b6d4;
+    --text:     #f1f5f9;
+    --muted:    #64748b;
+    --muted2:   #94a3b8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── 배경 그리드 패턴 ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(249,115,22,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(249,115,22,.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* ── 헤더 ── */
+  .header {
+    position: relative; z-index: 10;
+    background: rgba(15,17,23,.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex; align-items: center;
+    height: 56px; gap: 16px;
+    flex-shrink: 0;
+  }
+  .header-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px; letter-spacing: .1em;
+    color: var(--orange);
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none;
+  }
+  .header-logo span { color: var(--text); }
+  .header-sep {
+    width: 1px; height: 24px; background: var(--border);
+  }
+  .header-title {
+    font-size: 14px; font-weight: 500; color: var(--muted2);
+  }
+  .header-right {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .header-badge {
+    background: rgba(249,115,22,.12);
+    border: 1px solid rgba(249,115,22,.3);
+    color: var(--orange2);
+    font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 12px;
+    letter-spacing: .04em;
+  }
+
+  /* ── 툴바 ── */
+  .toolbar {
+    position: relative; z-index: 5;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .toolbar-nav {
+    display: flex; align-items: center; gap: 4px;
+  }
+  .btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--muted2);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    font-family: inherit;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { color: var(--text); border-color: var(--muted); background: rgba(255,255,255,.05); }
+  .btn.icon { padding: 7px 10px; font-size: 16px; }
+  .btn.today {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: #fff;
+  }
+  .btn.today:hover { background: var(--orange2); border-color: var(--orange2); }
+
+  .toolbar-month {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; letter-spacing: .05em;
+    color: var(--text);
+    min-width: 200px;
+  }
+  .toolbar-month small {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 12px; font-weight: 400;
+    color: var(--muted);
+    letter-spacing: 0;
+    margin-left: 8px;
+  }
+  .toolbar-right {
+    margin-left: auto;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .legend {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 11px; color: var(--muted2);
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 5px;
+  }
+  .legend-dot {
+    width: 8px; height: 8px; border-radius: 2px;
+  }
+
+  /* ── 캘린더 본체 ── */
+  .calendar-wrap {
+    position: relative; z-index: 1;
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  /* 요일 헤더 */
+  .cal-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .cal-weekday {
+    padding: 10px 12px;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .1em;
+    color: var(--muted);
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .cal-weekday.sun { color: var(--red); }
+  .cal-weekday.sat { color: var(--blue); }
+
+  /* 날짜 그리드 */
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    grid-template-rows: repeat(6, 1fr);
+    flex: 1;
+  }
+
+  .cal-cell {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 8px;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    transition: background .15s;
+    cursor: default;
+  }
+  .cal-cell:nth-child(7n) { border-right: none; }
+  .cal-cell:hover { background: rgba(255,255,255,.02); }
+  .cal-cell.other-month { opacity: .3; }
+  .cal-cell.today {
+    background: rgba(249,115,22,.06);
+  }
+  .cal-cell.today .day-num {
+    background: var(--orange);
+    color: #fff;
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .day-num {
+    font-size: 13px; font-weight: 600;
+    color: var(--muted2);
+    margin-bottom: 4px;
+    width: 26px; height: 26px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .cal-cell.sun .day-num { color: var(--red); }
+  .cal-cell.sat .day-num { color: var(--blue); }
+  .cal-cell.today .day-num { color: #fff; }
+
+  /* 일정 이벤트 */
+  .events {
+    display: flex; flex-direction: column; gap: 2px;
+    overflow-y: auto; flex: 1;
+    scrollbar-width: none;
+  }
+  .events::-webkit-scrollbar { display: none; }
+
+  .event {
+    font-size: 11px; font-weight: 500;
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: filter .15s;
+    line-height: 1.6;
+  }
+  .event:hover { filter: brightness(1.2); }
+
+  /* 이벤트 카테고리 색상 */
+  .event.cat-education  { background: rgba(59,130,246,.18); color: #93c5fd; border-left: 2px solid var(--blue); }
+  .event.cat-inspection { background: rgba(34,197,94,.18);  color: #86efac; border-left: 2px solid var(--green); }
+  .event.cat-report     { background: rgba(239,68,68,.18);  color: #fca5a5; border-left: 2px solid var(--red); }
+  .event.cat-meeting    { background: rgba(168,85,247,.18); color: #d8b4fe; border-left: 2px solid var(--purple); }
+  .event.cat-drill      { background: rgba(249,115,22,.18); color: #fdba74; border-left: 2px solid var(--orange); }
+  .event.cat-holiday    { background: rgba(234,179,8,.18);  color: #fde047; border-left: 2px solid var(--yellow); }
+  .event.cat-default    { background: rgba(6,182,212,.18);  color: #67e8f9; border-left: 2px solid var(--cyan); }
+
+  .more-events {
+    font-size: 10px; color: var(--muted);
+    padding: 1px 6px; cursor: pointer;
+  }
+  .more-events:hover { color: var(--orange); }
+
+  /* ── 이벤트 상세 모달 ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    width: 420px; max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 28px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.5);
+  }
+  .modal-header {
+    display: flex; align-items: flex-start; gap: 12px;
+    margin-bottom: 20px;
+  }
+  .modal-cat-bar {
+    width: 4px; border-radius: 2px;
+    min-height: 40px; flex-shrink: 0;
+  }
+  .modal-title {
+    font-size: 18px; font-weight: 700;
+    line-height: 1.4;
+  }
+  .modal-close {
+    margin-left: auto;
+    background: none; border: none;
+    color: var(--muted); font-size: 20px;
+    cursor: pointer; padding: 4px;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-info {
+    display: flex; flex-direction: column; gap: 10px;
+    font-size: 13px; color: var(--muted2);
+  }
+  .modal-info-row {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .modal-info-icon {
+    width: 20px; text-align: center; flex-shrink: 0;
+  }
+
+  /* ── 연결 설정 패널 ── */
+  .connect-panel {
+    position: relative; z-index: 5;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .connect-label {
+    font-size: 12px; color: var(--muted);
+    flex-shrink: 0;
+  }
+  .connect-input {
+    flex: 1;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .connect-input:focus { border-color: var(--orange); }
+  .connect-input::placeholder { color: var(--muted); }
+  .connect-btn {
+    background: var(--orange);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .15s;
+    white-space: nowrap;
+  }
+  .connect-btn:hover { background: var(--orange2); }
+  .connect-btn:disabled { opacity: .5; cursor: not-allowed; }
+  .connect-status {
+    font-size: 11px; color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .connect-status .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .connect-status .dot.on  { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .connect-status .dot.off { background: var(--muted); }
+
+  /* ── 로딩 ── */
+  .loading-overlay {
+    position: absolute; inset: 0;
+    background: rgba(15,17,23,.8);
+    display: none; align-items: center; justify-content: center;
+    z-index: 50;
+    flex-direction: column; gap: 12px;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--orange);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--muted2); }
+
+  /* ── 반응형 ── */
+  @media (max-width: 768px) {
+    .header { padding: 0 12px; }
+    .toolbar { padding: 10px 12px; flex-wrap: wrap; }
+    .toolbar-month { font-size: 22px; min-width: auto; }
+    .legend { display: none; }
+    .cal-weekday { padding: 8px 4px; font-size: 10px; }
+    .cal-cell { padding: 4px; }
+    .day-num { font-size: 11px; width: 22px; height: 22px; }
+    .event { font-size: 10px; padding: 1px 4px; }
+    .connect-panel { flex-wrap: wrap; }
+    .connect-input { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div class="header">
+  <a class="header-logo" href="index.html">⚠ <span>SAFETY</span> PORTAL</a>
+  <div class="header-sep"></div>
+  <div class="header-title">안전보건 월간계획</div>
+  <div class="header-right">
+    <span class="header-badge">TEST</span>
+  </div>
+</div>
+
+<!-- 툴바 -->
+<div class="toolbar">
+  <div class="toolbar-nav">
+    <button class="btn today" onclick="goToday()">오늘</button>
+    <button class="btn icon" onclick="prevMonth()">◀</button>
+    <button class="btn icon" onclick="nextMonth()">▶</button>
+  </div>
+  <div class="toolbar-month" id="monthLabel"></div>
+  <div class="toolbar-right">
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>안전교육</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>안전점검</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>신고/보고</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>회의</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>훈련</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>공휴일</div>
+    </div>
+  </div>
+</div>
+
+<!-- 캘린더 -->
+<div class="calendar-wrap">
+  <div class="cal-weekdays">
+    <div class="cal-weekday sun">일</div>
+    <div class="cal-weekday">월</div>
+    <div class="cal-weekday">화</div>
+    <div class="cal-weekday">수</div>
+    <div class="cal-weekday">목</div>
+    <div class="cal-weekday">금</div>
+    <div class="cal-weekday sat">토</div>
+  </div>
+  <div class="cal-grid" id="calGrid"></div>
+  <div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">일정을 불러오는 중...</div>
+  </div>
+</div>
+
+<!-- 하단 Google Calendar 연결 패널 -->
+<div class="connect-panel">
+  <span class="connect-label">📅 Google Calendar 연결</span>
+  <input class="connect-input" id="apiKeyInput" type="text" placeholder="Google API Key 입력">
+  <input class="connect-input" id="calIdInput" type="text" placeholder="캘린더 ID (예: xxxxx@group.calendar.google.com)">
+  <button class="connect-btn" id="connectBtn" onclick="connectCalendar()">연결</button>
+  <div class="connect-status" id="connectStatus">
+    <div class="dot off"></div>
+    <span>더미 데이터 모드</span>
+  </div>
+</div>
+
+<!-- 이벤트 상세 모달 -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-cat-bar" id="modalCatBar"></div>
+      <div>
+        <div class="modal-title" id="modalTitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-info" id="modalInfo"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// 상태
+// ══════════════════════════════════════════
+let currentYear, currentMonth; // 0-indexed month
+let googleApiKey = '';
+let googleCalId = '';
+let isConnected = false;
+let cachedEvents = {};
+
+const MONTHS_KR = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const CATEGORY_MAP = {
+  '교육': 'education',
+  '안전교육': 'education',
+  '신규자': 'education',
+  '특별교육': 'education',
+  '점검': 'inspection',
+  '안전점검': 'inspection',
+  '합동점검': 'inspection',
+  '정기점검': 'inspection',
+  '보고': 'report',
+  '신고': 'report',
+  '산재': 'report',
+  '보고서': 'report',
+  '제출': 'report',
+  '회의': 'meeting',
+  '산안위': 'meeting',
+  '협의체': 'meeting',
+  '간담회': 'meeting',
+  '훈련': 'drill',
+  '소방': 'drill',
+  '대피': 'drill',
+  '비상': 'drill',
+  '공휴일': 'holiday',
+  '휴일': 'holiday',
+  '대체공휴일': 'holiday',
+};
+
+const CAT_COLORS = {
+  education:  'var(--blue)',
+  inspection: 'var(--green)',
+  report:     'var(--red)',
+  meeting:    'var(--purple)',
+  drill:      'var(--orange)',
+  holiday:    'var(--yellow)',
+  default:    'var(--cyan)',
+};
+
+// ══════════════════════════════════════════
+// 더미 데이터 (테스트용)
+// ══════════════════════════════════════════
+function getDummyEvents(year, month) {
+  const m = month + 1;
+  const base = [
+    { title: '신규채용자 안전교육', date: `${year}-${String(m).padStart(2,'0')}-02`, time: '09:00 - 12:00', location: '현장 교육장', desc: '신규 입장 근로자 대상 채용 시 안전교육 (8시간)' },
+    { title: '정기 안전점검', date: `${year}-${String(m).padStart(2,'0')}-05`, time: '10:00 - 16:00', location: '현장 전체', desc: '월간 정기 안전점검 실시' },
+    { title: '안전보건 협의체 회의', date: `${year}-${String(m).padStart(2,'0')}-07`, time: '14:00 - 16:00', location: '현장 사무실', desc: '노사 안전보건 협의체 정기회의' },
+    { title: '특별안전교육 (밀폐공간)', date: `${year}-${String(m).padStart(2,'0')}-10`, time: '09:00 - 12:00', location: '현장 교육장', desc: '밀폐공간 작업 대상 특별안전교육 (16시간/2일)' },
+    { title: '근로자 정기 안전교육', date: `${year}-${String(m).padStart(2,'0')}-12`, time: '08:00 - 09:00', location: '현장 교육장', desc: '근로자 정기 안전보건교육 (매월 2시간)' },
+    { title: '소방 대피훈련', date: `${year}-${String(m).padStart(2,'0')}-14`, time: '11:00 - 12:00', location: '현장 전체', desc: '분기별 소방 및 비상대피 훈련 실시' },
+    { title: '산업안전보건위원회', date: `${year}-${String(m).padStart(2,'0')}-15`, time: '10:00 - 12:00', location: '본사 회의실', desc: '산업안전보건위원회 정기 심의·의결' },
+    { title: '합동 안전점검', date: `${year}-${String(m).padStart(2,'0')}-18`, time: '09:00 - 17:00', location: '현장 전체', desc: '발주처 합동 안전점검' },
+    { title: '안전관리비 사용 보고', date: `${year}-${String(m).padStart(2,'0')}-20`, time: '종일', location: '-', desc: '안전관리비 사용실적 보고서 제출 기한' },
+    { title: '관리감독자 안전교육', date: `${year}-${String(m).padStart(2,'0')}-22`, time: '14:00 - 18:00', location: '현장 교육장', desc: '관리감독자 정기 안전보건교육 (연 16시간)' },
+    { title: '안전보건 간담회', date: `${year}-${String(m).padStart(2,'0')}-24`, time: '16:00 - 17:00', location: '현장 사무실', desc: '현장 근로자 안전보건 간담회' },
+    { title: '월간 안전보고서 제출', date: `${year}-${String(m).padStart(2,'0')}-28`, time: '종일', location: '-', desc: '월간 안전관리 보고서 발주처 제출 기한' },
+  ];
+  // 적절한 날짜가 해당 월에 없으면 필터링
+  return base.filter(e => {
+    const d = new Date(e.date);
+    return d.getMonth() === month && d.getFullYear() === year;
+  });
+}
+
+// ══════════════════════════════════════════
+// 카테고리 자동 분류
+// ══════════════════════════════════════════
+function classifyEvent(title) {
+  for (const [keyword, cat] of Object.entries(CATEGORY_MAP)) {
+    if (title.includes(keyword)) return cat;
+  }
+  return 'default';
+}
+
+// ══════════════════════════════════════════
+// Google Calendar API 연동
+// ══════════════════════════════════════════
+async function fetchGoogleEvents(year, month) {
+  const key = `${year}-${month}`;
+  if (cachedEvents[key]) return cachedEvents[key];
+
+  const timeMin = new Date(year, month, 1).toISOString();
+  const timeMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+  const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(googleCalId)}/events?` +
+    `key=${googleApiKey}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=250`;
+
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`API 오류: ${resp.status}`);
+  const data = await resp.json();
+
+  const events = (data.items || []).map(item => {
+    const start = item.start.dateTime || item.start.date;
+    const end = item.end.dateTime || item.end.date;
+    const isAllDay = !item.start.dateTime;
+    let timeStr = '종일';
+    if (!isAllDay) {
+      const s = new Date(start);
+      const e = new Date(end);
+      timeStr = `${String(s.getHours()).padStart(2,'0')}:${String(s.getMinutes()).padStart(2,'0')} - ${String(e.getHours()).padStart(2,'0')}:${String(e.getMinutes()).padStart(2,'0')}`;
+    }
+    return {
+      title: item.summary || '(제목 없음)',
+      date: isAllDay ? start : start.slice(0, 10),
+      time: timeStr,
+      location: item.location || '-',
+      desc: item.description || '',
+    };
+  });
+
+  cachedEvents[key] = events;
+  return events;
+}
+
+// ══════════════════════════════════════════
+// 캘린더 렌더링
+// ══════════════════════════════════════════
+async function renderCalendar() {
+  const grid = document.getElementById('calGrid');
+  const loading = document.getElementById('loading');
+
+  // 헤더 업데이트
+  document.getElementById('monthLabel').innerHTML =
+    `${currentYear}년 ${MONTHS_KR[currentMonth]}` +
+    `<small>${currentYear}.${String(currentMonth+1).padStart(2,'0')}</small>`;
+
+  // 이벤트 로드
+  let events = [];
+  loading.classList.add('show');
+  try {
+    if (isConnected) {
+      events = await fetchGoogleEvents(currentYear, currentMonth);
+    } else {
+      events = getDummyEvents(currentYear, currentMonth);
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Google Calendar 일정 로드 실패: ' + err.message);
+    events = getDummyEvents(currentYear, currentMonth);
+  }
+  loading.classList.remove('show');
+
+  // 날짜별 이벤트 매핑
+  const eventsByDate = {};
+  events.forEach(ev => {
+    if (!eventsByDate[ev.date]) eventsByDate[ev.date] = [];
+    eventsByDate[ev.date].push(ev);
+  });
+
+  // 그리드 계산
+  const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  const prevDays = new Date(currentYear, currentMonth, 0).getDate();
+
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
+  let html = '';
+  for (let i = 0; i < 42; i++) {
+    const col = i % 7;
+    let day, dateStr, isOther = false;
+
+    if (i < firstDay) {
+      // 이전 달
+      day = prevDays - firstDay + 1 + i;
+      const pm = currentMonth === 0 ? 12 : currentMonth;
+      const py = currentMonth === 0 ? currentYear - 1 : currentYear;
+      dateStr = `${py}-${String(pm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      isOther = true;
+    } else if (i >= firstDay + daysInMonth) {
+      // 다음 달
+      day = i - firstDay - daysInMonth + 1;
+      const nm = currentMonth + 2 > 12 ? 1 : currentMonth + 2;
+      const ny = currentMonth + 2 > 12 ? currentYear + 1 : currentYear;
+      dateStr = `${ny}-${String(nm).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      isOther = true;
+    } else {
+      day = i - firstDay + 1;
+      dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    }
+
+    const isToday = dateStr === todayStr;
+    const isSun = col === 0;
+    const isSat = col === 6;
+
+    let classes = 'cal-cell';
+    if (isOther) classes += ' other-month';
+    if (isToday) classes += ' today';
+    if (isSun) classes += ' sun';
+    if (isSat) classes += ' sat';
+
+    html += `<div class="${classes}">`;
+    html += `<div class="day-num">${day}</div>`;
+    html += `<div class="events">`;
+
+    const dayEvents = eventsByDate[dateStr] || [];
+    const maxShow = 3;
+    dayEvents.slice(0, maxShow).forEach((ev, idx) => {
+      const cat = classifyEvent(ev.title);
+      const evJson = JSON.stringify(ev).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      html += `<div class="event cat-${cat}" onclick='showModal(${JSON.stringify(ev).replace(/'/g, "\\'")})'>${ev.title}</div>`;
+    });
+    if (dayEvents.length > maxShow) {
+      html += `<div class="more-events">+${dayEvents.length - maxShow}개 더보기</div>`;
+    }
+
+    html += `</div></div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+// ══════════════════════════════════════════
+// 네비게이션
+// ══════════════════════════════════════════
+function goToday() {
+  const now = new Date();
+  currentYear = now.getFullYear();
+  currentMonth = now.getMonth();
+  renderCalendar();
+}
+function prevMonth() {
+  currentMonth--;
+  if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+  renderCalendar();
+}
+function nextMonth() {
+  currentMonth++;
+  if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+  renderCalendar();
+}
+
+// ══════════════════════════════════════════
+// 모달
+// ══════════════════════════════════════════
+function showModal(ev) {
+  const cat = classifyEvent(ev.title);
+  document.getElementById('modalCatBar').style.background = CAT_COLORS[cat];
+  document.getElementById('modalTitle').textContent = ev.title;
+
+  const infoHtml = `
+    <div class="modal-info-row">
+      <span class="modal-info-icon">📅</span>
+      <span>${ev.date} (${getDayName(ev.date)})</span>
+    </div>
+    <div class="modal-info-row">
+      <span class="modal-info-icon">🕐</span>
+      <span>${ev.time}</span>
+    </div>
+    <div class="modal-info-row">
+      <span class="modal-info-icon">📍</span>
+      <span>${ev.location}</span>
+    </div>
+    ${ev.desc ? `
+    <div style="margin-top:8px; padding-top:12px; border-top:1px solid var(--border);">
+      <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">상세 내용</div>
+      <div style="font-size:13px; color:var(--text); line-height:1.7;">${ev.desc}</div>
+    </div>` : ''}
+  `;
+  document.getElementById('modalInfo').innerHTML = infoHtml;
+  document.getElementById('modalOverlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+}
+
+function getDayName(dateStr) {
+  const days = ['일','월','화','수','목','금','토'];
+  return days[new Date(dateStr).getDay()];
+}
+
+// ESC 키로 모달 닫기
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ══════════════════════════════════════════
+// Google Calendar 연결
+// ══════════════════════════════════════════
+function connectCalendar() {
+  const apiKey = document.getElementById('apiKeyInput').value.trim();
+  const calId = document.getElementById('calIdInput').value.trim();
+
+  if (!apiKey || !calId) {
+    alert('API Key와 캘린더 ID를 모두 입력해주세요.');
+    return;
+  }
+
+  googleApiKey = apiKey;
+  googleCalId = calId;
+  isConnected = true;
+  cachedEvents = {};
+
+  document.getElementById('connectStatus').innerHTML =
+    '<div class="dot on"></div><span>Google Calendar 연결됨</span>';
+  document.getElementById('connectBtn').textContent = '재연결';
+
+  renderCalendar();
+}
+
+// ══════════════════════════════════════════
+// 초기화
+// ══════════════════════════════════════════
+const now = new Date();
+currentYear = now.getFullYear();
+currentMonth = now.getMonth();
+renderCalendar();
+</script>
+</body>
+</html>
