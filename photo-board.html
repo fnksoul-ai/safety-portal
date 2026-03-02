@@ -229,13 +229,19 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
   @page{size:A4 portrait;margin:0}
 }
 /* ─ id-cert template ─ */
-.ic-hdr-table{width:100%;border-collapse:collapse;margin-bottom:0;font-family:'Malgun Gothic',sans-serif;font-size:11px;table-layout:fixed}
-.ic-hdr-table td{border:1px solid #222;padding:4px 8px;height:25px;vertical-align:middle}
-.ic-hdr-table .ic-lbl{background:#e8e8e8;font-weight:700;text-align:center;font-size:10px;color:#222}
-.ic-hdr-table .ic-val{color:#111;font-size:11px;position:relative}
-.ic-hdr-table .ic-val input{display:block;width:100%;height:100%;border:none;outline:none;background:transparent;padding:0 2px;box-sizing:border-box;cursor:text;font-family:inherit;font-size:inherit;color:inherit}
-.ic-title-row td{border:1px solid #222;text-align:center;font-size:16px;font-weight:700;color:#002060;padding:10px 8px;letter-spacing:2px;cursor:text}
-.ic-col-hdr td{border:1px solid #222;text-align:center;font-weight:700;font-size:10px;background:#e8e8e8;color:#222;padding:5px 4px}
+.ic-hdr{width:100%;font-family:'Malgun Gothic',sans-serif;font-size:11px;border:1px solid #222;display:grid;grid-template-columns:60px 1fr 60px 1fr;grid-template-rows:auto auto auto auto}
+.ic-hdr-title{grid-column:1/-1;text-align:center;font-size:16px;font-weight:700;color:#002060;padding:10px 8px;letter-spacing:2px;border-bottom:1px solid #222;cursor:text;outline:none}
+.ic-hdr-title:focus{background:#fffbe6}
+.ic-hdr-lbl{background:#e8e8e8;font-weight:700;text-align:center;font-size:10px;color:#222;padding:5px 4px;border-bottom:1px solid #222;border-right:1px solid #222;display:flex;align-items:center;justify-content:center;cursor:text;outline:none}
+.ic-hdr-lbl:focus{background:#fff3e0;outline:2px solid #f97316;outline-offset:-1px}
+.ic-hdr-val{padding:4px 8px;color:#111;font-size:11px;cursor:text;outline:none;min-height:18px;border-bottom:1px solid #222}
+.ic-hdr-val:focus{background:#fffbe6;outline:2px solid #f97316;outline-offset:-1px}
+.ic-hdr-val:empty:before{content:attr(data-placeholder);color:#aaa;pointer-events:none}
+.ic-col-hdr-row{grid-column:1/-1;display:grid;grid-template-columns:28px 1fr 1fr;text-align:center;font-weight:700;font-size:10px;background:#e8e8e8;color:#222}
+.ic-col-hdr-row>div{padding:5px 4px;border-right:1px solid #222;outline:none}
+.ic-col-hdr-row>div:last-child{border-right:none}
+.ic-col-hdr-row>div[contenteditable]:focus{background:#fff3e0;outline:2px solid #f97316;outline-offset:-1px}
+[data-icmeta].ic-active{outline:2px solid #f97316;outline-offset:-1px}
 .ic-grid{display:flex;flex-direction:column;flex:1;min-height:0}
 .ic-slot{display:grid;grid-template-columns:28px 1fr 1fr;grid-template-rows:1fr auto;border-left:1px solid #222;border-right:1px solid #222;border-bottom:1px solid #222;min-height:0;flex:1}
 .ic-num{grid-row:1/3;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#333;border-right:1px solid #222;background:#fff}
@@ -252,7 +258,8 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .ic-meta{grid-column:2/4;display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #222;min-height:20px}
 .ic-meta-cell{display:grid;grid-template-columns:42px 1fr;font-size:10px}
 .ic-meta-cell:first-child{border-right:1px solid #222}
-.ic-meta-lbl{background:#e8e8e8;font-weight:700;display:flex;align-items:center;justify-content:center;border-right:1px solid #222;color:#222;padding:2px;font-size:9px}
+.ic-meta-lbl{background:#e8e8e8;font-weight:700;display:flex;align-items:center;justify-content:center;border-right:1px solid #222;color:#222;padding:2px;font-size:9px;cursor:text;outline:none}
+.ic-meta-lbl:focus{background:#fff3e0;outline:2px solid #f97316;outline-offset:-1px}
 .ic-meta-inp{border:none;outline:none;padding:2px 5px;font-family:'Malgun Gothic',sans-serif;font-size:10px;background:transparent;color:#111;width:100%;min-width:0}
 .ic-meta-lbl.sel.on,.ic-meta-inp.sel.on{outline:2px solid #f97316;outline-offset:-1px;background:rgba(249,115,22,.06)}
 </style>
@@ -900,12 +907,17 @@ function ensureSlotsIdCert(pg) {
   pg.slots.forEach(s => {
     if (!s.cells) s.cells = { name:defCell(), note:defCell(), nameLabel:defLbl(), noteLabel:defLbl() };
   });
-  if (!pg.idCertMeta) pg.idCertMeta = {projectName:'', company:'', hireDate:'', headcount:'',
-    cells:{title:defCell(),projectName:defCell(),company:defCell(),hireDate:defCell(),headcount:defCell(),
-           projectNameLbl:defLbl(),companyLbl:defLbl(),hireDateLbl:defLbl(),headcountLbl:defLbl()}};
-  if (!pg.idCertMeta.cells) pg.idCertMeta.cells = {title:defCell(),projectName:defCell(),company:defCell(),hireDate:defCell(),headcount:defCell(),
-    projectNameLbl:defLbl(),companyLbl:defLbl(),hireDateLbl:defLbl(),headcountLbl:defLbl()};
-  if (!pg.idCertMeta.cells.title) pg.idCertMeta.cells.title = defCell();
+  const defTitle = ()=>({font:"'Malgun Gothic',sans-serif",sz:'16px',align:'center',bold:true,va:'middle',bt:0,bb:0,bl:0,br:0,color:'#002060',spacing:'2px'});
+  if (!pg.idCertMeta) pg.idCertMeta = {projectName:'', company:'', hireDate:'', headcount:'', colHdr1:'', colHdr2:'',
+    cells:{title:defTitle(),projectName:defCell(),company:defCell(),hireDate:defCell(),headcount:defCell(),
+           projectNameLbl:defLbl(),companyLbl:defLbl(),hireDateLbl:defLbl(),headcountLbl:defLbl(),
+           colHdr1:defLbl(),colHdr2:defLbl()}};
+  if (!pg.idCertMeta.cells) pg.idCertMeta.cells = {title:defTitle(),projectName:defCell(),company:defCell(),hireDate:defCell(),headcount:defCell(),
+    projectNameLbl:defLbl(),companyLbl:defLbl(),hireDateLbl:defLbl(),headcountLbl:defLbl(),
+    colHdr1:defLbl(),colHdr2:defLbl()};
+  if (!pg.idCertMeta.cells.title) pg.idCertMeta.cells.title = defTitle();
+  if (!pg.idCertMeta.cells.colHdr1) pg.idCertMeta.cells.colHdr1 = defLbl();
+  if (!pg.idCertMeta.cells.colHdr2) pg.idCertMeta.cells.colHdr2 = defLbl();
 }
 function ensureSlots(pg) {
   while (pg.slots.length < slotCount) pg.slots.push(newSlot());
@@ -1044,6 +1056,11 @@ function refreshSel() {
   // icmeta 요소 하이라이트
   document.querySelectorAll('[data-icmeta="1"]').forEach(el => {
     const active = sel.has(`${el.dataset.page}:icmeta:${el.dataset.ct}`);
+    el.classList.toggle('ic-active', active);
+  });
+  // ic-hdr data-key 요소 하이라이트
+  document.querySelectorAll('[data-key][data-pi]').forEach(el => {
+    const active = sel.has(`${el.dataset.pi}:icmeta:${el.dataset.key}`);
     el.style.outline = active ? '2px solid #f97316' : '';
     el.style.outlineOffset = active ? '-1px' : '';
   });
@@ -1094,7 +1111,8 @@ function refreshFmtBar() {
     if (f.bold) document.getElementById('BOLD').classList.add('on');
     if (f.align) { const am={left:'AL',center:'AC',right:'AR'}; if(am[f.align]) document.getElementById(am[f.align]).classList.add('on'); }
     const hintMap={title:'문서 제목',projectName:'공사명',company:'업체명',hireDate:'채용일자',headcount:'인원',
-      projectNameLbl:'공사명 라벨',companyLbl:'업체명 라벨',hireDateLbl:'채용일자 라벨',headcountLbl:'인원 라벨'};
+      projectNameLbl:'공사명 라벨',companyLbl:'업체명 라벨',hireDateLbl:'채용일자 라벨',headcountLbl:'인원 라벨',
+      colHdr1:'신분증 헤더',colHdr2:'이수증 헤더'};
     document.getElementById('fhint').textContent = (hintMap[ct]||ct) + ' 선택됨';
     return;
   }
@@ -1186,13 +1204,13 @@ function applyFmt(type, value) {
       if (type==='spacing')  f.spacing=value;
       if (type==='color')    f.color=value;
       // DOM 반영
-      const el = document.querySelector(`[data-icmeta="1"][data-page="${pi}"][data-ct="${ct}"]`);
+      let el = document.querySelector(`[data-icmeta="1"][data-page="${pi}"][data-ct="${ct}"]`);
+      if (!el) el = document.querySelector(`[data-key="${ct}"][data-pi="${pi}"]`);
       if (el) {
-        const inp = el.querySelector('input') || el;
-        inp.style.fontFamily=f.font; inp.style.fontSize=f.sz;
-        inp.style.fontWeight=f.bold?'700':'400'; inp.style.color=f.color;
-        inp.style.letterSpacing=f.spacing||'0px';
-        if (f.align) inp.style.textAlign=f.align;
+        el.style.fontFamily=f.font; el.style.fontSize=f.sz;
+        el.style.fontWeight=f.bold?'700':'400'; el.style.color=f.color;
+        el.style.letterSpacing=f.spacing||'0px';
+        if (f.align) el.style.textAlign=f.align;
       }
       return;
     }
@@ -1255,6 +1273,8 @@ function qFont(d) {
   if (si === 'hdr') {
     const pg = pages[+pi];
     f = ct==='title' ? pg?.titleFmt : ct==='sitelabel' ? pg?.siteLblFmt : pg?.siteFmt;
+  } else if (si === 'icmeta') {
+    f = pages[+pi]?.idCertMeta?.cells?.[ct];
   } else {
     f = pages[+pi]?.slots[+si]?.cells[ct];
   }
@@ -1271,6 +1291,8 @@ function qSpacing(d) {
   if (si === 'hdr') {
     const pg = pages[+pi];
     f = ct==='title' ? pg?.titleFmt : ct==='sitelabel' ? pg?.siteLblFmt : pg?.siteFmt;
+  } else if (si === 'icmeta') {
+    f = pages[+pi]?.idCertMeta?.cells?.[ct];
   } else {
     f = pages[+pi]?.slots[+si]?.cells[ct];
   }
@@ -1593,10 +1615,13 @@ function makeSlotIdCert(pi, si, d, globalIdx) {
     // 라벨
     const lbl = document.createElement('div');
     lbl.className = 'ic-meta-lbl sel'; lbl.dataset.ct = lblCt;
+    lbl.contentEditable = 'true';
     if (sel.has(`${pi}:${si}:${lblCt}`)) lbl.classList.add('on');
     const lblF = d.cells[lblCt];
     if (lblF) lbl.style.cssText += `;font-family:${lblF.font};font-size:${lblF.sz};font-weight:${lblF.bold?'700':'400'};color:${lblF.color||'#222'};letter-spacing:${lblF.spacing||'0px'}`;
     lbl.textContent = d[lblTextKey] || placeholder;
+    lbl.addEventListener('input', () => { d[lblTextKey] = lbl.textContent; });
+    lbl.addEventListener('mousedown', e => { e.stopPropagation(); });
     lbl.addEventListener('click', e => { e.stopPropagation(); selCell(pi, si, lblCt, e.ctrlKey||e.metaKey); });
     // 값 입력
     const inp = document.createElement('input');
@@ -1639,90 +1664,45 @@ function renderAllIdCert() {
     const sheet = document.createElement('div'); sheet.className='sheet';
     sheet.style.padding = '40px 65px';
 
-    // ─ 헤더 테이블 (엑셀 A~U 비율 반영) ─
-    // A=3.625, B~K=130(10×13), L~U=130(10×13) → 비율 ~1.4% : 49.3% : 49.3%
-    // 헤더행: 라벨1(A~B)=6.3%, 값1(C~K)=44.4%, 라벨2(L~M)=9.9%, 값2(N~U)=39.4%
-    const tbl = document.createElement('table'); tbl.className = 'ic-hdr-table';
-    // colgroup for 21 equal sub-columns (A~U)
-    const cg = document.createElement('colgroup');
-    // col A = narrow
-    const colA = document.createElement('col'); colA.style.width = '28px'; cg.appendChild(colA);
-    // cols B~U = 20 equal columns
-    for (let c=0; c<20; c++) { const col = document.createElement('col'); col.style.width = `${(100-4)/20}%`; cg.appendChild(col); }
-    tbl.appendChild(cg);
-
+    // ─ 헤더 ─
     const mc = meta.cells || {};
-
-    // Row 1-2: 타이틀 (A1:U2)
-    const tr1 = document.createElement('tr'); tr1.className = 'ic-title-row';
-    const tdTitle = document.createElement('td'); tdTitle.colSpan = 21;
-    tdTitle.textContent = title;
-    tdTitle.dataset.ct = 'title'; tdTitle.dataset.page = pi; tdTitle.dataset.icmeta = '1';
-    const titleF = mc.title;
-    tdTitle.style.cssText = 'height:42px;cursor:text';
-    if (titleF) { tdTitle.style.fontFamily=titleF.font; tdTitle.style.fontSize=titleF.sz; tdTitle.style.fontWeight=titleF.bold?'700':'400'; tdTitle.style.color=titleF.color||'#002060'; tdTitle.style.letterSpacing=titleF.spacing||'2px'; }
-    tdTitle.contentEditable = pi===0 ? 'true' : 'false';
-    if (pi===0) {
-      tdTitle.addEventListener('input', ()=>{ document.getElementById('docTitle').value=tdTitle.textContent; syncTitle(tdTitle.textContent); });
-    }
-    tdTitle.addEventListener('mousedown', e => { e.stopPropagation(); });
-    tdTitle.addEventListener('click', e => { e.stopPropagation(); sel.clear(); sel.add(`${pi}:icmeta:title`); refreshSel(); refreshFmtBar(); });
-    if (sel.has(`${pi}:icmeta:title`)) { tdTitle.style.outline='2px solid #f97316'; tdTitle.style.outlineOffset='-1px'; }
-    tr1.appendChild(tdTitle); tbl.appendChild(tr1);
-
-    // Row 3: 공사명(A~B) | 값(C~K) | 업체명(L~M) | 값(N~U)
-    const tr2 = document.createElement('tr');
-    function mkLbl(text, cs, cellKey) {
-      const td = document.createElement('td'); td.className='ic-lbl sel'; td.colSpan=cs; td.textContent=text;
-      td.dataset.ct = cellKey; td.dataset.page = pi; td.dataset.icmeta = '1';
-      if (sel.has(`${pi}:icmeta:${cellKey}`)) td.classList.add('on');
-      const f = mc[cellKey];
-      if (f) { td.style.fontFamily=f.font; td.style.fontSize=f.sz; td.style.fontWeight=f.bold?'700':'400'; td.style.color=f.color||'#222'; td.style.letterSpacing=f.spacing||'0px'; }
-      td.addEventListener('click', e => { e.stopPropagation(); sel.clear(); sel.add(`${pi}:icmeta:${cellKey}`); refreshSel(); refreshFmtBar(); });
-      return td;
-    }
-    function mkVal(val, key, ph, cs) {
-      const td = document.createElement('td'); td.className='ic-val'; td.colSpan=cs;
-      td.dataset.ct = key; td.dataset.page = pi; td.dataset.icmeta = '1';
-      if (pi===0) {
-        const inp = document.createElement('input');
-        inp.type = 'text';
-        inp.style.cssText = 'border:none;outline:none;background:transparent;width:100%;height:100%;padding:0 2px;box-sizing:border-box;cursor:text;position:relative;z-index:1;font-family:inherit;font-size:inherit;color:inherit';
-        const f = mc[key];
-        if (f) { inp.style.fontFamily=f.font; inp.style.fontSize=f.sz; inp.style.fontWeight=f.bold?'700':'400'; inp.style.color=f.color||'#111'; inp.style.letterSpacing=f.spacing||'0px'; inp.style.textAlign=f.align||'left'; }
-        inp.value = val; inp.placeholder = ph;
-        inp.oninput = e => { meta[key] = e.target.value; };
-        inp.addEventListener('mousedown', e => { e.stopPropagation(); });
-        inp.addEventListener('click', e => { e.stopPropagation(); sel.clear(); sel.add(`${pi}:icmeta:${key}`); refreshSel(); refreshFmtBar(); });
-        td.appendChild(inp);
-      } else { td.textContent = val; }
-      return td;
-    }
-    tr2.append(
-      mkLbl('공사명', 2, 'projectNameLbl'),
-      mkVal(meta.projectName||site, 'projectName', '공사명 입력', 9),
-      mkLbl('업체명', 2, 'companyLbl'),
-      mkVal(meta.company, 'company', '업체명 입력', 8)
-    );
-    tbl.appendChild(tr2);
-
-    // Row 4: 채용일자(A~B) | 값(C~K) | 인원(L~M) | 값(N~U)
-    const tr3 = document.createElement('tr');
-    tr3.append(
-      mkLbl('채용일자', 2, 'hireDateLbl'),
-      mkVal(meta.hireDate, 'hireDate', '날짜 입력', 9),
-      mkLbl('인원', 2, 'headcountLbl'),
-      mkVal(meta.headcount, 'headcount', '인원 수', 8)
-    );
-    tbl.appendChild(tr3);
-
-    // Row 5: No.(A) | 신분증(B~K) | 건설업 기초안전보건교육 이수증(L~U)
-    const tr4 = document.createElement('tr'); tr4.className = 'ic-col-hdr';
-    const th1 = document.createElement('td'); th1.colSpan=1; th1.textContent='No.';
-    const th2 = document.createElement('td'); th2.colSpan=10; th2.textContent='신분증';
-    const th3 = document.createElement('td'); th3.colSpan=10; th3.textContent='건설업 기초안전보건교육 이수증';
-    tr4.append(th1, th2, th3); tbl.appendChild(tr4);
-    sheet.appendChild(tbl);
+    const hdr = document.createElement('div'); hdr.className = 'ic-hdr';
+    const esc = s => (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    hdr.innerHTML =
+      `<div class="ic-hdr-title" contenteditable="${pi===0?'true':'false'}">${esc(title)}</div>`+
+      `<div class="ic-hdr-lbl" contenteditable="true" data-key="projectNameLbl" data-pi="${pi}">공사명</div>`+
+      `<div class="ic-hdr-val" contenteditable="true" data-key="projectName" data-pi="${pi}" data-placeholder="공사명 입력" style="border-right:1px solid #222">${esc(meta.projectName||site)}</div>`+
+      `<div class="ic-hdr-lbl" contenteditable="true" data-key="companyLbl" data-pi="${pi}">업체명</div>`+
+      `<div class="ic-hdr-val" contenteditable="true" data-key="company" data-pi="${pi}" data-placeholder="업체명 입력">${esc(meta.company)}</div>`+
+      `<div class="ic-hdr-lbl" contenteditable="true" data-key="hireDateLbl" data-pi="${pi}">채용일자</div>`+
+      `<div class="ic-hdr-val" contenteditable="true" data-key="hireDate" data-pi="${pi}" data-placeholder="날짜 입력" style="border-right:1px solid #222">${esc(meta.hireDate)}</div>`+
+      `<div class="ic-hdr-lbl" contenteditable="true" data-key="headcountLbl" data-pi="${pi}">인원</div>`+
+      `<div class="ic-hdr-val" contenteditable="true" data-key="headcount" data-pi="${pi}" data-placeholder="인원 수">${esc(meta.headcount)}</div>`+
+      `<div class="ic-col-hdr-row"><div>No.</div><div contenteditable="true" data-key="colHdr1" data-pi="${pi}">${esc(meta.colHdr1||'신분증')}</div><div contenteditable="true" data-key="colHdr2" data-pi="${pi}">${esc(meta.colHdr2||'건설업 기초안전보건교육 이수증')}</div></div>`;
+    // 타이틀 이벤트
+    const titleEl = hdr.querySelector('.ic-hdr-title');
+    if (pi===0) titleEl.addEventListener('input', ()=>{ document.getElementById('docTitle').value=titleEl.textContent; syncTitle(titleEl.textContent); });
+    // 라벨 + 값 + 컬럼헤더 필드: 서식 적용 + 이벤트
+    hdr.querySelectorAll('[data-key]').forEach(el => {
+      const k = el.dataset.key;
+      const f = mc[k];
+      if (f) {
+        if (f.font) el.style.fontFamily = f.font;
+        if (f.sz) el.style.fontSize = f.sz;
+        el.style.fontWeight = f.bold ? '700' : '400';
+        if (f.color) el.style.color = f.color;
+        if (f.spacing) el.style.letterSpacing = f.spacing;
+        if (f.align) el.style.textAlign = f.align;
+      }
+      el.addEventListener('input', () => { meta[k] = el.textContent; });
+      el.addEventListener('mousedown', e => { e.stopPropagation(); });
+      el.addEventListener('focus', () => {
+        requestAnimationFrame(() => {
+          sel.clear(); sel.add(`${pi}:icmeta:${k}`); refreshSel(); refreshFmtBar();
+        });
+      });
+    });
+    sheet.appendChild(hdr);
 
     // ─ 슬롯 그리드 ─
     const grid = document.createElement('div'); grid.className = 'ic-grid';
@@ -1749,7 +1729,6 @@ function renderAllIdCert() {
   document.getElementById('rmSlotBtn').style.display = slotCount>2 ? '' : 'none';
   refreshSel();
 }
-
 // ══════════════════════════════════════════════
 //  전체 렌더 (기본 템플릿)
 // ══════════════════════════════════════════════
@@ -1947,10 +1926,11 @@ function toast(m) {
 //  전역 이벤트
 // ══════════════════════════════════════════════
 document.addEventListener('click', e=>{
-  if (!e.target.closest('[data-idx],[data-ct],[data-hdr-page],[data-icmeta],.fmtbar')) {
+  if (!e.target.closest('[data-idx],[data-ct],[data-hdr-page],[data-icmeta],[data-icval],[data-key],[contenteditable],.fmtbar,.ic-hdr-val,.ic-hdr-lbl')) {
     sel.clear(); refreshSel(); refreshFmtBar();
   }
 });
+
 document.addEventListener('keydown', e=>{
   if ((e.ctrlKey||e.metaKey)&&e.key==='z'&&!e.shiftKey) { e.preventDefault(); undo(); }
 });
