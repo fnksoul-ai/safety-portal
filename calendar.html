@@ -261,10 +261,10 @@
 
   .event.cat-education  { background: #dbeafe; color: #1e40af; border-left: 2px solid #3b82f6; }
   .event.cat-inspection { background: #dcfce7; color: #166534; border-left: 2px solid #22c55e; }
-  .event.cat-report     { background: #fee2e2; color: #991b1b; border-left: 2px solid #ef4444; }
+  .event.cat-report     { background: #fef9c3; color: #854d0e; border-left: 2px solid #eab308; }
   .event.cat-meeting    { background: #f3e8ff; color: #6b21a8; border-left: 2px solid #a855f7; }
   .event.cat-drill      { background: #ffedd5; color: #9a3412; border-left: 2px solid #f97316; }
-  .event.cat-holiday    { background: #fef9c3; color: #854d0e; border-left: 2px solid #eab308; }
+  .event.cat-holiday    { background: #fee2e2; color: #991b1b; border-left: 2px solid #ef4444; }
   .event.cat-default    { background: #cffafe; color: #155e75; border-left: 2px solid #06b6d4; }
 
   .more-events {
@@ -472,8 +472,9 @@
     }
     .toolbar-month small { color: #666 !important; }
     .toolbar-center { color: #111 !important; font-size: 32px !important; font-weight: 900 !important; letter-spacing: .25em !important; }
-    .legend { display: flex !important; }
-    .legend-item { color: #333 !important; }
+    .legend { display: flex !important; font-size: 9px !important; gap: 8px !important; }
+    .legend-dot { width: 6px !important; height: 6px !important; }
+    .legend-item { gap: 3px !important; }
 
     /* 캘린더 인쇄 스타일 */
     .calendar-wrap {
@@ -514,10 +515,10 @@
     }
     .event.cat-education  { background: #dbeafe !important; color: #1e40af !important; border-left: 2px solid #3b82f6 !important; }
     .event.cat-inspection { background: #dcfce7 !important; color: #166534 !important; border-left: 2px solid #22c55e !important; }
-    .event.cat-report     { background: #fee2e2 !important; color: #991b1b !important; border-left: 2px solid #ef4444 !important; }
+    .event.cat-report     { background: #fef9c3 !important; color: #854d0e !important; border-left: 2px solid #eab308 !important; }
     .event.cat-meeting    { background: #f3e8ff !important; color: #6b21a8 !important; border-left: 2px solid #a855f7 !important; }
     .event.cat-drill      { background: #ffedd5 !important; color: #9a3412 !important; border-left: 2px solid #f97316 !important; }
-    .event.cat-holiday    { background: #fef9c3 !important; color: #854d0e !important; border-left: 2px solid #eab308 !important; }
+    .event.cat-holiday    { background: #fee2e2 !important; color: #991b1b !important; border-left: 2px solid #ef4444 !important; }
     .event.cat-default    { background: #cffafe !important; color: #155e75 !important; border-left: 2px solid #06b6d4 !important; }
 
     @page {
@@ -605,10 +606,10 @@
     <div class="legend">
       <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>안전교육</div>
       <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>안전점검</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>신고/보고</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>신고/보고</div>
       <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>회의</div>
       <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>훈련</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>공휴일</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>공휴일</div>
     </div>
   </div>
 </div>
@@ -684,8 +685,8 @@ const CATEGORY_MAP = {
 };
 
 const CAT_COLORS = {
-  education: 'var(--blue)', inspection: 'var(--green)', report: 'var(--red)',
-  meeting: 'var(--purple)', drill: 'var(--orange)', holiday: 'var(--yellow)',
+  education: 'var(--blue)', inspection: 'var(--green)', report: 'var(--yellow)',
+  meeting: 'var(--purple)', drill: 'var(--orange)', holiday: 'var(--red)',
   default: 'var(--cyan)',
 };
 
