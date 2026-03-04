@@ -609,14 +609,15 @@
 
     /* 숨길 요소 */
     nav, .error-banner, .admin-panel, .print-btn,
-    .loading-overlay, .modal-overlay,
+    .loading-overlay, .modal-overlay, .connect-indicator,
     #authNavWrapper, #authToast { display: none !important; }
 
     /* 툴바 인쇄 스타일 */
     .toolbar {
       background: #fff !important;
       border-bottom: 2px solid #333 !important;
-      padding: 12px 0 !important;
+      padding: 8px 0 !important;
+      flex-wrap: wrap !important;
     }
     .toolbar .btn { display: none !important; }
     .toolbar-nav { display: none !important; }
@@ -626,17 +627,20 @@
     }
     .toolbar-month small { color: #666 !important; }
     .toolbar-center { color: #111 !important; font-size: 30px !important; font-weight: 900 !important; letter-spacing: .25em !important; }
-    .legend { display: flex !important; font-size: 9px !important; gap: 8px !important; }
-    .legend-dot { width: 6px !important; height: 6px !important; }
-    .legend-item { gap: 3px !important; }
+    .toolbar-right {
+      margin-left: auto !important;
+    }
     .toolbar-right-inner {
       display: flex !important;
       flex-direction: column !important;
       align-items: flex-end !important;
-      gap: 2px !important;
+      gap: 3px !important;
     }
-    .site-name-row { display: flex !important; }
-    .site-name-label { color: #333 !important; font-size: 10px !important; }
+    .legend { display: flex !important; font-size: 9px !important; gap: 8px !important; }
+    .legend-dot { width: 6px !important; height: 6px !important; }
+    .legend-item { gap: 3px !important; color: #333 !important; }
+    .site-name-row { display: flex !important; align-items: center !important; }
+    .site-name-label { color: #333 !important; font-size: 10px !important; font-weight: 700 !important; }
     .site-name-input {
       background: transparent !important;
       border: none !important;
@@ -644,6 +648,7 @@
       font-size: 10px !important;
       font-weight: 600 !important;
       padding: 0 !important;
+      width: auto !important;
     }
 
     /* 캘린더 인쇄 스타일 */
