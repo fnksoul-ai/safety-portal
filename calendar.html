@@ -756,6 +756,11 @@
       color: #333 !important;
       border-right: 1px solid #999 !important;
     }
+    .remarks-body {
+      outline: none !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
   }
 </style>
 <script src="auth.js"></script>
@@ -858,7 +863,7 @@
 </div>
 
 <!-- 인쇄 버튼 -->
-<button class="print-btn" onclick="(function(){var t=document.title;document.title=' ';setTimeout(function(){window.print();setTimeout(function(){document.title=t;},500);},200);})()">🖨️ 인쇄하기</button>
+<button class="print-btn" onclick="printWithGuide()">🖨️ 인쇄하기</button>
 
 <!-- 이벤트 상세 모달 -->
 <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
@@ -1099,6 +1104,23 @@ function showModal(ev) {
   document.getElementById('modalOverlay').classList.add('show');
 }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+// ── 인쇄 안내 팝업 ──
+function printWithGuide() {
+  const msg = '📋 인쇄 배율 권장 설정 안내\n\n' +
+    '• A4 용지: 배율 95%\n' +
+    '• A3 용지: 배율 135%\n\n' +
+    '인쇄 설정에서 위 배율을 적용해 주세요.\n' +
+    '확인을 누르면 인쇄 화면으로 이동합니다.';
+  if (confirm(msg)) {
+    var t = document.title;
+    document.title = ' ';
+    setTimeout(function() {
+      window.print();
+      setTimeout(function() { document.title = t; }, 500);
+    }, 200);
+  }
+}
 
 // ── 비고란 서식 ──
 function remarksFormat(cmd, val) {
