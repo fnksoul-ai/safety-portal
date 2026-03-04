@@ -150,6 +150,37 @@
     margin-left: auto;
     display: flex; align-items: center; gap: 8px;
   }
+  .toolbar-right-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+  }
+  .site-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .site-name-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted2);
+    white-space: nowrap;
+  }
+  .site-name-input {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 11px;
+    color: var(--text);
+    font-family: inherit;
+    outline: none;
+    width: 280px;
+    transition: border-color .2s;
+  }
+  .site-name-input:focus { border-color: var(--orange); }
+  .site-name-input::placeholder { color: var(--muted); }
   .legend {
     display: flex; align-items: center; gap: 14px;
     font-size: 11px; color: var(--muted2);
@@ -437,6 +468,97 @@
     border-right: 1px solid #999;
     flex-shrink: 0;
   }
+  .remarks-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .remarks-toolbar {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  .remarks-toolbar.admin-active {
+    display: flex;
+  }
+  .remarks-toolbar select {
+    font-size: 11px;
+    padding: 2px 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #fff;
+    color: #334155;
+    cursor: pointer;
+    outline: none;
+  }
+  .remarks-size-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #fff;
+    padding: 0 6px;
+    height: 26px;
+  }
+  .remarks-size-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #334155;
+    min-width: 30px;
+    text-align: center;
+  }
+  .remarks-size-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .remarks-size-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 12px;
+    border: none;
+    background: none;
+    color: #64748b;
+    font-size: 8px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+  }
+  .remarks-size-btn:hover {
+    color: #f97316;
+  }
+  .remarks-toolbar input[type="color"] {
+    width: 24px;
+    height: 24px;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    padding: 1px;
+    cursor: pointer;
+    background: #fff;
+  }
+  .remarks-fmt-btn {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 4px;
+    background: #fff;
+    color: #334155;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .remarks-fmt-btn:hover {
+    background: #e2e8f0;
+  }
   .remarks-body {
     flex: 1;
     min-height: 48px;
@@ -507,6 +629,16 @@
     .legend { display: flex !important; font-size: 9px !important; gap: 8px !important; }
     .legend-dot { width: 6px !important; height: 6px !important; }
     .legend-item { gap: 3px !important; }
+    .site-name-row { display: flex !important; }
+    .site-name-label { color: #333 !important; font-size: 10px !important; }
+    .site-name-input {
+      background: transparent !important;
+      border: none !important;
+      color: #111 !important;
+      font-size: 10px !important;
+      font-weight: 600 !important;
+      padding: 0 !important;
+    }
 
     /* 캘린더 인쇄 스타일 */
     .calendar-wrap {
@@ -599,6 +731,9 @@
       min-height: 0 !important;
     }
 
+    .remarks-toolbar {
+      display: none !important;
+    }
     .remarks-section {
       width: 100% !important;
       display: flex !important;
@@ -647,13 +782,19 @@
   <div class="toolbar-month" id="monthLabel"></div>
   <div class="toolbar-center">안 전 보 건 월 간 계 획</div>
   <div class="toolbar-right">
-    <div class="legend">
-      <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>안전교육</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>안전점검</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>신고/보고</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>회의</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>훈련</div>
-      <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>공휴일</div>
+    <div class="toolbar-right-inner">
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div>안전교육</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>안전점검</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>신고/보고</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div>회의</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>훈련</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>공휴일</div>
+      </div>
+      <div class="site-name-row">
+        <span class="site-name-label">현장명</span>
+        <input type="text" class="site-name-input" id="siteNameInput" placeholder="현장명을 입력하세요" oninput="saveSiteName()" disabled>
+      </div>
     </div>
   </div>
 </div>
@@ -679,7 +820,22 @@
 <!-- 비고란 -->
 <div class="remarks-section">
   <div class="remarks-label">비고</div>
-  <div class="remarks-body" contenteditable="true"></div>
+  <div class="remarks-right">
+    <div class="remarks-toolbar">
+      <div class="remarks-size-group">
+        <span class="remarks-size-label" id="remarksSizeLabel">12px</span>
+        <div class="remarks-size-btns">
+          <button class="remarks-size-btn" onclick="remarksSizeUp()" title="크기 키우기">▲</button>
+          <button class="remarks-size-btn" onclick="remarksSizeDown()" title="크기 줄이기">▼</button>
+        </div>
+      </div>
+      <input type="color" id="remarksFontColor" value="#334155" onchange="remarksFormat('foreColor',this.value)" title="글꼴 색상">
+      <button class="remarks-fmt-btn" onclick="remarksFormat('bold')" title="굵게"><b>B</b></button>
+      <button class="remarks-fmt-btn" onclick="remarksFormat('italic')" title="기울임"><i>I</i></button>
+      <button class="remarks-fmt-btn" onclick="remarksFormat('underline')" title="밑줄"><u>U</u></button>
+    </div>
+    <div class="remarks-body" id="remarksBody" contenteditable="false" oninput="saveRemarks()"></div>
+  </div>
 </div>
 
 <!-- 관리자 전용: Google Calendar 연결 패널 -->
@@ -893,6 +1049,7 @@ async function renderCalendar() {
     html += `</div></div>`;
   }
   grid.innerHTML = html;
+  loadRemarks();
 }
 
 // ── 네비게이션 ──
@@ -931,6 +1088,53 @@ function showModal(ev) {
   document.getElementById('modalOverlay').classList.add('show');
 }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
+
+// ── 비고란 서식 ──
+function remarksFormat(cmd, val) {
+  document.getElementById('remarksBody').focus();
+  document.execCommand(cmd, false, val || null);
+  saveRemarks();
+}
+
+const REMARK_SIZES = [10, 12, 14, 16, 18, 24];
+let remarkSizeIndex = 1; // default 12px
+
+function remarksSizeUp() {
+  if (remarkSizeIndex < REMARK_SIZES.length - 1) {
+    remarkSizeIndex++;
+    const sizeVal = REMARK_SIZES.indexOf(REMARK_SIZES[remarkSizeIndex]) + 1; // fontSize command uses 1-7
+    document.getElementById('remarksSizeLabel').textContent = REMARK_SIZES[remarkSizeIndex] + 'px';
+    remarksFormat('fontSize', remarkSizeIndex + 1);
+  }
+}
+function remarksSizeDown() {
+  if (remarkSizeIndex > 0) {
+    remarkSizeIndex--;
+    document.getElementById('remarksSizeLabel').textContent = REMARK_SIZES[remarkSizeIndex] + 'px';
+    remarksFormat('fontSize', remarkSizeIndex + 1);
+  }
+}
+
+// ── 비고란 월별 저장/불러오기 ──
+function getRemarksKey() {
+  return `remarks_${currentYear}_${currentMonth}`;
+}
+function saveRemarks() {
+  const html = document.getElementById('remarksBody').innerHTML;
+  localStorage.setItem(getRemarksKey(), html);
+}
+function loadRemarks() {
+  const html = localStorage.getItem(getRemarksKey()) || '';
+  document.getElementById('remarksBody').innerHTML = html;
+}
+
+// ── 현장명 저장/불러오기 ──
+function saveSiteName() {
+  localStorage.setItem('site_name', document.getElementById('siteNameInput').value);
+}
+function loadSiteName() {
+  document.getElementById('siteNameInput').value = localStorage.getItem('site_name') || '';
+}
 function getDayName(dateStr) { return ['일','월','화','수','목','금','토'][new Date(dateStr).getDay()]; }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
@@ -973,11 +1177,21 @@ function toggleAdminPanel() {
 function updateAdminUI() {
   const isAdmin = typeof AUTH !== 'undefined' && AUTH.isAdmin();
   const settingsBtn = document.getElementById('settingsBtn');
+  const remarksBody = document.getElementById('remarksBody');
+  const remarksToolbar = document.querySelector('.remarks-toolbar');
+  const siteNameInput = document.getElementById('siteNameInput');
+
   if (isAdmin) {
     settingsBtn.classList.add('show');
+    remarksBody.contentEditable = 'true';
+    remarksToolbar.classList.add('admin-active');
+    siteNameInput.disabled = false;
   } else {
     settingsBtn.classList.remove('show');
     document.getElementById('adminPanel').classList.remove('show');
+    remarksBody.contentEditable = 'false';
+    remarksToolbar.classList.remove('admin-active');
+    siteNameInput.disabled = true;
   }
 }
 
@@ -996,6 +1210,7 @@ currentYear = now.getFullYear();
 currentMonth = now.getMonth();
 renderCalendar();
 updateAdminUI();
+loadSiteName();
 </script>
 </body>
 </html>
