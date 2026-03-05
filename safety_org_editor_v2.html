@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>안전관리 조직도 | Safety Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+
+/* ══ PORTAL NAV ══ */
+#portal-nav{
+  position:relative;z-index:300;
+  background:rgba(15,17,23,.96);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid #2c3347;
+  padding:0 20px;
+  display:flex;align-items:center;
+  height:48px;gap:14px;
+  flex-shrink:0;
+}
+.pnav-logo{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:18px;letter-spacing:.1em;
+  color:#f97316;
+  display:flex;align-items:center;gap:7px;
+  text-decoration:none;
+  flex-shrink:0;
+}
+.pnav-logo span{color:#f1f5f9;}
+.pnav-sep{width:1px;height:20px;background:#2c3347;flex-shrink:0;}
+.pnav-title{font-size:13px;font-weight:600;color:#94a3b8;}
+.pnav-links{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.pnav-link{
+  font-size:12px;font-weight:500;color:#64748b;
+  padding:5px 10px;border-radius:6px;
+  text-decoration:none;transition:all .15s;
+  border:1px solid transparent;
+}
+.pnav-link:hover{color:#f1f5f9;background:rgba(255,255,255,.06);border-color:#2c3347;}
+.pnav-link.active{color:#f97316;border-color:rgba(249,115,22,.3);background:rgba(249,115,22,.08);}
+
+:root{
+  --navy:#0a1628;--blue:#1d6fa4;--blue-lt:#e8f4fb;--blue-bd:#7ec8e3;
+  --green:#2a7d4f;--green-lt:#e8f6ef;--green-bd:#6ecf9a;
+  --red:#c0392b;--red-lt:#fdecea;--red-bd:#e74c3c;
+  --gray:#64748b;--border:#cbd5e1;--bg:#dde4ed;
+  --sel:#3b82f6;--conn:#94a3b8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--navy);
+  overflow:hidden;height:100vh;display:flex;flex-direction:column;}
+
+/* ── TOOLBAR ── */
+#toolbar{
+  flex-shrink:0;background:var(--navy);
+  display:flex;align-items:center;gap:5px;padding:7px 12px;
+  box-shadow:0 2px 12px rgba(0,0,0,.3);z-index:200;flex-wrap:wrap;
+}
+.tb-logo{color:#fff;font-size:13px;font-weight:900;margin-right:4px;white-space:nowrap;}
+.tb-btn{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);
+  color:#fff;font-size:11px;font-weight:600;padding:5px 10px;
+  border-radius:5px;cursor:pointer;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;
+  transition:background .12s;
+}
+.tb-btn:hover{background:rgba(255,255,255,.22);}
+.tb-btn.act{background:var(--sel);border-color:var(--sel);}
+.tb-btn.red{background:rgba(220,50,50,.25);border-color:rgba(220,50,50,.4);}
+.tb-btn.red.ready{background:rgba(220,50,50,.55);border-color:rgba(220,50,50,.8);animation:pulse .8s infinite alternate;}
+@keyframes pulse{from{opacity:.8}to{opacity:1}}
+.tb-btn.red:hover{background:rgba(220,50,50,.45);}
+.tb-btn.grn{background:rgba(40,180,100,.25);border-color:rgba(40,180,100,.4);}
+.tb-btn.grn:hover{background:rgba(40,180,100,.45);}
+.tb-sep{width:1px;height:22px;background:rgba(255,255,255,.15);margin:0 2px;}
+.tb-hint{color:rgba(255,255,255,.4);font-size:10px;margin-left:auto;}
+
+/* ── LAYOUT ── */
+#main{flex:1;display:flex;overflow:hidden;position:relative;}
+
+/* ── SCROLLABLE WRAPPER ── */
+#wrapper{
+  flex:1;overflow:auto;
+  background:var(--bg);
+  background-image:radial-gradient(#8fa3bc 1px,transparent 1px);
+  background-size:6px 6px;
+}
+
+/* ── CANVAS ── */
+#canvas{position:relative;width:2100px;height:1100px;user-select:none;}
+
+/* ── SVG LAYER ── */
+#svg-layer{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
+
+/* ── BOX ── */
+.box{
+  position:absolute;border-radius:7px;cursor:move;z-index:10;
+  min-width:90px;min-height:55px;
+}
+.box-body{
+  width:100%;height:100%;border-radius:7px;
+  padding:8px 12px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;overflow:hidden;
+  pointer-events:none;
+}
+.b-role{font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;opacity:.72;margin-bottom:2px;}
+.b-name{font-size:12px;font-weight:700;line-height:1.3;word-break:keep-all;}
+.b-contact{font-size:9px;margin-top:3px;opacity:.82;}
+.b-contact::before{content:"";display:none;}
+
+/* selection ring */
+.box.sel .box-body{outline:2.5px solid var(--sel);outline-offset:-1px;border-radius:7px;}
+
+/* ── THEMES ── */
+.t-navy    {background:#0a1628;color:#fff;}
+.t-pm      {background:#1d6fa4;color:#fff;outline:3px solid #1a5f8a;outline-offset:-3px;}
+.t-prime   {background:#1d6fa4;color:#fff;}
+.t-prime-lt{background:#e8f4fb;color:#1d6fa4;outline:1.5px solid #7ec8e3;outline-offset:-1.5px;}
+.t-safety  {background:#c0392b;color:#fff;}
+.t-sflt    {background:#fdecea;color:#c0392b;outline:1.5px solid #e74c3c;outline-offset:-1.5px;}
+.t-sm      {background:#2a7d4f;color:#fff;outline:3px solid #1e6040;outline-offset:-3px;}
+.t-sub     {background:#2a7d4f;color:#fff;}
+.t-sub-lt  {background:#e8f6ef;color:#2a7d4f;outline:1.5px solid #6ecf9a;outline-offset:-1.5px;}
+.t-subdark {background:#1e6040;color:#fff;}
+.t-gray    {background:#64748b;color:#fff;}
+.t-white   {background:#fff;color:#0a1628;outline:1.5px solid #cbd5e1;outline-offset:-1.5px;}
+
+.t-sky      {background:#0ea5e9;color:#fff;}
+.t-sky-lt   {background:#e0f2fe;color:#0369a1;outline:1.5px solid #7dd3fc;outline-offset:-1.5px;}
+.t-indigo   {background:#4f46e5;color:#fff;}
+.t-indigo-lt{background:#ede9fe;color:#4338ca;outline:1.5px solid #a5b4fc;outline-offset:-1.5px;}
+.t-teal     {background:#0d9488;color:#fff;}
+.t-teal-lt  {background:#ccfbf1;color:#0f766e;outline:1.5px solid #5eead4;outline-offset:-1.5px;}
+.t-lime     {background:#65a30d;color:#fff;}
+.t-lime-lt  {background:#ecfccb;color:#3f6212;outline:1.5px solid #a3e635;outline-offset:-1.5px;}
+.t-orange   {background:#ea580c;color:#fff;}
+.t-orange-lt{background:#fff7ed;color:#c2410c;outline:1.5px solid #fdba74;outline-offset:-1.5px;}
+.t-amber    {background:#d97706;color:#fff;}
+.t-amber-lt {background:#fffbeb;color:#b45309;outline:1.5px solid #fcd34d;outline-offset:-1.5px;}
+.t-slate    {background:#475569;color:#fff;}
+.t-zinc     {background:#52525b;color:#fff;}
+.t-light    {background:#f1f5f9;color:#334155;outline:1.5px solid #cbd5e1;outline-offset:-1.5px;}
+.t-purple   {background:#7c3aed;color:#fff;}
+.t-purple-lt{background:#f5f3ff;color:#6d28d9;outline:1.5px solid #c4b5fd;outline-offset:-1.5px;}
+.t-pink     {background:#db2777;color:#fff;}
+.t-pink-lt  {background:#fdf2f8;color:#be185d;outline:1.5px solid #f9a8d4;outline-offset:-1.5px;}
+.t-rose     {background:#e11d48;color:#fff;}
+.t-rose-lt  {background:#fff1f2;color:#be123c;outline:1.5px solid #fda4af;outline-offset:-1.5px;}
+.t-gold     {background:#b45309;color:#fff;}
+.t-gold-lt  {background:#fffbeb;color:#92400e;outline:1.5px solid #fcd34d;outline-offset:-1.5px;}
+.t-brown    {background:#78350f;color:#fff;}
+.t-cyan     {background:#0891b2;color:#fff;}
+.t-cyan-lt  {background:#ecfeff;color:#0e7490;outline:1.5px solid #67e8f9;outline-offset:-1.5px;}
+
+
+/* ── PORTS ── */
+.port{
+  position:absolute;width:16px;height:16px;border-radius:50%;
+  background:#fff;border:2.5px solid var(--sel);
+  opacity:0;z-index:50;cursor:crosshair;pointer-events:none;
+  transition:opacity .12s,transform .1s;box-shadow:0 0 0 3px rgba(59,130,246,.15);
+}
+.port-t{top:-8px; left:50%;transform:translateX(-50%);}
+.port-b{bottom:-8px;left:50%;transform:translateX(-50%);}
+.port-l{left:-8px; top:50%;transform:translateY(-50%);}
+.port-r{right:-8px;top:50%;transform:translateY(-50%);}
+/* connect-mode: show ports */
+body.cm .port{opacity:.5;pointer-events:all;}
+body.cm .box:hover .port{opacity:1;transform:translateX(-50%) scale(1.25);}
+body.cm .box:hover .port-l,body.cm .box:hover .port-r{transform:translateY(-50%) scale(1.25);}
+body.cm .port:hover{opacity:1;background:var(--sel);transform:translateX(-50%) scale(1.5);}
+body.cm .port-l:hover,body.cm .port-r:hover{background:var(--sel);transform:translateY(-50%) scale(1.5);}
+body.cm .port.active{opacity:1;background:var(--sel);box-shadow:0 0 0 4px rgba(59,130,246,.35);}
+
+/* ── RESIZE HANDLES ── */
+.rh{
+  position:absolute;width:9px;height:9px;background:#fff;
+  border:1.5px solid var(--sel);border-radius:2px;z-index:25;
+  opacity:0;pointer-events:none;
+}
+.box.sel .rh{opacity:1;pointer-events:all;}
+.rh-nw{top:-4px;left:-4px;cursor:nw-resize;}
+.rh-n {top:-4px;left:50%;transform:translateX(-50%);cursor:n-resize;}
+.rh-ne{top:-4px;right:-4px;cursor:ne-resize;}
+.rh-e {right:-4px;top:50%;transform:translateY(-50%);cursor:e-resize;}
+.rh-se{bottom:-4px;right:-4px;cursor:se-resize;}
+.rh-s {bottom:-4px;left:50%;transform:translateX(-50%);cursor:s-resize;}
+.rh-sw{bottom:-4px;left:-4px;cursor:sw-resize;}
+.rh-w {left:-4px;top:50%;transform:translateY(-50%);cursor:w-resize;}
+
+/* ── CONNECTIONS ── */
+.cp{fill:none;stroke:#94a3b8;stroke-width:2.2;stroke-linejoin:round;
+   stroke-linecap:round;pointer-events:none;transition:stroke .12s;}
+.cp.sel{stroke:#3b82f6;}
+.ch{fill:none;stroke:transparent;stroke-width:14;cursor:pointer;pointer-events:stroke;}
+.ct{fill:none;stroke:#3b82f6;stroke-width:1.8;stroke-dasharray:5 4;pointer-events:none;}
+
+/* ── EDIT PANEL ── */
+#ep{
+  width:268px;flex-shrink:0;background:#fff;
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;
+  box-shadow:-3px 0 14px rgba(0,0,0,.07);z-index:50;
+}
+.ep-hdr{background:var(--navy);color:#fff;padding:11px 14px;
+  display:flex;justify-content:space-between;align-items:center;flex-shrink:0;}
+.ep-hdr h3{font-size:12px;font-weight:700;}
+.ep-body{flex:1;overflow-y:auto;padding:14px;}
+.ep-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  height:100%;gap:8px;color:var(--gray);font-size:11px;text-align:center;padding:20px;}
+.ep-empty .ico{font-size:28px;opacity:.35;}
+.ep-sec{margin-bottom:14px;}
+.ep-sec h4{font-size:9px;font-weight:700;color:#94a3b8;letter-spacing:1px;
+  text-transform:uppercase;margin-bottom:6px;}
+.ep-f{margin-bottom:7px;}
+.ep-f label{display:block;font-size:10px;font-weight:700;color:var(--navy);margin-bottom:3px;}
+.ep-f input,.ep-f select{
+  width:100%;border:1.5px solid var(--border);border-radius:5px;
+  padding:6px 9px;font-size:11px;font-family:'Noto Sans KR',sans-serif;
+  color:var(--navy);background:#f8fafc;transition:border .12s;}
+.ep-f input:focus,.ep-f select:focus{outline:none;border-color:var(--blue);background:#fff;}
+.ep-f input[type=number]{-moz-appearance:textfield;}
+.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:4px;}
+.sw{width:26px;height:26px;border-radius:4px;cursor:pointer;border:2px solid transparent;
+  transition:transform .1s,border .1s;flex-shrink:0;}
+.sw:hover{transform:scale(1.2);}
+.sw.act{border-color:var(--sel) !important;transform:scale(1.2);}
+.ep-div{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.ep-ft{padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:6px;flex-shrink:0;}
+.ep-btn{flex:1;padding:7px;border-radius:5px;border:none;cursor:pointer;
+  font-size:11px;font-weight:700;font-family:'Noto Sans KR',sans-serif;transition:opacity .12s;}
+.ep-btn:hover{opacity:.83;}
+.ep-apply{background:var(--blue);color:#fff;}
+.ep-del{background:#fee2e2;color:var(--red);}
+
+
+
+
+/* ── FORMAT BUTTONS ── */
+.fmt-btn{
+  width:28px;height:28px;border-radius:5px;border:1.5px solid var(--border);
+  background:#f8fafc;color:var(--navy);font-size:12px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  transition:all .12s;font-family:'Noto Sans KR',sans-serif;
+}
+.fmt-btn:hover{background:#e2e8f0;}
+.fmt-btn.fmt-act{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+
+/* ── DIVIDERS ── */
+.divider{
+  position:absolute;z-index:8;cursor:move;
+  pointer-events:all;
+}
+
+/* ─ HORIZONTAL ─ */
+.divider.dh{
+  display:flex;flex-direction:column;
+  min-height:32px;
+}
+.dh-body{
+  position:relative;
+  height:32px;
+  display:flex;align-items:center;
+  border-radius:6px;
+  overflow:hidden;
+  pointer-events:none;
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+}
+/* diagonal stripe overlay */
+.dh-body::before{
+  content:'';position:absolute;inset:0;
+  background-image:repeating-linear-gradient(
+    -45deg,
+    transparent,transparent 6px,
+    rgba(255,255,255,.10) 6px,rgba(255,255,255,.10) 9px
+  );
+  pointer-events:none;
+}
+/* left solid accent bar */
+.dh-body::after{
+  content:'';position:absolute;left:0;top:0;bottom:0;
+  width:5px;background:rgba(255,255,255,.35);
+  pointer-events:none;
+}
+.dh-label-pill{
+  position:relative;z-index:2;
+  display:inline-flex;align-items:center;gap:5px;
+  margin:0 12px;
+  background:rgba(255,255,255,.18);
+  backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:20px;
+  padding:3px 12px;
+  font-size:11px;font-weight:800;letter-spacing:.1em;
+  color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);
+  white-space:nowrap;
+  pointer-events:none;
+}
+.dh-label-pill .div-icon{font-size:10px;}
+/* right cap diamond */
+.dh-cap{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  width:10px;height:10px;background:rgba(255,255,255,.4);
+  clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);
+  pointer-events:none;
+}
+
+/* ─ VERTICAL ─ */
+.divider.dv{
+  display:flex;flex-direction:row;
+  min-width:32px;
+}
+.dv-body{
+  position:relative;
+  width:32px;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:6px;
+  overflow:hidden;
+  pointer-events:none;
+  box-shadow:2px 0 8px rgba(0,0,0,.18);
+}
+.dv-body::before{
+  content:'';position:absolute;inset:0;
+  background-image:repeating-linear-gradient(
+    -45deg,
+    transparent,transparent 6px,
+    rgba(255,255,255,.10) 6px,rgba(255,255,255,.10) 9px
+  );
+  pointer-events:none;
+}
+.dv-body::after{
+  content:'';position:absolute;top:0;left:0;right:0;
+  height:5px;background:rgba(255,255,255,.35);
+  pointer-events:none;
+}
+.dv-label-pill{
+  position:relative;z-index:2;
+  writing-mode:vertical-lr;
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,.18);
+  backdrop-filter:blur(4px);
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:20px;
+  padding:12px 3px;
+  font-size:11px;font-weight:800;letter-spacing:.1em;
+  color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4);
+  white-space:nowrap;
+  pointer-events:none;
+}
+
+/* ─ SELECTED STATE ─ */
+.divider.sel-div .dh-body,
+.divider.sel-div .dv-body{
+  outline:2.5px solid var(--sel);
+  outline-offset:2px;
+  box-shadow:0 0 0 4px rgba(59,130,246,.18),0 2px 8px rgba(0,0,0,.18);
+}
+
+/* ─ RESIZE HANDLE ─ */
+.div-rh{
+  position:absolute;
+  width:14px;height:14px;
+  background:#fff;
+  border:2px solid var(--sel);
+  border-radius:50%;
+  z-index:26;cursor:ew-resize;
+  display:none;
+  box-shadow:0 1px 4px rgba(0,0,0,.3);
+}
+.divider.sel-div .div-rh{display:block;}
+.div-rh-e{right:-8px;top:50%;transform:translateY(-50%);}
+.div-rh-s{bottom:-8px;left:50%;transform:translateX(-50%);cursor:ns-resize;}
+
+
+/* ── JUNCTION NODES ── */
+.junc{
+  position:absolute;z-index:12;
+  width:16px;height:16px;
+  border-radius:50%;
+  background:#fff;
+  border:2.5px solid #94a3b8;
+  cursor:move;
+  transform:translate(-50%,-50%);
+  transition:border-color .15s,box-shadow .15s;
+  box-shadow:0 1px 4px rgba(0,0,0,.2);
+}
+.junc:hover{ border-color:var(--sel); box-shadow:0 0 0 3px rgba(59,130,246,.2); }
+.junc.sel{ border-color:var(--sel); background:#dbeafe; box-shadow:0 0 0 4px rgba(59,130,246,.25); }
+/* ports on junction — same as box ports but always visible in con-mode */
+.cm .junc .port{ display:flex !important; }
+
+/* ── MULTI-SELECT ── */
+#selrect{
+  position:absolute;z-index:200;pointer-events:none;
+  border:1.5px solid var(--sel);
+  background:rgba(59,130,246,.08);
+  border-radius:3px;display:none;
+}
+.box.msel .box-body{outline:2px solid var(--sel);outline-offset:-1px;border-radius:7px;}
+.box.msel{z-index:4;}
+
+/* ── ZOOM CONTROLS ── */
+#zoom-bar{
+  position:fixed;right:20px;bottom:20px;z-index:300;
+  display:flex;flex-direction:column;gap:4px;
+  background:rgba(15,22,40,.88);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;padding:8px 6px;
+  backdrop-filter:blur(8px);
+  box-shadow:0 4px 20px rgba(0,0,0,.35);
+}
+.zb{
+  width:34px;height:34px;border-radius:7px;border:none;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;cursor:pointer;
+  transition:background .12s,transform .08s;
+  background:rgba(255,255,255,.1);color:#fff;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.zb:hover{background:rgba(255,255,255,.22);transform:scale(1.08);}
+.zb:active{transform:scale(.95);}
+#zoom-pct{
+  font-size:10px;font-weight:700;color:rgba(255,255,255,.65);
+  text-align:center;letter-spacing:.5px;padding:2px 0;
+  cursor:pointer;
+}
+#zoom-pct:hover{color:#fff;}
+.z-div{height:1px;background:rgba(255,255,255,.12);margin:2px 0;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(50px);
+  background:#1e293b;color:#fff;padding:8px 18px;border-radius:7px;
+  font-size:11px;font-weight:600;z-index:500;
+  transition:transform .2s,opacity .2s;opacity:0;pointer-events:none;}
+#toast.on{transform:translateX(-50%) translateY(0);opacity:1;}
+
+/* ── CTX MENU ── */
+#ctx{position:fixed;z-index:400;background:#fff;border:1px solid var(--border);
+  border-radius:7px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:4px;display:none;min-width:130px;}
+#ctx.on{display:block;}
+.ci{padding:7px 11px;font-size:11px;font-weight:600;color:var(--navy);
+  cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:6px;}
+.ci:hover{background:var(--blue-lt);}
+.ci.del{color:var(--red);}
+.ci.del:hover{background:var(--red-lt);}
+
+
+/* ── TAB BAR ── */
+#tabbar{
+  flex-shrink:0;
+  display:flex;align-items:stretch;
+  background:#1e2a3a;
+  border-bottom:2px solid #0a1628;
+  padding:0 12px;gap:2px;
+  height:38px;
+  position:relative;z-index:150;
+}
+.tab{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:0 18px;
+  font-size:12px;font-weight:700;
+  color:rgba(255,255,255,.45);
+  cursor:pointer;border-bottom:3px solid transparent;
+  margin-bottom:-2px;transition:color .15s,border-color .15s;
+  white-space:nowrap;font-family:'Noto Sans KR',sans-serif;
+  user-select:none;
+}
+.tab:hover{color:rgba(255,255,255,.75);}
+.tab.act{color:#fff;border-bottom-color:var(--sel);}
+.tab .tab-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.tab-spacer{flex:1;}
+.tab-info{
+  display:flex;align-items:center;gap:6px;
+  font-size:10px;color:rgba(255,255,255,.35);
+  padding:0 4px;
+}
+
+@media print{
+  #toolbar,#ep{display:none!important;}
+  #main{display:block;}
+  #wrapper{overflow:visible;}
+  #canvas{transform:scale(.8);transform-origin:top left;}
+}
+</style>
+<script src="auth.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+</head>
+<body>
+
+<!-- PORTAL NAV -->
+<nav id="portal-nav">
+  <a class="pnav-logo" href="index.html">⚠ <span>SAFETY</span> PORTAL</a>
+  <div class="pnav-sep"></div>
+  <span class="pnav-title">안전관리 조직도</span>
+  <div class="pnav-links">
+    <a class="pnav-link" href="index.html">🏠 홈</a>
+    <a class="pnav-link" href="calendar.html">📅 월간계획</a>
+    <a class="pnav-link" href="photo-board.html">📷 사진대지</a>
+    <a class="pnav-link active" href="safety_org_editor_v2.html">🏗 조직도</a>
+  </div>
+</nav>
+
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <span class="tb-logo">🦺 조직도 편집기</span>
+  <div class="tb-sep"></div>
+  <!-- 관리자 전용 편집 도구 -->
+  <div id="admin-tools" class="admin-only" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;">
+    <button class="tb-btn act" id="btn-sel" onclick="setMode('sel')">↖ 선택·이동</button>
+    <button class="tb-btn" id="btn-con" onclick="setMode('con')">⤷ 연결선 그리기 <span style="opacity:.6;font-size:9px;">[C]</span></button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" onclick="addBox('prime-lt')">＋ 원청 박스</button>
+    <button class="tb-btn" onclick="addBox('sub-lt')">＋ 협력 박스</button>
+    <button class="tb-btn" onclick="addDivider('h')" title="가로 구분선">━ 가로 구분선</button>
+    <button class="tb-btn" onclick="addDivider('v')" title="세로 구분선">┃ 세로 구분선</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn grn" onclick="doExport()">💾 HTML 저장</button>
+    <div class="tb-sep"></div>
+    <button class="tb-btn" id="btn-copy" onclick="copySelected()" title="Ctrl+C">⧉ 복사 <span style="opacity:.6;font-size:9px;">[Ctrl+C]</span></button>
+    <button class="tb-btn" id="btn-paste" onclick="pasteBox()" title="Ctrl+V" style="opacity:.45;" disabled>⧉ 붙여넣기 <span style="opacity:.6;font-size:9px;">[Ctrl+V]</span></button>
+    <button class="tb-btn red" id="btn-del" onclick="delSelected()">🗑 삭제 <span style="opacity:.6;font-size:9px;">[Del]</span></button>
+    <button class="tb-btn red" onclick="resetAll()">↺ 초기화</button>
+    <span style="color:rgba(255,255,255,.55);font-size:10px;border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:3px 8px;white-space:nowrap;">🧲 스냅 10px</span>
+  </div>
+  <!-- 항상 표시: 인쇄 -->
+  <button class="tb-btn" onclick="window.print()">🖨 인쇄</button>
+  <span class="tb-hint" id="hint">박스 클릭→편집 | 드래그→이동 | 모서리 드래그→크기조절</span>
+</div>
+
+<!-- TAB BAR -->
+<div id="tabbar">
+  <div class="tab act" id="tab-0" onclick="switchPage(0)">
+    <span class="tab-dot" style="background:#64748b;"></span>전체 조직도
+  </div>
+  <div class="tab" id="tab-1" onclick="switchPage(1)">
+    <span class="tab-dot" style="background:#1d6fa4;"></span>원청 조직도
+  </div>
+  <div class="tab" id="tab-2" onclick="switchPage(2)">
+    <span class="tab-dot" style="background:#2a7d4f;"></span>협력업체 조직도
+  </div>
+  <div class="tab-spacer"></div>
+  <div class="tab-info" id="tab-info">전체 조직도</div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="wrapper">
+    <div id="canvas">
+      <div id="selrect"></div>
+      <svg id="svg-layer" xmlns="http://www.w3.org/2000/svg">
+        <defs></defs>
+        <g id="cl"></g>
+        <path id="tmp" class="ct" d="" />
+      </svg>
+    </div>
+  </div>
+
+  <!-- EDIT PANEL (admin only) -->
+  <div id="ep" class="admin-only" style="display:none;">
+    <div class="ep-hdr"><h3 id="ep-title">편집 패널</h3></div>
+    <div class="ep-body" id="ep-body">
+      <div class="ep-empty"><div class="ico">🖱</div>
+        <div>박스를 클릭하면<br>여기서 편집합니다</div></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ZOOM CONTROLS -->
+<div id="zoom-bar">
+  <button class="zb" onclick="setZoom(zoom+.1)" title="확대 (+)">＋</button>
+  <div id="zoom-pct" onclick="setZoom(1)" title="100%로 초기화">100%</div>
+  <button class="zb" onclick="setZoom(zoom-.1)" title="축소 (−)">－</button>
+  <div class="z-div"></div>
+  <button class="zb" onclick="fitView()" title="전체 보기" style="font-size:13px;">⊞</button>
+</div>
+
+<div id="view-badge">👁 보기 전용 — 편집은 관리자만 가능합니다</div>
+<div id="toast"></div>
+<div id="ctx">
+  <div class="ci" id="ctx-edit" onclick="ctxDoEdit()">✏️ 편집</div>
+  <div class="ci del" onclick="ctxDoDel()">🗑 삭제</div>
+</div>
+
+<script>
+'use strict';
+// ═══════════════════════════
+// THEMES
+// ═══════════════════════════
+const TH = [
+  // ── 원청 계열
+  {k:'pm',      bg:'#1d6fa4',text:'#fff',   lb:'원청(진)'},
+  {k:'prime-lt',bg:'#e8f4fb',text:'#1d6fa4',lb:'원청(연)'},
+  {k:'sky',     bg:'#0ea5e9',text:'#fff',   lb:'하늘'},
+  {k:'sky-lt',  bg:'#e0f2fe',text:'#0369a1',lb:'하늘(연)'},
+  {k:'indigo',  bg:'#4f46e5',text:'#fff',   lb:'인디고'},
+  {k:'indigo-lt',bg:'#ede9fe',text:'#4338ca',lb:'인디고(연)'},
+  // ── 협력 계열
+  {k:'sm',      bg:'#2a7d4f',text:'#fff',   lb:'협력(진)'},
+  {k:'sub-lt',  bg:'#e8f6ef',text:'#2a7d4f',lb:'협력(연)'},
+  {k:'teal',    bg:'#0d9488',text:'#fff',   lb:'청록'},
+  {k:'teal-lt', bg:'#ccfbf1',text:'#0f766e',lb:'청록(연)'},
+  {k:'lime',    bg:'#65a30d',text:'#fff',   lb:'라임'},
+  {k:'lime-lt', bg:'#ecfccb',text:'#3f6212',lb:'라임(연)'},
+  // ── 안전/경고 계열
+  {k:'safety',  bg:'#c0392b',text:'#fff',   lb:'안전(진)'},
+  {k:'sflt',    bg:'#fdecea',text:'#c0392b',lb:'안전(연)'},
+  {k:'orange',  bg:'#ea580c',text:'#fff',   lb:'주황'},
+  {k:'orange-lt',bg:'#fff7ed',text:'#c2410c',lb:'주황(연)'},
+  {k:'amber',   bg:'#d97706',text:'#fff',   lb:'황색'},
+  {k:'amber-lt',bg:'#fffbeb',text:'#b45309',lb:'황색(연)'},
+  // ── 중립 계열
+  {k:'navy',    bg:'#0a1628',text:'#fff',   lb:'네이비'},
+  {k:'slate',   bg:'#475569',text:'#fff',   lb:'슬레이트'},
+  {k:'gray',    bg:'#6b7280',text:'#fff',   lb:'회색'},
+  {k:'zinc',    bg:'#52525b',text:'#fff',   lb:'징크'},
+  {k:'white',   bg:'#ffffff',text:'#0a1628',lb:'흰색'},
+  {k:'light',   bg:'#f1f5f9',text:'#334155',lb:'밝은회'},
+  // ── 보조 계열
+  {k:'purple',  bg:'#7c3aed',text:'#fff',   lb:'보라'},
+  {k:'purple-lt',bg:'#f5f3ff',text:'#6d28d9',lb:'보라(연)'},
+  {k:'pink',    bg:'#db2777',text:'#fff',   lb:'핑크'},
+  {k:'pink-lt', bg:'#fdf2f8',text:'#be185d',lb:'핑크(연)'},
+  {k:'rose',    bg:'#e11d48',text:'#fff',   lb:'로즈'},
+  {k:'rose-lt', bg:'#fff1f2',text:'#be123c',lb:'로즈(연)'},
+  // ── 특수
+  {k:'gold',    bg:'#b45309',text:'#fff',   lb:'골드'},
+  {k:'gold-lt', bg:'#fffbeb',text:'#92400e',lb:'골드(연)'},
+  {k:'brown',   bg:'#78350f',text:'#fff',   lb:'브라운'},
+  {k:'cyan',    bg:'#0891b2',text:'#fff',   lb:'시안'},
+  {k:'cyan-lt', bg:'#ecfeff',text:'#0e7490',lb:'시안(연)'},
+  {k:'subdark', bg:'#1e6040',text:'#fff',   lb:'딥그린'},
+];
+
+// ═══════════════════════════
+// INITIAL DATA
+// ═══════════════════════════
+const IB = [
+  {id:'client',  x:862,y:42, w:180,h:72, role:'CLIENT',            name:'발 주 처',       contact:'010-0000-0000', th:'navy'},
+  {id:'sm',      x:252,y:188,w:196,h:80, role:'SITE MANAGER',      name:'현 장 소 장',    contact:'010-0000-0000', th:'pm'},
+  {id:'sub-head',x:1355,y:188,w:196,h:80,role:'SUB-CON HEAD',      name:'협력업체 대표',  contact:'010-0000-0000', th:'sm'},
+  {id:'cb',      x:90, y:348,w:158,h:70, role:'CONSTRUCTION',      name:'공 사 부 장',    contact:'010-0000-0000', th:'prime'},
+  {id:'sfm',     x:405,y:348,w:160,h:70, role:'SAFETY MANAGER',    name:'안전관리자',     contact:'010-0000-0000', th:'safety'},
+  {id:'srep',    x:1358,y:348,w:178,h:70,role:'SITE REP',          name:'현장대리인',     contact:'010-0000-0000', th:'sub'},
+  {id:'pm',      x:16, y:488,w:120,h:80, role:'PM',                name:'공사과장',       contact:'010-0000-0000', th:'prime-lt'},
+  {id:'eng',     x:152,y:488,w:120,h:80, role:'ENGINEER',          name:'현장주임',       contact:'010-0000-0000', th:'prime-lt'},
+  {id:'ins',     x:335,y:488,w:122,h:80, role:'INSPECT',           name:'안전점검원',     contact:'010-0000-0000', th:'sflt'},
+  {id:'hlth',    x:474,y:488,w:122,h:80, role:'HEALTH',            name:'보건관리자',     contact:'010-0000-0000', th:'sflt'},
+  {id:'sfo',     x:1360,y:488,w:165,h:70,role:'SAFETY OFFICER',    name:'안전담당자',     contact:'010-0000-0000', th:'subdark'},
+  {id:'civil',   x:16, y:638,w:112,h:80, role:'CIVIL',             name:'토목담당',       contact:'010-0000-0000', th:'prime-lt'},
+  {id:'arch',    x:144,y:638,w:112,h:80, role:'ARCH',              name:'건축담당',       contact:'010-0000-0000', th:'prime-lt'},
+  {id:'me',      x:272,y:638,w:112,h:80, role:'M&E',              name:'기계·전기',      contact:'010-0000-0000', th:'prime-lt'},
+  {id:'fa',      x:1162,y:638,w:114,h:80,role:'FOREMAN A',         name:'철근반장',       contact:'010-0000-0000', th:'sub-lt'},
+  {id:'fb',      x:1292,y:638,w:114,h:80,role:'FOREMAN B',         name:'형틀반장',       contact:'010-0000-0000', th:'sub-lt'},
+  {id:'fc',      x:1422,y:638,w:114,h:80,role:'FOREMAN C',         name:'설비반장',       contact:'010-0000-0000', th:'sub-lt'},
+  {id:'fd',      x:1552,y:638,w:114,h:80,role:'FOREMAN D',         name:'기타반장',       contact:'010-0000-0000', th:'sub-lt'},
+  {id:'wkr',     x:1362,y:792,w:180,h:60,role:'ALL WORKERS',       name:'작업 근로자 전원',contact:'',            th:'navy'},
+];
+const IC = [
+  {id:'c1', f:'client', fp:'b', t:'sm',      tp:'t'},
+  {id:'c2', f:'client', fp:'b', t:'sub-head',tp:'t'},
+  {id:'c3', f:'sm',     fp:'b', t:'cb',      tp:'t'},
+  {id:'c4', f:'sm',     fp:'b', t:'sfm',     tp:'t'},
+  {id:'c5', f:'cb',     fp:'b', t:'pm',      tp:'t'},
+  {id:'c6', f:'cb',     fp:'b', t:'eng',     tp:'t'},
+  {id:'c7', f:'sfm',    fp:'b', t:'ins',     tp:'t'},
+  {id:'c8', f:'sfm',    fp:'b', t:'hlth',    tp:'t'},
+  {id:'c9', f:'pm',     fp:'b', t:'civil',   tp:'t'},
+  {id:'c10',f:'eng',    fp:'b', t:'arch',    tp:'t'},
+  {id:'c11',f:'ins',    fp:'b', t:'me',      tp:'t'},
+  {id:'c12',f:'sub-head',fp:'b',t:'srep',    tp:'t'},
+  {id:'c13',f:'srep',   fp:'b', t:'sfo',     tp:'t'},
+  {id:'c14',f:'sfo',    fp:'b', t:'fa',      tp:'t'},
+  {id:'c15',f:'sfo',    fp:'b', t:'fb',      tp:'t'},
+  {id:'c16',f:'sfo',    fp:'b', t:'fc',      tp:'t'},
+  {id:'c17',f:'sfo',    fp:'b', t:'fd',      tp:'t'},
+  {id:'c18',f:'fa',     fp:'b', t:'wkr',     tp:'t'},
+  {id:'c19',f:'fb',     fp:'b', t:'wkr',     tp:'t'},
+  {id:'c20',f:'fc',     fp:'b', t:'wkr',     tp:'t'},
+  {id:'c21',f:'fd',     fp:'b', t:'wkr',     tp:'t'},
+];
+
+
+// ═══════════════════════════
+// PAGE DATA
+// ═══════════════════════════
+const PAGE_DEFS = [
+  { label:'전체 조직도', color:'#64748b',
+    boxes: IB, conns: IC },
+
+  { label:'원청 조직도', color:'#1d6fa4',
+    boxes:[
+      {id:'p-top', x:420,y:70,  w:150,h:70, role:'NEW',            name:'새 박스',     contact:'010-0000-0000',th:'slate'},
+      {id:'p-b1',  x:90, y:230, w:140,h:70, role:'CONSTRUCTION',   name:'공 사 부 장', contact:'010-0000-0000',th:'pm'},
+      {id:'p-b2',  x:250,y:230, w:140,h:70, role:'CONSTRUCTION',   name:'공 사 부 장', contact:'010-0000-0000',th:'pm'},
+      {id:'p-b3',  x:410,y:230, w:140,h:70, role:'CONSTRUCTION',   name:'공 사 부 장', contact:'010-0000-0000',th:'pm'},
+      {id:'p-b4',  x:570,y:230, w:140,h:70, role:'CONSTRUCTION',   name:'공 사 부 장', contact:'010-0000-0000',th:'pm'},
+      {id:'p-s1',  x:740,y:230, w:150,h:70, role:'SAFETY MANAGER', name:'안전관리자',  contact:'010-0000-0000',th:'sflt'},
+      {id:'p-b5',  x:90, y:340, w:140,h:70, role:'CONSTRUCTION',   name:'공 사 부 장', contact:'010-0000-0000',th:'pm'},
+      {id:'p-b6',  x:570,y:340, w:140,h:70, role:'CONSTRUCTION',   name:'공 사 부 장', contact:'010-0000-0000',th:'pm'},
+      {id:'p-s2',  x:740,y:340, w:150,h:70, role:'SAFETY MANAGER', name:'안전관리자',  contact:'010-0000-0000',th:'sflt'},
+      {id:'p-s3',  x:740,y:450, w:150,h:70, role:'SAFETY MANAGER', name:'안전관리자',  contact:'010-0000-0000',th:'sflt'},
+      {id:'p-s4',  x:740,y:550, w:150,h:70, role:'SAFETY MANAGER', name:'안전관리자',  contact:'010-0000-0000',th:'sflt'},
+    ],
+    conns:[
+      {id:'pc1', f:'p-top',fp:'b',t:'p-b1',tp:'t'},
+      {id:'pc2', f:'p-top',fp:'b',t:'p-b2',tp:'t'},
+      {id:'pc3', f:'p-top',fp:'b',t:'p-b3',tp:'t'},
+      {id:'pc4', f:'p-top',fp:'b',t:'p-b4',tp:'t'},
+      {id:'pc5', f:'p-top',fp:'b',t:'p-s1',tp:'t'},
+      {id:'pc6', f:'p-b1', fp:'b',t:'p-b5',tp:'t'},
+      {id:'pc7', f:'p-b4', fp:'b',t:'p-b6',tp:'t'},
+      {id:'pc8', f:'p-s1', fp:'b',t:'p-s2',tp:'t'},
+      {id:'pc9', f:'p-s2', fp:'b',t:'p-s3',tp:'t'},
+      {id:'pc10',f:'p-s3', fp:'b',t:'p-s4',tp:'t'},
+    ]
+  },
+
+  { label:'협력업체 조직도', color:'#2a7d4f',
+    boxes:[
+      {id:'s-rep',  x:320,y:60,  w:170,h:75, role:'SITE REP',          name:'현장대리인',      contact:'010-0000-0000',th:'sub-lt'},
+      {id:'s-new',  x:60, y:140, w:140,h:75, role:'NEW',               name:'새 박스',         contact:'010-0000-0000',th:'sub-lt'},
+      {id:'s-sup',  x:60, y:350, w:145,h:75, role:'관리감독자',         name:'이 철',           contact:'010-0000-0000',th:'sub-lt'},
+      {id:'s-fb3',  x:230,y:350, w:135,h:75, role:'FOREMAN B',         name:'형틀반장',         contact:'010-0000-0000',th:'sub-lt'},
+      {id:'s-fc3',  x:390,y:350, w:135,h:75, role:'FOREMAN C',         name:'설비반장',         contact:'010-0000-0000',th:'sub-lt'},
+      {id:'s-fd3',  x:550,y:350, w:135,h:75, role:'FOREMAN D',         name:'기타반장',         contact:'010-0000-0000',th:'sub-lt'},
+      {id:'s-fa4',  x:60, y:460, w:135,h:75, role:'FOREMAN A',         name:'철근반장',         contact:'010-0000-0000',th:'sub-lt'},
+      {id:'s-fb4',  x:230,y:460, w:135,h:75, role:'FOREMAN B',         name:'형틀반장',         contact:'010-0000-0000',th:'sub-lt'},
+      {id:'s-fc4',  x:390,y:460, w:135,h:75, role:'FOREMAN C',         name:'설비반장',         contact:'010-0000-0000',th:'sub-lt'},
+      {id:'s-fd4',  x:550,y:460, w:135,h:75, role:'FOREMAN D',         name:'기타반장',         contact:'010-0000-0000',th:'sub-lt'},
+      {id:'s-wkr',  x:60, y:600, w:625,h:65, role:'ALL WORKERS',       name:'작업 근로자 전원', contact:'',             th:'navy'},
+    ],
+    conns:[
+      {id:'sc1', f:'s-rep', fp:'l', t:'s-new', tp:'r'},
+      {id:'sc2', f:'s-rep', fp:'b', t:'s-sup', tp:'t'},
+      {id:'sc3', f:'s-rep', fp:'b', t:'s-fb3', tp:'t'},
+      {id:'sc4', f:'s-rep', fp:'b', t:'s-fc3', tp:'t'},
+      {id:'sc5', f:'s-rep', fp:'b', t:'s-fd3', tp:'t'},
+      {id:'sc6', f:'s-sup', fp:'b', t:'s-fa4', tp:'t'},
+      {id:'sc7', f:'s-fb3', fp:'b', t:'s-fb4', tp:'t'},
+      {id:'sc8', f:'s-fc3', fp:'b', t:'s-fc4', tp:'t'},
+      {id:'sc9', f:'s-fd3', fp:'b', t:'s-fd4', tp:'t'},
+      {id:'sc10',f:'s-fa4', fp:'b', t:'s-wkr', tp:'t'},
+      {id:'sc11',f:'s-fb4', fp:'b', t:'s-wkr', tp:'t'},
+      {id:'sc12',f:'s-fc4', fp:'b', t:'s-wkr', tp:'t'},
+      {id:'sc13',f:'s-fd4', fp:'b', t:'s-wkr', tp:'t'},
+    ]
+  }
+];
+
+// Per-page saved state
+const pageStates = [null, null, null]; // saved boxMap snapshots
+let currentPage = 0;
+
+// ═══════════════════════════
+// STATE
+// ═══════════════════════════
+const G=10;
+let zoom = 1;
+const ZOOM_MIN = 0.2, ZOOM_MAX = 3; // grid size px
+const snap=v=>Math.round(v/G)*G;
+let mode='sel', selBox=null, selBoxId=null, selConn=null, connecting=null;
+let multiSel=new Set(); // set of box ids
+let uidx=200, boxMap={}, conns=[];
+let divMap={}; // id -> {el, d}
+let selDiv=null, selDivId=null;
+let juncMap={}; // id -> {el, d:{id,x,y}}
+
+const cvs  = document.getElementById('canvas');
+const svgl = document.getElementById('svg-layer');
+const cl   = document.getElementById('cl');
+const tmp  = document.getElementById('tmp');
+const wrap = document.getElementById('wrapper');
+
+// ═══════════════════════════
+// UTIL
+// ═══════════════════════════
+const uid = () => 'x'+(++uidx);
+
+function cvPos(e){
+  const r = cvs.getBoundingClientRect();
+  return {x:(e.clientX - r.left)/zoom, y:(e.clientY - r.top)/zoom};
+}
+function boxRect(id){
+  const b=boxMap[id]; if(!b) return null;
+  if(b.d.isJunction){
+    // junction el is centered (transform:-50%,-50%), so left/top IS the center
+    const cx=parseFloat(b.el.style.left), cy=parseFloat(b.el.style.top);
+    return {x:cx-8,y:cy-8,w:16,h:16};
+  }
+  return {x:parseFloat(b.el.style.left),y:parseFloat(b.el.style.top),
+          w:b.el.offsetWidth,h:b.el.offsetHeight};
+}
+function portPos(id,side){
+  const r=boxRect(id); if(!r) return null;
+  return {
+    t:{x:r.x+r.w/2,y:r.y},
+    b:{x:r.x+r.w/2,y:r.y+r.h},
+    l:{x:r.x,       y:r.y+r.h/2},
+    r:{x:r.x+r.w,   y:r.y+r.h/2},
+  }[side];
+}
+function toast(m){
+  const t=document.getElementById('toast');
+  t.textContent=m; t.classList.add('on');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('on'),2200);
+}
+
+
+// ═══════════════════════════
+// DIVIDERS
+// ═══════════════════════════
+function addDivider(dir){
+  const cx = snap(wrap.scrollLeft/zoom + wrap.clientWidth/(zoom*2) - (dir==='h'?150:30));
+  const cy = snap(wrap.scrollTop/zoom  + wrap.clientHeight/(zoom*2) - (dir==='h'?15:100));
+  const d = {
+    id:uid(), dir, x:cx, y:cy,
+    len: dir==='h' ? 300 : 200,
+    label:'구분선', color:'#94a3b8', labelPos:'above',
+  };
+  mkDivider(d);
+  toast('━ 구분선 추가됨');
+}
+
+function mkDivider(d){
+  const el = document.createElement('div');
+  el.className = 'divider d'+(d.dir);
+  el.id = 'dv-'+d.id;
+  el.style.left = d.x+'px';
+  el.style.top  = d.y+'px';
+  el.style.color= d.color;
+  if(d.dir==='h'){
+    el.style.width = d.len+'px';
+    el.innerHTML = `
+      <div class="dh-body" style="background:${d.color};">
+        <div class="dh-label-pill"><span class="div-icon">━</span>${d.label||''}</div>
+        <div class="dh-cap"></div>
+      </div>
+    `;
+    // resize handle E (width)
+    const rh=document.createElement('div');
+    rh.className='div-rh div-rh-e'; rh.dataset.dirid=d.id;
+    rh.addEventListener('mousedown',onDivRhDown);
+    el.appendChild(rh);
+  } else {
+    el.style.height = d.len+'px';
+    el.innerHTML = `
+      <div class="dv-body" style="background:${d.color};">
+        <div class="dv-label-pill"><span class="div-icon">┃</span>${d.label||''}</div>
+      </div>
+    `;
+    const rh=document.createElement('div');
+    rh.className='div-rh div-rh-s'; rh.dataset.dirid=d.id;
+    rh.addEventListener('mousedown',onDivRhDown);
+    el.appendChild(rh);
+  }
+  el.addEventListener('mousedown', e=>{
+    if(e.target.classList.contains('div-rh')) return;
+    e.stopPropagation(); e.preventDefault();
+    selDiv_fn(el, d.id);
+    const ox=parseFloat(el.style.left), oy=parseFloat(el.style.top);
+    const sx=e.clientX, sy=e.clientY, z=zoom;
+    function mv(e){
+      el.style.left=snap(Math.max(0,ox+(e.clientX-sx)/z))+'px';
+      el.style.top =snap(Math.max(0,oy+(e.clientY-sy)/z))+'px';
+    }
+    function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }
+    document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+  });
+  el.addEventListener('contextmenu',e=>{e.preventDefault();selDiv_fn(el,d.id);showCtx(e,'div',d.id);});
+  cvs.appendChild(el);
+  divMap[d.id]={el,d:{...d}};
+  return el;
+}
+
+function selDiv_fn(el,id){
+  deselAll();
+  selDiv=el; selDivId=id;
+  el.classList.add('sel-div');
+  showDivPanel(id);
+  document.getElementById('btn-del').classList.add('ready');
+}
+function deselDiv(){
+  if(!selDiv) return;
+  selDiv.classList.remove('sel-div');
+  selDiv=null; selDivId=null;
+  document.getElementById('btn-del').classList.remove('ready');
+}
+
+function showDivPanel(id){
+  const dv=divMap[id]; if(!dv) return;
+  const d=dv.d;
+  document.getElementById('ep-title').textContent='구분선 편집';
+  document.getElementById('ep-body').innerHTML=`
+<div class="ep-sec"><h4>텍스트</h4>
+  <div class="ep-f"><label>라벨</label><input id="dv-lbl" value="${d.label||''}"></div>
+</div>
+<hr class="ep-div">
+<div class="ep-sec"><h4>색상</h4>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;">
+    ${['#94a3b8','#64748b','#0a1628','#1d6fa4','#2a7d4f','#c0392b','#d97706','#7c3aed','#db2777'].map(c=>`
+    <div onclick="applyDivColor('${id}','${c}')" style="width:24px;height:24px;border-radius:4px;background:${c};cursor:pointer;border:2px solid ${d.color===c?'#3b82f6':'transparent'}"></div>`).join('')}
+    <input type="color" value="${d.color}" onchange="applyDivColor('${id}',this.value)" style="width:24px;height:24px;padding:1px;border-radius:4px;border:1.5px solid var(--border);cursor:pointer;">
+  </div>
+</div>
+<hr class="ep-div">
+<div class="ep-sec"><h4>길이 (px)</h4>
+  <div class="ep-f"><label>${d.dir==='h'?'너비':'높이'}</label>
+    <input id="dv-len" type="number" value="${d.len}" min="50" max="2000">
+  </div>
+</div>
+<div class="ep-ft" style="padding:0;border:none;margin-top:6px;">
+  <button class="ep-btn ep-apply" onclick="applyDiv('${id}')">✓ 적용</button>
+  <button class="ep-btn ep-del" onclick="delDiv('${id}')">🗑 삭제</button>
+</div>`;
+}
+
+function applyDivColor(id,color){
+  const dv=divMap[id]; if(!dv) return;
+  dv.d.color=color; redrawDivider(dv); showDivPanel(id);
+}
+function applyDivLabelPos(id,pos){
+  const dv=divMap[id]; if(!dv) return;
+  dv.d.labelPos=pos; redrawDivider(dv); showDivPanel(id);
+}
+function applyDiv(id){
+  const dv=divMap[id]; if(!dv) return;
+  dv.d.label=document.getElementById('dv-lbl')?.value||'';
+  dv.d.len=Math.max(50,parseInt(document.getElementById('dv-len')?.value)||dv.d.len);
+  redrawDivider(dv); toast('✓ 적용됨');
+}
+function redrawDivider(dv){
+  const d=dv.d, el=dv.el;
+  if(d.dir==='h') el.style.width=d.len+'px';
+  else            el.style.height=d.len+'px';
+  // Rebuild innerHTML but keep resize handle
+  const rh=el.querySelector('.div-rh');
+  if(d.dir==='h'){
+    el.innerHTML=`
+      <div class="dh-body" style="background:${d.color};">
+        <div class="dh-label-pill"><span class="div-icon">━</span>${d.label||''}</div>
+        <div class="dh-cap"></div>
+      </div>
+    `;
+  } else {
+    el.innerHTML=`
+      <div class="dv-body" style="background:${d.color};">
+        <div class="dv-label-pill"><span class="div-icon">┃</span>${d.label||''}</div>
+      </div>
+    `;
+  }
+  el.style.color=d.color;
+  if(rh){ el.appendChild(rh); }
+}
+function delDiv(id){
+  divMap[id]?.el.remove(); delete divMap[id];
+  if(selDivId===id){selDiv=null;selDivId=null;}
+  showEmpty(); document.getElementById('btn-del').classList.remove('ready');
+  toast('🗑 구분선 삭제됨');
+}
+
+// Resize handle for divider length
+let DVR=null;
+function onDivRhDown(e){
+  if(e.button!==0) return; e.stopPropagation(); e.preventDefault();
+  const id=e.currentTarget.dataset.dirid;
+  const dv=divMap[id]; if(!dv) return;
+  selDiv_fn(dv.el,id);
+  DVR={dv,sx:e.clientX,sy:e.clientY,len:dv.d.len,z:zoom};
+  document.addEventListener('mousemove',onDVRmove);
+  document.addEventListener('mouseup',onDVRup);
+}
+function onDVRmove(e){
+  if(!DVR) return;
+  const {dv,sx,sy,len,z}=DVR;
+  const delta = dv.d.dir==='h' ? (e.clientX-sx)/z : (e.clientY-sy)/z;
+  dv.d.len=Math.max(50,snap(len+delta));
+  redrawDivider(dv);
+  if(selDivId===dv.d.id){ document.getElementById('dv-len')?.setAttribute('value',dv.d.len); }
+}
+function onDVRup(){ DVR=null; document.removeEventListener('mousemove',onDVRmove); document.removeEventListener('mouseup',onDVRup); }
+
+
+// ═══════════════════════════
+// JUNCTION NODES
+// ═══════════════════════════
+function mkJunction(d){
+  const el=document.createElement('div');
+  el.className='junc'; el.id='jn-'+d.id;
+  el.style.left=d.x+'px'; el.style.top=d.y+'px';
+
+  // 4 ports — same data pattern as boxes so portPos() works
+  [{s:'t',cls:'port-t'},{s:'b',cls:'port-b'},{s:'l',cls:'port-l'},{s:'r',cls:'port-r'}].forEach(({s,cls})=>{
+    const p=document.createElement('div');
+    p.className='port '+cls;
+    p.dataset.bid=d.id; p.dataset.s=s;
+    p.addEventListener('mousedown',onPortDown);
+    p.addEventListener('click',onPortClick);
+    el.appendChild(p);
+  });
+
+  // Drag
+  el.addEventListener('mousedown',e=>{
+    if(mode==='con') return;
+    if(e.target.classList.contains('port')) return;
+    if(e.button!==0) return;
+    e.stopPropagation(); e.preventDefault();
+    selJunc_fn(el, d.id);
+    const ox=parseFloat(el.style.left), oy=parseFloat(el.style.top);
+    const sx=e.clientX, sy=e.clientY, z=zoom;
+    function mv(e){
+      const nx=snap(Math.max(0,ox+(e.clientX-sx)/z));
+      const ny=snap(Math.max(0,oy+(e.clientY-sy)/z));
+      el.style.left=nx+'px'; el.style.top=ny+'px';
+      d.x=nx; d.y=ny;
+      refreshConns();
+    }
+    function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }
+    document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+  });
+  el.addEventListener('contextmenu',e=>{
+    e.preventDefault(); selJunc_fn(el,d.id);
+    showCtx(e,'junc',d.id);
+  });
+
+  cvs.appendChild(el);
+  // Register in juncMap AND boxMap so portPos() works
+  juncMap[d.id]={el,d:{...d}};
+  boxMap[d.id]={el,d:{...d, w:16, h:16, isJunction:true}};
+  return el;
+}
+
+function selJunc_fn(el,id){
+  deselAll();
+  el.classList.add('sel');
+  selBoxId=id; selBox=el;
+  showJuncPanel(id);
+  document.getElementById('btn-del').classList.add('ready');
+}
+
+function showJuncPanel(id){
+  document.getElementById('ep-title').textContent='분기점';
+  document.getElementById('ep-body').innerHTML=`
+<div style="text-align:center;padding:20px 0;font-size:28px;">⦿</div>
+<div style="font-size:11px;color:#64748b;text-align:center;line-height:1.8;">
+  연결선의 분기점입니다.<br>
+  포트(●)에서 새 연결선을 그을 수 있습니다.<br>
+  드래그로 이동 가능합니다.
+</div>
+<hr class="ep-div" style="margin:12px 0;">
+<button class="ep-btn ep-del" style="width:100%;margin-top:4px;" onclick="delJunc('${id}')">🗑 분기점 삭제</button>`;
+}
+
+function delJunc(id){
+  removeConnsByBox(id);
+  juncMap[id]?.el.remove();
+  delete juncMap[id];
+  delete boxMap[id];
+  if(selBoxId===id){selBox=null;selBoxId=null;}
+  showEmpty();
+  document.getElementById('btn-del').classList.remove('ready');
+  toast('🗑 분기점 삭제됨');
+}
+
+// ═══════════════════════════
+// ORTHOGONAL ROUTING
+// ═══════════════════════════
+function route(p1,s1,p2,s2){
+  const G=34;
+  let x1=p1.x,y1=p1.y,x2=p2.x,y2=p2.y;
+  let ex1=x1,ey1=y1,ex2=x2,ey2=y2;
+  if(s1==='t') ey1-=G; if(s1==='b') ey1+=G;
+  if(s1==='l') ex1-=G; if(s1==='r') ex1+=G;
+  if(s2==='t') ey2-=G; if(s2==='b') ey2+=G;
+  if(s2==='l') ex2-=G; if(s2==='r') ex2+=G;
+
+  const iv1=s1==='t'||s1==='b', iv2=s2==='t'||s2==='b';
+  let pts=[[x1,y1],[ex1,ey1]];
+
+  if(iv1&&iv2){const my=(ey1+ey2)/2; pts.push([ex1,my],[ex2,my]);}
+  else if(!iv1&&!iv2){const mx=(ex1+ex2)/2; pts.push([mx,ey1],[mx,ey2]);}
+  else if(iv1&&!iv2){pts.push([ex2,ey1]);}
+  else{pts.push([ex1,ey2]);}
+
+  pts.push([ex2,ey2],[x2,y2]);
+  // dedup
+  const r=[[pts[0][0],pts[0][1]]];
+  for(let i=1;i<pts.length;i++){
+    const p=r[r.length-1];
+    if(Math.abs(pts[i][0]-p[0])>0.5||Math.abs(pts[i][1]-p[1])>0.5) r.push([pts[i][0],pts[i][1]]);
+  }
+  return 'M '+r.map(([x,y])=>`${Math.round(x)},${Math.round(y)}`).join(' L ');
+}
+function routeToCursor(fid,fs,mx,my){
+  const p=portPos(fid,fs); if(!p) return '';
+  const G=34;
+  let ex=p.x,ey=p.y;
+  if(fs==='t') ey-=G; if(fs==='b') ey+=G;
+  if(fs==='l') ex-=G; if(fs==='r') ex+=G;
+  const iv=fs==='t'||fs==='b';
+  const pts=[[p.x,p.y],[ex,ey],...(iv?[[mx,ey],[mx,my]]:[[ex,my],[mx,my]])];
+  return 'M '+pts.map(([x,y])=>`${Math.round(x)},${Math.round(y)}`).join(' L ');
+}
+
+// ═══════════════════════════
+// CONNECTIONS
+// ═══════════════════════════
+function refreshConns(){conns.forEach(redrawConn);}
+
+function redrawConn(c){
+  const p1=portPos(c.f,c.fp), p2=portPos(c.t,c.tp);
+  if(!p1||!p2) return;
+  const d=route(p1,c.fp,p2,c.tp);
+  c.pe.setAttribute('d',d); c.he.setAttribute('d',d);
+}
+
+function addConnEl(c){
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  const he=document.createElementNS('http://www.w3.org/2000/svg','path');
+  he.setAttribute('class','ch');
+  const pe=document.createElementNS('http://www.w3.org/2000/svg','path');
+  pe.setAttribute('class','cp');
+  [he,pe].forEach(cel=>{
+    cel.addEventListener('click',e=>{
+      e.stopPropagation();
+      if(mode==='con'){
+        // In connect mode: create junction at click position, split the line
+        const r=cvs.getBoundingClientRect();
+        const cx=snap((e.clientX-r.left)/zoom);
+        const cy=snap((e.clientY-r.top)/zoom);
+        const jd={id:uid(),x:cx,y:cy};
+        mkJunction(jd);
+        // Split: original A→B becomes A→junction + junction→B
+        const jc1={id:uid(),f:c.f,fp:c.fp,t:jd.id,tp:'t'};
+        const jc2={id:uid(),f:jd.id,fp:'b',t:c.t,tp:c.tp};
+        removeConnObj(c);
+        conns.push(jc1); addConnEl(jc1);
+        conns.push(jc2); addConnEl(jc2);
+        selJunc_fn(juncMap[jd.id].el, jd.id);
+        toast('⦿ 분기점 생성됨 — 포트(●)에서 새 연결선을 그으세요');
+      } else {
+        selConn_fn(c);
+      }
+    });
+    cel.addEventListener('contextmenu',e=>{e.preventDefault();selConn_fn(c);showCtx(e,'conn',c);});
+  });
+  g.appendChild(he); g.appendChild(pe);
+  cl.appendChild(g);
+  c.pe=pe; c.he=he; c.g=g;
+  redrawConn(c);
+}
+
+function selConn_fn(c){
+  if(selConn){selConn.pe.classList.remove('sel');}
+  if(selBox) deselBox();
+  selConn=c; c.pe.classList.add('sel');
+  showConnPanel(c);
+  document.getElementById('btn-del').classList.add('ready');
+  document.getElementById('btn-copy').style.background='rgba(59,130,246,.25)';document.getElementById('btn-copy').style.borderColor='rgba(59,130,246,.5)';
+}
+function deselConn(){
+  if(!selConn)return;
+  selConn.pe.classList.remove('sel');
+  
+  selConn=null;
+  document.getElementById('btn-del').classList.remove('ready');
+  document.getElementById('btn-copy').style.background='';document.getElementById('btn-copy').style.borderColor='';
+}
+// deselConn defined above
+
+function removeConnObj(c){
+  c.g.remove(); conns=conns.filter(x=>x!==c);
+  if(selConn===c){selConn=null;}
+}
+function removeConnsByBox(id){[...conns].forEach(c=>{if(c.f===id||c.t===id)removeConnObj(c);});}
+
+// ═══════════════════════════
+// BOX CREATION
+// ═══════════════════════════
+function mkBox(d){
+  const el=document.createElement('div');
+  el.className='box t-'+d.th;
+  el.id='bx-'+d.id;
+  el.style.left=d.x+'px';el.style.top=d.y+'px';el.style.width=d.w+'px';el.style.height=d.h+'px';
+
+  // body
+  const bd=document.createElement('div'); bd.className='box-body';
+  el.appendChild(bd);
+
+  // ports
+  [{s:'t',cls:'port-t'},{s:'b',cls:'port-b'},{s:'l',cls:'port-l'},{s:'r',cls:'port-r'}].forEach(({s,cls})=>{
+    const p=document.createElement('div');
+    p.className='port '+cls; p.dataset.bid=d.id; p.dataset.s=s;
+    p.addEventListener('mousedown',onPortDown);
+    p.addEventListener('click',onPortClick);
+    el.appendChild(p);
+  });
+
+  // resize handles
+  ['nw','n','ne','e','se','s','sw','w'].forEach(dir=>{
+    const h=document.createElement('div');
+    h.className='rh rh-'+dir; h.dataset.dir=dir;
+    h.addEventListener('mousedown',onRhDown);
+    el.appendChild(h);
+  });
+
+  // drag + select on box element (bd has pointer-events:none so we listen on el)
+  el.addEventListener('mousedown',e=>{
+    if(e.target.classList.contains('port')||e.target.classList.contains('rh')) return;
+    onBoxDown(e,el,d.id);
+  });
+  el.addEventListener('contextmenu',e=>{e.preventDefault();selBox_fn(el,d.id);showCtx(e,'box',d.id);});
+
+  cvs.appendChild(el);
+  boxMap[d.id]={el,d:{...d}};
+  renderBoxBody(boxMap[d.id]);
+  return el;
+}
+
+function addBox(th){
+  const cx=wrap.scrollLeft+wrap.clientWidth/2-75;
+  const cy=wrap.scrollTop+wrap.clientHeight/2-40;
+  const d={id:uid(),x:snap(cx),y:snap(cy),w:150,h:80,role:'NEW',name:'새 박스',contact:'010-0000-0000',th};
+  mkBox(d); toast('＋ 박스 추가됨');
+}
+
+// ═══════════════════════════
+// SELECTION
+// ═══════════════════════════
+function selBox_fn(el,id,additive){
+  deselConn();
+  if(!additive){
+    // clear old multi
+    clearMultiSel();
+    if(selBox&&selBox!==el) deselBox();
+  }
+  selBox=el; selBoxId=id;
+  el.classList.add('sel');
+  multiSel.add(id);
+  showBoxPanel(id);
+  document.getElementById('btn-del').classList.add('ready');
+  document.getElementById('btn-copy').style.background='rgba(59,130,246,.25)';
+  document.getElementById('btn-copy').style.borderColor='rgba(59,130,246,.5)';
+  updateMultiBadge();
+}
+function deselBox(){
+  if(!selBox)return;
+  selBox.classList.remove('sel');
+  selBox=null; selBoxId=null;
+  clearMultiSel();
+}
+function clearMultiSel(){
+  multiSel.forEach(id=>{ boxMap[id]?.el.classList.remove('sel','msel'); });
+  multiSel.clear();
+  document.getElementById('btn-del').classList.remove('ready');
+  document.getElementById('btn-copy').style.background='';
+  document.getElementById('btn-copy').style.borderColor='';
+  updateMultiBadge();
+}
+function updateMultiBadge(){
+  const n=multiSel.size;
+  const hint=document.getElementById('hint');
+  if(n>1) hint.textContent=`${n}개 선택됨 — 드래그로 한번에 이동 | Del 삭제 | Ctrl+C 복사`;
+}
+function deselAll(){deselBox();deselConn();selBoxId=null;clearMultiSel();deselDiv();showEmpty();}
+
+// ═══════════════════════════
+// DRAG-MOVE
+// ═══════════════════════════
+let DS=null;
+function onBoxDown(e,bx,id){
+  if(mode==='con') return;
+  if(e.button!==0) return;
+  e.stopPropagation(); e.preventDefault();
+
+  const additive = e.shiftKey;
+  if(additive && multiSel.has(id)){
+    // Shift+click on already-selected → deselect only
+    bx.classList.remove('sel','msel');
+    multiSel.delete(id);
+    if(selBoxId===id){ selBox=null; selBoxId=null; }
+    updateMultiBadge();
+    return;
+  }
+
+  // If clicking a box already in the group (no shift) → keep group, just drag
+  const keepGroup = !additive && multiSel.size > 1 && multiSel.has(id);
+  if(!keepGroup) selBox_fn(bx, id, additive);
+
+  // Snapshot AFTER selection is finalized
+  const snapshots={};
+  multiSel.forEach(bid=>{
+    const b=boxMap[bid];
+    if(b) snapshots[bid]={ox:parseFloat(b.el.style.left),oy:parseFloat(b.el.style.top)};
+  });
+  DS={bx,sx:e.clientX,sy:e.clientY,ox:parseFloat(bx.style.left),oy:parseFloat(bx.style.top),mv:false,z:zoom,snapshots};
+  document.addEventListener('mousemove',onDmove);
+  document.addEventListener('mouseup',onDup);
+}
+function onDmove(e){
+  if(!DS) return;
+  const dx=e.clientX-DS.sx, dy=e.clientY-DS.sy;
+  if(!DS.mv&&Math.abs(dx)+Math.abs(dy)<4) return;
+  DS.mv=true;
+  const ddx=dx/DS.z, ddy=dy/DS.z;
+  if(Object.keys(DS.snapshots).length>1){
+    // move all selected
+    Object.entries(DS.snapshots).forEach(([bid,{ox,oy}])=>{
+      const b=boxMap[bid];
+      if(b){ b.el.style.left=snap(Math.max(0,ox+ddx))+'px'; b.el.style.top=snap(Math.max(0,oy+ddy))+'px'; }
+    });
+  } else {
+    DS.bx.style.left=snap(Math.max(0,DS.ox+ddx))+'px';
+    DS.bx.style.top =snap(Math.max(0,DS.oy+ddy))+'px';
+  }
+  refreshConns();
+}
+function onDup(){DS=null;document.removeEventListener('mousemove',onDmove);document.removeEventListener('mouseup',onDup);}
+
+// ═══════════════════════════
+// RESIZE
+// ═══════════════════════════
+let RS=null;
+function onRhDown(e){
+  if(e.button!==0) return; e.stopPropagation(); e.preventDefault();
+  const bx=e.currentTarget.closest('.box');
+  const id=bx.id.replace('bx-','');
+  selBox_fn(bx,id);
+  RS={bx,dir:e.currentTarget.dataset.dir,sx:e.clientX,sy:e.clientY,
+      ox:parseFloat(bx.style.left),oy:parseFloat(bx.style.top),
+      ow:bx.offsetWidth,oh:bx.offsetHeight,z:zoom};
+  document.addEventListener('mousemove',onRmove);
+  document.addEventListener('mouseup',onRup);
+}
+function onRmove(e){
+  if(!RS) return;
+  const {bx,dir,sx,sy,ox,oy,ow,oh,z}=RS;
+  const dx=(e.clientX-sx)/z, dy=(e.clientY-sy)/z, MN=80;
+  let l=ox,t=oy,w=ow,h=oh;
+  if(dir.includes('e')) w=Math.max(MN,ow+dx);
+  if(dir.includes('s')) h=Math.max(MN,oh+dy);
+  if(dir.includes('w')){const nw=Math.max(MN,ow-dx);l=ox+ow-nw;w=nw;}
+  if(dir.includes('n')){const nh=Math.max(MN,oh-dy);t=oy+oh-nh;h=nh;}
+  bx.style.left=snap(l)+'px'; bx.style.top=snap(t)+'px';
+  bx.style.width=snap(w)+'px'; bx.style.height=snap(h)+'px';
+  refreshConns();
+}
+function onRup(){RS=null;document.removeEventListener('mousemove',onRmove);document.removeEventListener('mouseup',onRup);}
+
+// ═══════════════════════════
+// CONNECT MODE
+// ═══════════════════════════
+function onPortDown(e){
+  // use mousedown only to prevent box drag from firing
+  if(mode!=='con') return;
+  e.stopPropagation(); e.preventDefault();
+}
+function onPortClick(e){
+  if(mode!=='con') return;
+  e.stopPropagation(); e.preventDefault();
+  const bid=e.currentTarget.dataset.bid, s=e.currentTarget.dataset.s;
+  if(!connecting){
+    connecting={fid:bid,fs:s,el:e.currentTarget};
+    e.currentTarget.classList.add('active');
+    document.addEventListener('mousemove',onCMove);
+    toast('연결 시작 — 연결할 박스의 포트(●)를 클릭하세요 | ESC 취소');
+  } else {
+    if(connecting.fid===bid){ cancelConn(); return; }
+    if(conns.some(c=>c.f===connecting.fid&&c.fp===connecting.fs&&c.t===bid&&c.tp===s)){
+      toast('이미 연결된 포트입니다'); cancelConn(); return;
+    }
+    const c={id:uid(),f:connecting.fid,fp:connecting.fs,t:bid,tp:s};
+    conns.push(c); addConnEl(c);
+    cancelConn(); toast('✓ 연결선 추가됨');
+  }
+}
+function onCMove(e){
+  if(!connecting) return;
+  const r=cvs.getBoundingClientRect();
+  const p={x:(e.clientX-r.left)/zoom, y:(e.clientY-r.top)/zoom};
+  tmp.setAttribute('d',routeToCursor(connecting.fid,connecting.fs,p.x,p.y));
+}
+function cancelConn(){
+  if(connecting){connecting.el.classList.remove('active');connecting=null;}
+  document.removeEventListener('mousemove',onCMove);
+  tmp.setAttribute('d','');
+}
+
+// ═══════════════════════════
+// MODE
+// ═══════════════════════════
+function setMode(m){
+  mode=m;
+  document.body.classList.toggle('cm',m==='con');
+  document.getElementById('btn-sel').classList.toggle('act',m==='sel');
+  document.getElementById('btn-con').classList.toggle('act',m==='con');
+  if(m!=='con') cancelConn();
+  document.getElementById('hint').textContent=m==='con'
+    ?'포트(●) 클릭→연결 시작 | 연결선 클릭→분기점 생성 | ESC 취소'
+    :'박스 클릭→편집 | 드래그→이동 | 모서리 드래그→크기조절 | Del→삭제';
+}
+
+// ═══════════════════════════
+// DELETE
+// ═══════════════════════════
+function delSelected(){
+  if(multiSel.size>0){
+    const ids=[...multiSel];
+    ids.forEach(id=>{ removeConnsByBox(id); boxMap[id]?.el.remove(); delete boxMap[id]; });
+    selBox=null; selBoxId=null; multiSel.clear();
+    showEmpty(); toast(`🗑 ${ids.length}개 박스 삭제됨`);
+    document.getElementById('btn-del').classList.remove('ready');
+    document.getElementById('btn-copy').style.background='';
+    document.getElementById('btn-copy').style.borderColor='';
+  } else if(selConn){
+    removeConnObj(selConn); selConn=null; showEmpty(); toast('🗑 연결선 삭제됨');
+  } else if(selDivId){
+    delDiv(selDivId);
+  } else if(selBoxId && boxMap[selBoxId]?.d?.isJunction){
+    delJunc(selBoxId);
+  } else {
+    toast('삭제할 항목을 먼저 선택하세요');
+  }
+}
+function delBox(id){
+  removeConnsByBox(id); boxMap[id]?.el.remove(); delete boxMap[id];
+  if(selBoxId===id){selBox=null;selBoxId=null;}
+  showEmpty(); toast('🗑 삭제됨');
+}
+function delConn(c){removeConnObj(c);selConn=null;showEmpty();toast('🗑 연결선 삭제됨');}
+
+// ═══════════════════════════
+// EDIT PANEL
+// ═══════════════════════════
+const SWHTML=TH.map(t=>`<div class="sw" title="${t.lb}" style="background:${t.bg};${t.bg==='#ffffff'?'outline:1.5px solid #cbd5e1;':''}" data-th="${t.k}" onclick="applyTh(this)"></div>`).join('');
+
+function showEmpty(){
+  document.getElementById('ep-title').textContent='편집 패널';
+  document.getElementById('ep-body').innerHTML=`<div class="ep-empty"><div class="ico">🖱</div><div>박스를 클릭하면<br>여기서 편집합니다</div></div>`;
+}
+function showBoxPanel(id){
+  const b=boxMap[id]; if(!b) return;
+  const d=b.d;
+  const ts=d.textStyle||{};
+  document.getElementById('ep-title').textContent='박스 편집';
+  document.getElementById('ep-body').innerHTML=`
+<div class="ep-sec"><h4>텍스트</h4>
+  <div class="ep-f"><label>역할 (작은 글씨)</label><input id="er" value="${d.role||''}"></div>
+  <div class="ep-f"><label>이름 / 직책</label><input id="en" value="${d.name||''}"></div>
+  <div class="ep-f"><label>연락처</label><input id="ec" placeholder="010-0000-0000" value="${d.contact||''}"></div>
+</div>
+<hr class="ep-div">
+<div class="ep-sec"><h4>텍스트 스타일</h4>
+  <div class="ep-f"><label>이름 크기</label>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <input id="efs" type="range" min="8" max="24" value="${ts.fontSize||12}" style="flex:1;accent-color:var(--blue);" oninput="document.getElementById('efs-v').textContent=this.value+'px'">
+      <span id="efs-v" style="font-size:10px;color:#64748b;min-width:28px;">${ts.fontSize||12}px</span>
+    </div>
+  </div>
+  <div class="ep-f"><label>역할 크기</label>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <input id="ers" type="range" min="6" max="16" value="${ts.roleSize||8}" style="flex:1;accent-color:var(--blue);" oninput="document.getElementById('ers-v').textContent=this.value+'px'">
+      <span id="ers-v" style="font-size:10px;color:#64748b;min-width:28px;">${ts.roleSize||8}px</span>
+    </div>
+  </div>
+  <div class="ep-f"><label>연락처 크기</label>
+    <div style="display:flex;gap:4px;align-items:center;">
+      <input id="ecs" type="range" min="6" max="16" value="${ts.contactSize||9}" style="flex:1;accent-color:var(--blue);" oninput="document.getElementById('ecs-v').textContent=this.value+'px'">
+      <span id="ecs-v" style="font-size:10px;color:#64748b;min-width:28px;">${ts.contactSize||9}px</span>
+    </div>
+  </div>
+  <div class="ep-f"><label>글자 색상</label>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <input type="color" id="etc" value="${ts.color||'#ffffff'}" style="width:36px;height:28px;padding:1px;border:1.5px solid var(--border);border-radius:5px;cursor:pointer;">
+      <div style="display:flex;gap:4px;flex:1;">
+        <button class="fmt-btn ${ts.bold?'fmt-act':''}" id="fb-bold" onclick="toggleFmt('bold')" title="굵게"><b>B</b></button>
+        <button class="fmt-btn ${ts.italic?'fmt-act':''}" id="fb-italic" onclick="toggleFmt('italic')" title="기울임"><i>I</i></button>
+        <button class="fmt-btn" onclick="resetTextStyle('${id}')" title="스타일 초기화" style="font-size:10px;flex:1;">초기화</button>
+      </div>
+    </div>
+  </div>
+</div>
+<hr class="ep-div">
+<div class="ep-sec"><h4>색상 테마</h4><div class="swatches">${SWHTML}</div></div>
+<hr class="ep-div">
+<div class="ep-sec"><h4>크기 (px)</h4>
+  <div class="ep-f"><label>너비</label><input id="ew" type="number" value="${Math.round(b.el.offsetWidth)}" min="80" max="500"></div>
+  <div class="ep-f"><label>높이</label><input id="eh" type="number" value="${Math.round(b.el.offsetHeight)}" min="50" max="400"></div>
+</div>`;
+  document.getElementById('ep-body').insertAdjacentHTML('beforeend',`
+<div class="ep-ft" style="padding:0;border:none;margin-top:6px;">
+  <button class="ep-btn ep-apply" onclick="applyBox('${id}')">✓ 적용</button>
+  <button class="ep-btn ep-del" onclick="delBox('${id}')">🗑 삭제</button>
+</div>`);
+  document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('act',s.dataset.th===d.th));
+  // live preview on color change
+  document.getElementById('etc').oninput=()=>livePreviewText(id);
+  document.getElementById('efs').oninput=()=>livePreviewText(id);
+  document.getElementById('ers').oninput=()=>livePreviewText(id);
+  document.getElementById('ecs').oninput=()=>livePreviewText(id);
+}
+function showConnPanel(c){
+  document.getElementById('ep-title').textContent='연결선';
+  document.getElementById('ep-body').innerHTML=`
+<div style="font-size:11px;color:#64748b;line-height:1.7;margin-bottom:12px;">
+  <b>${boxMap[c.f]?.d.name||c.f}</b> → <b>${boxMap[c.t]?.d.name||c.t}</b>
+</div>
+<button class="ep-btn ep-del" style="width:100%;" onclick="delConn(selConn)">🗑 연결선 삭제</button>`;
+}
+
+function applyTh(el){
+  document.querySelectorAll('.sw').forEach(s=>s.classList.remove('act'));
+  el.classList.add('act');
+  if(!selBoxId||!boxMap[selBoxId]) return;
+  const th=el.dataset.th;
+  boxMap[selBoxId].d.th=th;
+  boxMap[selBoxId].el.className='box t-'+th+' sel';
+}
+
+function applyBox(id){
+  const b=boxMap[id]; if(!b) return;
+  const role=document.getElementById('er')?.value.trim()||'';
+  const name=document.getElementById('en')?.value.trim()||'';
+  const contact=document.getElementById('ec')?.value.trim()||'';
+  const w=Math.max(80,parseInt(document.getElementById('ew')?.value)||b.el.offsetWidth);
+  const h=Math.max(50,parseInt(document.getElementById('eh')?.value)||b.el.offsetHeight);
+  const color=document.getElementById('etc')?.value||null;
+  const fontSize=parseInt(document.getElementById('efs')?.value)||12;
+  const roleSize=parseInt(document.getElementById('ers')?.value)||8;
+  const contactSize=parseInt(document.getElementById('ecs')?.value)||9;
+  const bold=document.getElementById('fb-bold')?.classList.contains('fmt-act')||false;
+  const italic=document.getElementById('fb-italic')?.classList.contains('fmt-act')||false;
+  b.d.role=role; b.d.name=name; b.d.contact=contact;
+  b.d.textStyle={color,fontSize,roleSize,contactSize,bold,italic};
+  b.el.style.width=w+'px'; b.el.style.height=h+'px';
+  renderBoxBody(b);
+  refreshConns(); toast('✓ 적용됨');
+}
+
+function renderBoxBody(b){
+  const ts=b.d.textStyle||{};
+  const nameStyle=`font-size:${ts.fontSize||12}px;${ts.bold?'font-weight:900;':'font-weight:700;'}${ts.italic?'font-style:italic;':''}${ts.color?'color:'+ts.color+';':''}`;
+  const roleStyle=`font-size:${ts.roleSize||8}px;${ts.color?'color:'+ts.color+';':''}`;
+  const contactStyle=`font-size:${ts.contactSize||9}px;${ts.color?'color:'+ts.color+';':''}`;
+  b.el.querySelector('.box-body').innerHTML=`
+<div class="b-role" style="${roleStyle}">${b.d.role||''}</div>
+<div class="b-name" style="${nameStyle}">${b.d.name||''}</div>
+${b.d.contact?`<div class="b-contact" style="${contactStyle}">${b.d.contact}</div>`:''}`;
+}
+
+function livePreviewText(id){
+  const b=boxMap[id]; if(!b) return;
+  const color=document.getElementById('etc')?.value||null;
+  const fontSize=parseInt(document.getElementById('efs')?.value)||12;
+  const roleSize=parseInt(document.getElementById('ers')?.value)||8;
+  const contactSize=parseInt(document.getElementById('ecs')?.value)||9;
+  const bold=document.getElementById('fb-bold')?.classList.contains('fmt-act')||false;
+  const italic=document.getElementById('fb-italic')?.classList.contains('fmt-act')||false;
+  b.d.textStyle={color,fontSize,roleSize,contactSize,bold,italic};
+  renderBoxBody(b);
+}
+
+function toggleFmt(type){
+  const btn=document.getElementById('fb-'+type);
+  if(!btn) return;
+  btn.classList.toggle('fmt-act');
+  if(selBoxId) livePreviewText(selBoxId);
+}
+
+function resetTextStyle(id){
+  const b=boxMap[id]; if(!b) return;
+  b.d.textStyle={};
+  renderBoxBody(b);
+  showBoxPanel(id);
+  toast('스타일 초기화됨');
+}
+
+// ═══════════════════════════
+// CONTEXT MENU
+// ═══════════════════════════
+let ctxData=null;
+const ctxEl=document.getElementById('ctx');
+function showCtx(e,type,payload){
+  ctxData={type,payload};
+  ctxEl.style.left=e.clientX+'px'; ctxEl.style.top=e.clientY+'px';
+  ctxEl.classList.add('on');
+  document.getElementById('ctx-edit').style.display=type==='box'?'':'none';
+  e.stopPropagation();
+}
+function ctxDoEdit(){ctxEl.classList.remove('on');if(ctxData?.type==='box')showBoxPanel(ctxData.payload);}
+function ctxDoDel(){
+  ctxEl.classList.remove('on');
+  if(!ctxData) return;
+  if(ctxData.type==='box') delBox(ctxData.payload);
+  else if(ctxData.type==='conn') delConn(ctxData.payload);
+  else if(ctxData.type==='div') delDiv(ctxData.payload);
+  else if(ctxData.type==='junc') delJunc(ctxData.payload);
+}
+document.addEventListener('click',()=>ctxEl.classList.remove('on'));
+
+// ═══════════════════════════
+// KEYBOARD
+// ═══════════════════════════
+document.addEventListener('keydown',e=>{
+  const tag=document.activeElement.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA') return;
+  if(e.key==='Escape'){cancelConn();setMode('sel');deselAll();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='a'){e.preventDefault();selectAll();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='c'){e.preventDefault();copySelected();}
+  if((e.ctrlKey||e.metaKey)&&e.key==='v'){e.preventDefault();pasteBox();}
+  if(e.key==='Delete'||e.key==='Backspace') delSelected();
+  if(e.key==='c'||e.key==='C') setMode(mode==='con'?'sel':'con');
+});
+
+// ═══════════════════════════
+// CANVAS CLICK
+// ═══════════════════════════
+// Rubber-band drag-select
+let RB=null;
+const selrect=document.getElementById('selrect');
+
+cvs.addEventListener('mousedown',e=>{
+  if(mode==='con') return;
+  if(e.button!==0) return;
+  // only start rubber-band on canvas background (not a box)
+  if(e.target!==cvs && e.target!==svgl && e.target!==cl && !e.target.closest('defs')) return;
+  if(!e.shiftKey) deselAll();
+  const r=cvs.getBoundingClientRect();
+  const sx=(e.clientX-r.left)/zoom, sy=(e.clientY-r.top)/zoom;
+  RB={sx,sy,ex:sx,ey:sy};
+  selrect.style.display='block';
+  selrect.style.left=sx+'px'; selrect.style.top=sy+'px';
+  selrect.style.width='0px'; selrect.style.height='0px';
+  document.addEventListener('mousemove',onRBmove);
+  document.addEventListener('mouseup',onRBup);
+  e.preventDefault();
+});
+
+function onRBmove(e){
+  if(!RB) return;
+  const r=cvs.getBoundingClientRect();
+  RB.ex=(e.clientX-r.left)/zoom; RB.ey=(e.clientY-r.top)/zoom;
+  const x=Math.min(RB.sx,RB.ex), y=Math.min(RB.sy,RB.ey);
+  const w=Math.abs(RB.ex-RB.sx), h=Math.abs(RB.ey-RB.sy);
+  selrect.style.left=x+'px'; selrect.style.top=y+'px';
+  selrect.style.width=w+'px'; selrect.style.height=h+'px';
+}
+
+function onRBup(e){
+  if(!RB){document.removeEventListener('mousemove',onRBmove);document.removeEventListener('mouseup',onRBup);return;}
+  const x1=Math.min(RB.sx,RB.ex), y1=Math.min(RB.sy,RB.ey);
+  const x2=Math.max(RB.sx,RB.ex), y2=Math.max(RB.sy,RB.ey);
+  selrect.style.display='none'; RB=null;
+  document.removeEventListener('mousemove',onRBmove);
+  document.removeEventListener('mouseup',onRBup);
+  // only select if dragged meaningfully
+  if(x2-x1<6 && y2-y1<6) return;
+  let firstId=null, firstEl=null;
+  Object.entries(boxMap).forEach(([id,b])=>{
+    const bx=parseFloat(b.el.style.left), by=parseFloat(b.el.style.top);
+    const bx2=bx+b.el.offsetWidth, by2=by+b.el.offsetHeight;
+    if(bx<x2 && bx2>x1 && by<y2 && by2>y1){
+      b.el.classList.add('sel','msel');
+      multiSel.add(id);
+      if(!firstId){firstId=id;firstEl=b.el;}
+    }
+  });
+  if(firstId){
+    selBox=firstEl; selBoxId=firstId;
+    showBoxPanel(firstId);
+    document.getElementById('btn-del').classList.add('ready');
+    document.getElementById('btn-copy').style.background='rgba(59,130,246,.25)';
+    document.getElementById('btn-copy').style.borderColor='rgba(59,130,246,.5)';
+  }
+  updateMultiBadge();
+}
+
+cvs.addEventListener('click',e=>{
+  if(mode==='con'&&connecting) cancelConn();
+});
+
+// ═══════════════════════════
+// RESET
+// ═══════════════════════════
+
+// ═══════════════════════════
+// COPY / PASTE
+// ═══════════════════════════
+let clipboard = null;
+
+function copySelected(){
+  const ids = multiSel.size > 0 ? [...multiSel] : (selBoxId ? [selBoxId] : []);
+  if(!ids.length){ toast('복사할 박스를 먼저 선택하세요'); return; }
+
+  // Store array of box snapshots with relative offsets from group anchor
+  const items = ids.map(id=>{
+    const b = boxMap[id]; if(!b) return null;
+    return {
+      role:b.d.role, name:b.d.name, contact:b.d.contact,
+      th:b.d.th, textStyle:{...( b.d.textStyle||{})},
+      w:b.el.offsetWidth, h:b.el.offsetHeight,
+      x:parseFloat(b.el.style.left), y:parseFloat(b.el.style.top),
+    };
+  }).filter(Boolean);
+
+  // Anchor = top-left corner of the group bounding box
+  const minX = Math.min(...items.map(i=>i.x));
+  const minY = Math.min(...items.map(i=>i.y));
+  clipboard = { items, anchorX:minX, anchorY:minY, offset:0 };
+
+  const pb = document.getElementById('btn-paste');
+  pb.removeAttribute('disabled'); pb.style.opacity='1';
+  toast(`✓ ${items.length}개 복사됨 — Ctrl+V 또는 붙여넣기`);
+}
+
+function pasteBox(){
+  if(!clipboard || !clipboard.items?.length){ toast('복사된 박스가 없습니다'); return; }
+  const OFFSET = 20;
+  const {items, anchorX, anchorY} = clipboard;
+  const dx = snap(anchorX + clipboard.offset + OFFSET) - anchorX;
+  const dy = snap(anchorY + clipboard.offset + OFFSET) - anchorY;
+  clipboard.offset += OFFSET;  // shift next paste
+
+  // Clear old selection
+  clearMultiSel();
+
+  const newIds = [];
+  items.forEach(item=>{
+    const d = {
+      id: uid(),
+      x: snap(item.x + dx), y: snap(item.y + dy),
+      w: item.w, h: item.h,
+      role: item.role, name: item.name,
+      contact: item.contact, th: item.th,
+      textStyle: {...(item.textStyle||{})},
+    };
+    const el = mkBox(d);
+    el.classList.add('sel','msel');
+    multiSel.add(d.id);
+    newIds.push(d.id);
+  });
+
+  // Set primary selection to first pasted box
+  if(newIds.length){
+    const firstId = newIds[0];
+    selBox = boxMap[firstId].el;
+    selBoxId = firstId;
+    showBoxPanel(firstId);
+    document.getElementById('btn-del').classList.add('ready');
+    document.getElementById('btn-copy').style.background='rgba(59,130,246,.25)';
+    document.getElementById('btn-copy').style.borderColor='rgba(59,130,246,.5)';
+  }
+  updateMultiBadge();
+  toast(`📋 ${newIds.length}개 붙여넣기 완료`);
+}
+
+
+function selectAll(){
+  clearMultiSel();
+  let firstId=null,firstEl=null;
+  Object.entries(boxMap).forEach(([id,b])=>{
+    b.el.classList.add('sel','msel'); multiSel.add(id);
+    if(!firstId){firstId=id;firstEl=b.el;}
+  });
+  if(firstId){selBox=firstEl;selBoxId=firstId;showBoxPanel(firstId);
+    document.getElementById('btn-del').classList.add('ready');
+    document.getElementById('btn-copy').style.background='rgba(59,130,246,.25)';
+    document.getElementById('btn-copy').style.borderColor='rgba(59,130,246,.5)';
+  }
+  updateMultiBadge();
+  toast(`✓ 전체 ${multiSel.size}개 선택됨`);
+}
+
+function resetAll(){
+  pageStates[currentPage]=null;
+  loadPageState(currentPage);
+  toast('↺ 현재 페이지 초기화됨');
+}
+
+// ═══════════════════════════
+// EXPORT
+// ═══════════════════════════
+function doExport(){
+  const bxs=Object.values(boxMap).map(b=>({
+    ...b.d, x:parseFloat(b.el.style.left),y:parseFloat(b.el.style.top),
+    w:b.el.offsetWidth,h:b.el.offsetHeight
+  }));
+  const css=Array.from(document.styleSheets[1]?.cssRules||[]).map(r=>r.cssText).join('\n');
+  const svgContent=svgl.innerHTML;
+  // Build static SVG with boxes
+  const boxSVG=bxs.map(d=>{
+    const th=TH.find(t=>t.k===d.th)||TH[0];
+    return `<foreignObject x="${d.x}" y="${d.y}" width="${d.w}" height="${d.h}">
+<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;height:100%;border-radius:7px;background:${th.bg};color:${th.text};font-family:'Noto Sans KR',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8px 12px;box-sizing:border-box;overflow:hidden;">
+  <div style="font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;opacity:.72;margin-bottom:2px;">${d.role||''}</div>
+  <div style="font-size:12px;font-weight:700;">${d.name||''}</div>
+  ${d.contact?`<div style="font-size:9px;margin-top:3px;opacity:.82;">${d.contact}</div>`:''}
+</div>
+</foreignObject>`;
+  }).join('\n');
+
+  // Compute conn paths for static
+  const connPaths=conns.map(c=>{
+    const p1=portPos(c.f,c.fp), p2=portPos(c.t,c.tp);
+    if(!p1||!p2) return '';
+    const d=route(p1,c.fp,p2,c.tp);
+    return `<path d="${d}" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }).join('\n');
+
+  const maxX=Math.max(...bxs.map(b=>b.x+b.w))+60;
+  const maxY=Math.max(...bxs.map(b=>b.y+b.h))+60;
+
+  const html=`<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>안전관리 조직도</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+body{margin:0;padding:20px;background:#edf2f7;font-family:'Noto Sans KR',sans-serif;}
+svg{display:block;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.12);}
+
+/* ── TAB BAR ── */
+#tabbar{
+  flex-shrink:0;
+  display:flex;align-items:stretch;
+  background:#1e2a3a;
+  border-bottom:2px solid #0a1628;
+  padding:0 12px;gap:2px;
+  height:38px;
+  position:relative;z-index:150;
+}
+.tab{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:0 18px;
+  font-size:12px;font-weight:700;
+  color:rgba(255,255,255,.45);
+  cursor:pointer;border-bottom:3px solid transparent;
+  margin-bottom:-2px;transition:color .15s,border-color .15s;
+  white-space:nowrap;font-family:'Noto Sans KR',sans-serif;
+  user-select:none;
+}
+.tab:hover{color:rgba(255,255,255,.75);}
+.tab.act{color:#fff;border-bottom-color:var(--sel);}
+.tab .tab-dot{
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+}
+.tab-spacer{flex:1;}
+.tab-info{
+  display:flex;align-items:center;gap:6px;
+  font-size:10px;color:rgba(255,255,255,.35);
+  padding:0 4px;
+}
+
+@media print{body{background:#fff;padding:0;}svg{border-radius:0;box-shadow:none;}}
+</style>
+<script src="auth.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="${maxX}" height="${maxY}" viewBox="0 0 ${maxX} ${maxY}">
+<defs>
+  <marker id="arr" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+    <polygon points="0 0,9 3.5,0 7" fill="#94a3b8"/></marker>
+</defs>
+${connPaths}
+${boxSVG}
+</svg>
+</body>
+</html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='안전관리_조직도.html'; a.click();
+  toast('💾 HTML 저장됨');
+}
+
+// ═══════════════════════════
+// INIT
+// ═══════════════════════════
+
+// ═══════════════════════════
+// PAGE SWITCHING
+// ═══════════════════════════
+function clearCanvas(){
+  Object.values(boxMap).forEach(b=>b.el.remove());
+  boxMap={};
+  conns.forEach(c=>c.g?.remove());
+  conns=[]; cl.innerHTML='';
+  Object.values(divMap).forEach(dv=>dv.el.remove());
+  divMap={};
+  Object.values(juncMap).forEach(j=>j.el.remove());
+  juncMap={};
+  deselAll();
+}
+
+function savePageState(idx){
+  pageStates[idx]={
+    boxes: Object.values(boxMap).map(b=>({
+      ...b.d, x:parseFloat(b.el.style.left),y:parseFloat(b.el.style.top),
+      w:b.el.offsetWidth,h:b.el.offsetHeight,
+    })),
+    conns: conns.map(c=>({id:c.id,f:c.f,fp:c.fp,t:c.t,tp:c.tp})),
+    juncs: Object.values(juncMap).map(j=>({...j.d})),
+    divs: Object.values(divMap).map(dv=>({
+      ...dv.d, x:parseFloat(dv.el.style.left),y:parseFloat(dv.el.style.top),
+    })),
+    zoom, scrollLeft:wrap.scrollLeft, scrollTop:wrap.scrollTop,
+  };
+}
+
+function loadPageState(idx){
+  const def = PAGE_DEFS[idx];
+  const saved = pageStates[idx];
+  clearCanvas();
+  uidx = 300 + idx*100;
+  const boxes = saved ? saved.boxes : def.boxes;
+  const cs    = saved ? saved.conns : def.conns;
+  boxes.forEach(d=>mkBox({...d}));
+  cs.forEach(c=>{conns.push({...c});addConnEl(conns[conns.length-1]);});
+  const juncs = saved ? (saved.juncs||[]) : (def.juncs||[]);
+  juncs.forEach(d=>mkJunction({...d}));
+  const divs = saved ? (saved.divs||[]) : (def.divs||[]);
+  divs.forEach(d=>mkDivider({...d}));
+  if(saved){
+    setZoom(saved.zoom||1);
+    setTimeout(()=>{wrap.scrollLeft=saved.scrollLeft||0;wrap.scrollTop=saved.scrollTop||0;},30);
+  } else {
+    setZoom(1);
+    setTimeout(()=>{wrap.scrollLeft=0;wrap.scrollTop=0;},30);
+  }
+}
+
+function switchPage(idx){
+  if(idx===currentPage) return;
+  savePageState(currentPage);
+  currentPage=idx;
+  loadPageState(idx);
+  // update tab UI
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('act',i===idx));
+  document.getElementById('tab-info').textContent=PAGE_DEFS[idx].label;
+  toast('📄 '+PAGE_DEFS[idx].label+' 페이지');
+}
+
+(function init(){
+  loadPageState(0);
+  toast('로드 완료 — 탭으로 페이지 전환 | [C] 연결선 | [ESC] 선택 | [Del] 삭제');
+})();
+
+// ═══════════════════════════
+// ZOOM
+// ═══════════════════════════
+
+function setZoom(z, cx, cy){
+  const prev = zoom;
+  zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round(z*10)/10));
+
+  // Keep scroll centered on the same canvas point
+  const wEl = wrap;
+  const cx2 = cx != null ? cx : wEl.scrollLeft + wEl.clientWidth/2;
+  const cy2 = cy != null ? cy : wEl.scrollTop  + wEl.clientHeight/2;
+  const canvasCx = cx2 / prev;
+  const canvasCy = cy2 / prev;
+
+  cvs.style.transform = `scale(${zoom})`;
+  cvs.style.transformOrigin = '0 0';
+  cvs.style.width  = (2100 / zoom) + 'px';  // keep wrapper scrollable
+  cvs.style.height = (1100 / zoom) + 'px';
+
+  // Adjust scroll to re-center
+  wEl.scrollLeft = canvasCx * zoom - wEl.clientWidth/2;
+  wEl.scrollTop  = canvasCy * zoom - wEl.clientHeight/2;
+
+  document.getElementById('zoom-pct').textContent = Math.round(zoom*100)+'%';
+  refreshConns();
+}
+
+function fitView(){
+  const bxs = Object.values(boxMap);
+  if(!bxs.length){ setZoom(1); return; }
+  const xs = bxs.map(b=>parseFloat(b.el.style.left));
+  const ys = bxs.map(b=>parseFloat(b.el.style.top));
+  const x2 = bxs.map(b=>parseFloat(b.el.style.left)+b.el.offsetWidth);
+  const y2 = bxs.map(b=>parseFloat(b.el.style.top)+b.el.offsetHeight);
+  const minX=Math.min(...xs)-30, minY=Math.min(...ys)-30;
+  const maxX=Math.max(...x2)+30, maxY=Math.max(...y2)+30;
+  const zx = wrap.clientWidth  / (maxX-minX);
+  const zy = wrap.clientHeight / (maxY-minY);
+  const z  = Math.min(zx, zy, 1.5);
+  setZoom(z);
+  setTimeout(()=>{ wrap.scrollLeft = minX*zoom - 20; wrap.scrollTop = minY*zoom - 20; }, 30);
+}
+
+// Ctrl+Wheel to zoom
+wrap.addEventListener('wheel', e=>{
+  if(!e.ctrlKey && !e.metaKey) return;
+  e.preventDefault();
+  const rect = cvs.getBoundingClientRect();
+  const cx = (e.clientX - rect.left);
+  const cy = (e.clientY - rect.top);
+  const delta = e.deltaY < 0 ? 0.1 : -0.1;
+  setZoom(zoom + delta, e.clientX - wrap.getBoundingClientRect().left, e.clientY - wrap.getBoundingClientRect().top);
+}, {passive:false});
+
+// Keyboard zoom
+document.addEventListener('keydown', e2=>{
+  const tag=document.activeElement.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA') return;
+  if(e2.key==='='||e2.key==='+') setZoom(zoom+.1);
+  if(e2.key==='-'||e2.key==='_') setZoom(zoom-.1);
+  if(e2.key==='0') setZoom(1);
+  if(e2.key==='f'||e2.key==='F') fitView();
+});
+
+// ═══════════════════════════
+// ADMIN GATE
+// ═══════════════════════════
+function updateAdminUI(){
+  const isAdmin = typeof AUTH !== 'undefined' && AUTH.isAdmin();
+  document.body.classList.toggle('is-admin', isAdmin);
+
+  // View badge (show briefly for non-admins on load)
+  if(!isAdmin){
+    const badge = document.getElementById('view-badge');
+    badge.classList.add('show');
+    setTimeout(()=>badge.classList.remove('show'), 3000);
+    // Block keyboard edit shortcuts
+    setMode('sel');
+  } else {
+    // restore default select mode active button
+    document.getElementById('btn-sel')?.classList.add('act');
+  }
+
+  // Disable box/conn drag & resize for non-admins
+  _editLocked = !isAdmin;
+}
+
+let _editLocked = true; // default locked until auth resolves
+
+// Patch onBoxDown, onRhDown, onDivRhDown to respect lock
+const _origBoxDown = onBoxDown;
+window.onBoxDown = function(e,bx,id){
+  if(_editLocked){ selBox_fn(bx,id); return; } // allow selection only
+  _origBoxDown(e,bx,id);
+};
+
+// auth.js callbacks
+window.onAdminLogin    = function(){ updateAdminUI(); toast('🔓 관리자 모드 — 편집 활성화'); };
+window.onAdminLogout   = function(){ updateAdminUI(); toast('🔒 편집 잠금됨'); };
+window.onAuthStateChange = function(){ updateAdminUI(); };
+
+// Run on load
+window.addEventListener('DOMContentLoaded', ()=>{ setTimeout(updateAdminUI, 300); });
+
+</script>
+</body>
+</html>
