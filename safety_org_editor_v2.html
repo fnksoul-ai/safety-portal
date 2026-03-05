@@ -485,6 +485,42 @@ body.cm .port.active{opacity:1;background:var(--sel);box-shadow:0 0 0 4px rgba(5
   #wrapper{overflow:visible;}
   #canvas{transform:scale(.8);transform-origin:top left;}
 }
+
+/* ── SAVE BUTTON ── */
+#btn-save{
+  display:none;
+  align-items:center;gap:5px;
+  background:transparent;
+  border:1px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.5);
+  border-radius:6px;
+  padding:0 12px;
+  height:24px;
+  font-size:11px;font-weight:700;letter-spacing:.03em;
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  transition:all .15s;white-space:nowrap;
+  margin-right:6px;
+}
+#btn-save:hover{
+  background:rgba(255,255,255,.07);
+  border-color:rgba(255,255,255,.4);
+  color:#fff;
+}
+#btn-save.dirty{
+  border-color:rgba(249,115,22,.7);
+  color:#fb923c;
+  animation:savePulse 2s infinite;
+}
+@keyframes savePulse{
+  0%,100%{box-shadow:none;}
+  50%{box-shadow:0 0 0 3px rgba(249,115,22,.18);}
+}
+#save-indicator{
+  font-size:10px;color:rgba(255,255,255,.28);
+  white-space:nowrap;padding-right:2px;
+}
+#save-indicator.saved{color:rgba(74,222,128,.75);}
+body.is-admin #btn-save{display:flex;}
 </style>
 <script src="auth.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
@@ -543,6 +579,8 @@ body.cm .port.active{opacity:1;background:var(--sel);box-shadow:0 0 0 4px rgba(5
     <span class="tab-dot" style="background:#2a7d4f;"></span>협력업체 조직도
   </div>
   <div class="tab-spacer"></div>
+  <span id="save-indicator"></span>
+  <button id="btn-save" onclick="saveToStorage()">💾 저장</button>
   <div class="tab-info" id="tab-info">전체 조직도</div>
 </div>
 
@@ -868,12 +906,13 @@ function mkDivider(d){
       el.style.left=snap(Math.max(0,ox+(e.clientX-sx)/z))+'px';
       el.style.top =snap(Math.max(0,oy+(e.clientY-sy)/z))+'px';
     }
-    function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }
+    function up(){ markDirty(); document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }
     document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
   });
   el.addEventListener('contextmenu',e=>{e.preventDefault();selDiv_fn(el,d.id);showCtx(e,'div',d.id);});
   cvs.appendChild(el);
   divMap[d.id]={el,d:{...d}};
+  markDirty();
   return el;
 }
 
@@ -960,7 +999,7 @@ function delDiv(id){
   divMap[id]?.el.remove(); delete divMap[id];
   if(selDivId===id){selDiv=null;selDivId=null;}
   showEmpty(); document.getElementById('btn-del').classList.remove('ready');
-  toast('🗑 구분선 삭제됨');
+  markDirty(); toast('🗑 구분선 삭제됨');
 }
 
 // Resize handle for divider length
@@ -982,7 +1021,7 @@ function onDVRmove(e){
   redrawDivider(dv);
   if(selDivId===dv.d.id){ document.getElementById('dv-len')?.setAttribute('value',dv.d.len); }
 }
-function onDVRup(){ DVR=null; document.removeEventListener('mousemove',onDVRmove); document.removeEventListener('mouseup',onDVRup); }
+function onDVRup(){ if(DVR) markDirty(); DVR=null; document.removeEventListener('mousemove',onDVRmove); document.removeEventListener('mouseup',onDVRup); }
 
 
 // ═══════════════════════════
@@ -1019,7 +1058,7 @@ function mkJunction(d){
       d.x=nx; d.y=ny;
       refreshConns();
     }
-    function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }
+    function up(){ markDirty(); document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }
     document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
   });
   el.addEventListener('contextmenu',e=>{
@@ -1175,6 +1214,7 @@ function deselConn(){
 function removeConnObj(c){
   c.g.remove(); conns=conns.filter(x=>x!==c);
   if(selConn===c){selConn=null;}
+  markDirty();
 }
 function removeConnsByBox(id){[...conns].forEach(c=>{if(c.f===id||c.t===id)removeConnObj(c);});}
 
@@ -1319,7 +1359,7 @@ function onDmove(e){
   }
   refreshConns();
 }
-function onDup(){DS=null;document.removeEventListener('mousemove',onDmove);document.removeEventListener('mouseup',onDup);}
+function onDup(){if(DS?.mv) markDirty(); DS=null;document.removeEventListener('mousemove',onDmove);document.removeEventListener('mouseup',onDup);}
 
 // ═══════════════════════════
 // RESIZE
@@ -1814,66 +1854,18 @@ function doExport(){
   const maxX=Math.max(...bxs.map(b=>b.x+b.w))+60;
   const maxY=Math.max(...bxs.map(b=>b.y+b.h))+60;
 
-  const html=`<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<title>안전관리 조직도</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
-<style>
-body{margin:0;padding:20px;background:#edf2f7;font-family:'Noto Sans KR',sans-serif;}
-svg{display:block;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.12);}
-
-/* ── TAB BAR ── */
-#tabbar{
-  flex-shrink:0;
-  display:flex;align-items:stretch;
-  background:#1e2a3a;
-  border-bottom:2px solid #0a1628;
-  padding:0 12px;gap:2px;
-  height:38px;
-  position:relative;z-index:150;
-}
-.tab{
-  display:inline-flex;align-items:center;gap:7px;
-  padding:0 18px;
-  font-size:12px;font-weight:700;
-  color:rgba(255,255,255,.45);
-  cursor:pointer;border-bottom:3px solid transparent;
-  margin-bottom:-2px;transition:color .15s,border-color .15s;
-  white-space:nowrap;font-family:'Noto Sans KR',sans-serif;
-  user-select:none;
-}
-.tab:hover{color:rgba(255,255,255,.75);}
-.tab.act{color:#fff;border-bottom-color:var(--sel);}
-.tab .tab-dot{
-  width:8px;height:8px;border-radius:50%;flex-shrink:0;
-}
-.tab-spacer{flex:1;}
-.tab-info{
-  display:flex;align-items:center;gap:6px;
-  font-size:10px;color:rgba(255,255,255,.35);
-  padding:0 4px;
-}
-
-@media print{body{background:#fff;padding:0;}svg{border-radius:0;box-shadow:none;}}
-</style>
-<script src="auth.js"></script>
-<script src="https://accounts.google.com/gsi/client" async></script>
-</head>
-<body>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-     width="${maxX}" height="${maxY}" viewBox="0 0 ${maxX} ${maxY}">
-<defs>
-  <marker id="arr" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
-    <polygon points="0 0,9 3.5,0 7" fill="#94a3b8"/></marker>
-</defs>
-${connPaths}
-${boxSVG}
-</svg>
-</body>
-</html>`;
+  const html='<!DOCTYPE html>\n'
+  +'<html lang="ko">\n<head>\n<meta charset="UTF-8">\n'
+  +'<title>\uC548\uC804\uAD00\uB9AC \uC870\uC9C1\uB3C4<\/title>\n'
+  +'<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">\n'
+  +'<style>body{margin:0;padding:20px;background:#edf2f7;font-family:\'Noto Sans KR\',sans-serif;}'
+  +'svg{display:block;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.12);}<\/style>\n'
+  +'<\/head>\n<body>\n'
+  +`<svg xmlns="http://www.w3.org/2000/svg" width="${maxX}" height="${maxY}" viewBox="0 0 ${maxX} ${maxY}">\n`
+  +'<defs><marker id="arr" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">'
+  +'<polygon points="0 0,9 3.5,0 7" fill="#94a3b8"/><\/marker><\/defs>\n'
+  +connPaths+'\n'+boxSVG+'\n'
+  +'<\/svg>\n<\/body>\n<\/html>';
 
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
   const a=document.createElement('a');
@@ -1949,8 +1941,11 @@ function switchPage(idx){
 }
 
 (function init(){
+  const hadSaved = loadFromStorage();
   loadPageState(0);
-  toast('로드 완료 — 탭으로 페이지 전환 | [C] 연결선 | [ESC] 선택 | [Del] 삭제');
+  if(hadSaved) toast('💾 저장된 조직도 불러옴 — 탭으로 페이지 전환');
+  else toast('로드 완료 — 탭으로 페이지 전환 | [C] 연결선 | [ESC] 선택 | [Del] 삭제');
+  markClean();
 })();
 
 // ═══════════════════════════
@@ -2016,6 +2011,64 @@ document.addEventListener('keydown', e2=>{
   if(e2.key==='-'||e2.key==='_') setZoom(zoom-.1);
   if(e2.key==='0') setZoom(1);
   if(e2.key==='f'||e2.key==='F') fitView();
+});
+
+
+// ═══════════════════════════
+// PERSISTENT STORAGE (localStorage)
+// ═══════════════════════════
+const LS_KEY = 'safety_org_v2';
+
+function saveToStorage(){
+  if(typeof AUTH==='undefined'||!AUTH.isAdmin()){ toast('⚠ 관리자만 저장할 수 있습니다'); return; }
+  // snapshot current page first
+  savePageState(currentPage);
+  const payload = {
+    version: 2,
+    savedAt: new Date().toISOString(),
+    pages: pageStates.map((ps, idx) => ps || null),
+  };
+  localStorage.setItem(LS_KEY, JSON.stringify(payload));
+  markClean();
+  const t = new Date();
+  const ts = String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0')+':'+String(t.getSeconds()).padStart(2,'0');
+  const ind = document.getElementById('save-indicator');
+  ind.textContent = '✓ ' + ts + ' 저장됨';
+  ind.className = 'saved';
+  setTimeout(()=>{ ind.textContent=''; ind.className=''; }, 4000);
+  toast('💾 저장됨 — ' + ts);
+}
+
+function loadFromStorage(){
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if(!raw) return false;
+    const payload = JSON.parse(raw);
+    if(!payload.pages) return false;
+    payload.pages.forEach((ps, idx)=>{ if(ps) pageStates[idx] = ps; });
+    return true;
+  } catch(e){ return false; }
+}
+
+// Mark as dirty (unsaved changes) — called on any edit
+let _isDirty = false;
+function markDirty(){
+  if(!_isDirty){
+    _isDirty = true;
+    document.getElementById('btn-save')?.classList.add('dirty');
+  }
+}
+function markClean(){
+  _isDirty = false;
+  document.getElementById('btn-save')?.classList.remove('dirty');
+}
+
+// Ctrl+S shortcut
+document.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey) && e.key==='s'){
+    e.preventDefault();
+    if(typeof AUTH!=='undefined' && AUTH.isAdmin()) saveToStorage();
+  }
 });
 
 // ═══════════════════════════
