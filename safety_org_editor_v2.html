@@ -480,10 +480,52 @@ body.cm .port.active{opacity:1;background:var(--sel);box-shadow:0 0 0 4px rgba(5
 }
 
 @media print{
-  #toolbar,#ep{display:none!important;}
-  #main{display:block;}
-  #wrapper{overflow:visible;}
-  #canvas{transform:scale(.8);transform-origin:top left;}
+  @page{ size:A4 landscape; margin:8mm; }
+
+  /* 숨길 요소 전부 */
+  #portal-nav, #toolbar, #tabbar, #ep,
+  #zoom-bar, #toast, #ctx, #view-badge,
+  #selrect, .port, .div-rh, .junc .port,
+  * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+
+  #portal-nav, #toolbar, #tabbar, #ep,
+  #zoom-bar, #toast, #ctx, #view-badge { display:none !important; }
+
+  html, body {
+    width:100%; height:100%;
+    margin:0; padding:0;
+    background:#fff !important;
+    overflow:visible !important;
+  }
+
+  #main {
+    display:block !important;
+    width:100%; height:100%;
+    margin:0; padding:0;
+  }
+
+  /* 래퍼: 스크롤 제거, 전체 노출 */
+  #wrapper {
+    overflow:visible !important;
+    width:100% !important;
+    height:100% !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    background:#fff !important;
+  }
+
+  /* 캔버스: JS가 인쇄 전 transform으로 센터링 처리 */
+  #canvas {
+    overflow:visible !important;
+    background:#fff !important;
+    box-shadow:none !important;
+  }
+
+  /* SVG 연결선 */
+  #svg-layer { overflow:visible !important; }
+
+  .box-body { box-shadow:none !important; }
 }
 
 /* ── SAVE BUTTON ── */
@@ -563,7 +605,7 @@ body.is-admin #btn-save{display:flex;}
     <span style="color:rgba(255,255,255,.55);font-size:10px;border:1px solid rgba(255,255,255,.2);border-radius:4px;padding:3px 8px;white-space:nowrap;">🧲 스냅 10px</span>
   </div>
   <!-- 항상 표시: 인쇄 -->
-  <button class="tb-btn" onclick="window.print()">🖨 인쇄</button>
+  <button class="tb-btn" onclick="smartPrint()">🖨 인쇄</button>
   <span class="tb-hint" id="hint">박스 클릭→편집 | 드래그→이동 | 모서리 드래그→크기조절</span>
 </div>
 
@@ -2070,6 +2112,57 @@ document.addEventListener('keydown', e=>{
     if(typeof AUTH!=='undefined' && AUTH.isAdmin()) saveToStorage();
   }
 });
+
+
+// ═══════════════════════════
+// SMART PRINT
+// ═══════════════════════════
+function smartPrint(){
+  // 1. Compute bounding box of all boxes + dividers
+  const bxs = Object.values(boxMap);
+  const dvs = Object.values(divMap);
+  if(!bxs.length){ window.print(); return; }
+
+  const allX = bxs.map(b=>parseFloat(b.el.style.left));
+  const allY = bxs.map(b=>parseFloat(b.el.style.top));
+  const allX2 = bxs.map(b=>parseFloat(b.el.style.left)+b.el.offsetWidth);
+  const allY2 = bxs.map(b=>parseFloat(b.el.style.top)+b.el.offsetHeight);
+  dvs.forEach(dv=>{
+    allX.push(parseFloat(dv.el.style.left));
+    allY.push(parseFloat(dv.el.style.top));
+    allX2.push(parseFloat(dv.el.style.left)+(dv.el.offsetWidth||0));
+    allY2.push(parseFloat(dv.el.style.top)+(dv.el.offsetHeight||0));
+  });
+
+  const minX = Math.min(...allX) - 40;
+  const minY = Math.min(...allY) - 40;
+  const cW   = Math.max(...allX2) - minX + 40;
+  const cH   = Math.max(...allY2) - minY + 40;
+
+  // A4 landscape printable area (mm→px at 96dpi: 277mm*272mm ≈ 1046*1028px)
+  const pageW = 1046, pageH = 1028;
+  const scaleX = pageW / cW;
+  const scaleY = pageH / cH;
+  const scale  = Math.min(scaleX, scaleY, 1); // never upscale
+
+  // Center offset inside page
+  const offX = (pageW - cW*scale) / 2 / scale - minX;
+  const offY = (pageH - cH*scale) / 2 / scale - minY;
+
+  const cvs = document.getElementById('canvas');
+  const prev = cvs.style.transform;
+
+  // Apply print transform
+  cvs.style.transform = `scale(${scale}) translate(${offX}px,${offY}px)`;
+  cvs.style.transformOrigin = '0 0';
+
+  setTimeout(()=>{
+    window.print();
+    setTimeout(()=>{
+      cvs.style.transform = prev;
+    }, 500);
+  }, 150);
+}
 
 // ═══════════════════════════
 // ADMIN GATE
