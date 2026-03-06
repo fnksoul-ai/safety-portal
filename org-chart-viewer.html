@@ -280,13 +280,37 @@
   .modal-close:hover { color: var(--text); border-color: var(--muted); }
 
   @media print {
-    * { display: none !important; }
-    html, body { display: block !important; height: 100% !important; margin: 0 !important; padding: 0 !important; }
-    .main-content { display: flex !important; height: 100vh !important; }
-    .viewer-wrap { display: flex !important; flex: 1 !important; flex-direction: column !important; }
-    .viewer-main { display: flex !important; flex: 1 !important; }
-    .slides-frame { display: block !important; width: 100% !important; height: 100% !important; border: none !important; }
-    @page { size: A3 landscape; margin: 0; }
+    @page { size: A4 landscape; margin: 0; }
+    html, body {
+      width: 297mm; height: 210mm;
+      margin: 0; padding: 0;
+      overflow: hidden;
+    }
+    /* 모든 요소 숨기기 */
+    nav, .admin-panel, .contact-panel, .slide-controls,
+    .placeholder, .print-btn, .toast, .modal-overlay { display: none !important; }
+    /* 레이아웃 펼치기 */
+    body { display: block !important; }
+    .main-content {
+      display: block !important;
+      width: 297mm; height: 210mm;
+    }
+    .viewer-wrap {
+      display: block !important;
+      width: 297mm; height: 210mm;
+    }
+    .viewer-main {
+      display: block !important;
+      width: 297mm; height: 210mm;
+    }
+    .slides-frame {
+      display: block !important;
+      width: 297mm !important;
+      height: 210mm !important;
+      border: none !important;
+      position: fixed !important;
+      top: 0; left: 0;
+    }
   }
 </style>
 <script src="auth.js"></script>
@@ -465,7 +489,19 @@ function saveAndLoad() {
 
 function printSlides() {
   const id = gt(); if (!id) return;
-  window.print();
+  // 인쇄용 embed URL (rm=minimal로 UI 제거, 크기 힌트)
+  const frame = $('slidesFrame');
+  const origSrc = frame.src;
+  const printSrc = `https://docs.google.com/presentation/d/${id}/embed?start=false&loop=false&rm=minimal&slide=id.p${curSlide}&size=large`;
+  frame.src = printSrc;
+  // iframe 로딩 후 인쇄
+  frame.onload = () => {
+    setTimeout(() => {
+      window.print();
+      frame.src = origSrc;
+      frame.onload = null;
+    }, 800);
+  };
 }
 
 /* ══════════════════════════════════════════
