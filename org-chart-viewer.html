@@ -279,7 +279,15 @@
   }
   .modal-close:hover { color: var(--text); border-color: var(--muted); }
 
-  @media print { * { display: none !important; } }
+  @media print {
+    * { display: none !important; }
+    html, body { display: block !important; height: 100% !important; margin: 0 !important; padding: 0 !important; }
+    .main-content { display: flex !important; height: 100vh !important; }
+    .viewer-wrap { display: flex !important; flex: 1 !important; flex-direction: column !important; }
+    .viewer-main { display: flex !important; flex: 1 !important; }
+    .slides-frame { display: block !important; width: 100% !important; height: 100% !important; border: none !important; }
+    @page { size: A3 landscape; margin: 0; }
+  }
 </style>
 <script src="auth.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
@@ -457,8 +465,7 @@ function saveAndLoad() {
 
 function printSlides() {
   const id = gt(); if (!id) return;
-  window.open(`https://docs.google.com/presentation/d/${id}/print`, '_blank');
-  showToast('📄 새 탭에서 인쇄 창이 열립니다');
+  window.print();
 }
 
 /* ══════════════════════════════════════════
