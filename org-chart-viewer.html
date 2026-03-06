@@ -125,9 +125,80 @@
     position: relative; z-index: 1;
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     overflow: hidden;
     background: #1a1a2e;
+  }
+
+  /* ── 왼쪽 페이지 네비게이션 패널 ── */
+  .nav-panel {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 64px;
+    flex-shrink: 0;
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    padding: 16px 0;
+    z-index: 2;
+  }
+  .nav-panel.show { display: flex; }
+
+  .nav-page-btn {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--muted2);
+    font-size: 20px;
+    cursor: pointer;
+    transition: all .15s;
+    user-select: none;
+  }
+  .nav-page-btn:hover:not(:disabled) {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: #fff;
+    transform: scale(1.05);
+  }
+  .nav-page-btn:disabled {
+    opacity: .3;
+    cursor: default;
+  }
+
+  .nav-page-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .nav-page-current {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 26px;
+    color: var(--text);
+    line-height: 1;
+  }
+  .nav-page-divider {
+    width: 20px; height: 1px;
+    background: var(--border);
+  }
+  .nav-page-total {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* 뷰어 본체 (iframe 감싸는 영역) */
+  .viewer-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    min-height: 0;
   }
 
   /* 파일 미설정 시 안내 화면 */
@@ -161,37 +232,12 @@
     display: none;
     flex: 1;
     width: 100%;
+    height: 100%;
+    min-height: 0;
     border: none;
     background: #fff;
   }
-  .slides-frame.show { display: block; }
-
-  /* ── 탭 (슬라이드가 여러 조직도 섹션인 경우) ── */
-  .tab-bar {
-    display: flex;
-    gap: 4px;
-    padding: 8px 24px;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .tab-bar::-webkit-scrollbar { display: none; }
-  .tab {
-    padding: 6px 16px;
-    border-radius: 6px;
-    font-size: 13px; font-weight: 500;
-    cursor: pointer;
-    border: 1px solid var(--border);
-    background: var(--bg3);
-    color: var(--muted2);
-    transition: all .15s;
-    white-space: nowrap;
-    font-family: inherit;
-  }
-  .tab:hover { color: var(--text); border-color: var(--muted); }
-  .tab.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .slides-frame.show { display: flex; }
 
   /* ── 관리자 패널 ── */
   .admin-panel {
@@ -311,18 +357,8 @@
   }
   .print-btn.hidden { display: none; }
 
-  /* ── 인쇄 ── */
   @media print {
-    nav, .toolbar, .tab-bar, .admin-panel, .print-btn, .toast { display: none !important; }
-    body { background: #fff !important; overflow: visible !important; }
-    body::before { display: none !important; }
-    .viewer-wrap { flex: 1 !important; overflow: visible !important; background: #fff !important; }
-    .slides-frame {
-      display: block !important;
-      width: 100% !important;
-      height: 100vh !important;
-    }
-    @page { size: A3 landscape; margin: 0; }
+    * { display: none !important; }
   }
 </style>
 <script src="auth.js"></script>
@@ -343,6 +379,7 @@
   <div class="admin-row">
     <span class="admin-label"><span class="admin-badge">ADMIN</span> Google Drive 파일 ID</span>
     <input class="admin-input" id="fileIdInput" type="text" placeholder="예: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
+    <input class="admin-input" id="totalPagesInput" type="number" min="1" max="100" placeholder="총 슬라이드 수" style="max-width:140px;">
     <button class="admin-btn" onclick="saveAndLoad()">저장 및 표시</button>
     <button class="admin-btn secondary" onclick="toggleAdminPanel()">닫기</button>
   </div>
@@ -362,99 +399,154 @@
 <!-- 뷰어 -->
 <div class="viewer-wrap" id="viewerWrap">
 
-  <!-- 미설정 안내 -->
-  <div class="placeholder" id="placeholder">
-    <div class="placeholder-icon">📊</div>
-    <div class="placeholder-title">조직도 파일이 연결되지 않았습니다</div>
-    <div class="placeholder-desc">
-      관리자가 Google Drive에 저장된 PPTX 파일을 연결하면<br>여기에 조직도 슬라이드가 표시됩니다.
+  <!-- 왼쪽 페이지 네비게이션 패널 -->
+  <div class="nav-panel" id="navPanel">
+    <button class="nav-page-btn" id="prevBtn" onclick="prevSlide()" title="이전 슬라이드" disabled>▲</button>
+    <div class="nav-page-info">
+      <div class="nav-page-current" id="currentPage">1</div>
+      <div class="nav-page-divider"></div>
+      <div class="nav-page-total" id="totalPages">-</div>
     </div>
-    <div class="placeholder-steps">
-      <b>① Google Drive</b>에서 PPTX 파일을 연다<br>
-      <b>② 공유 설정</b> → 링크가 있는 모든 사용자 → <b>뷰어</b><br>
-      <b>③ 주소창 URL</b>에서 파일 ID 복사<br>
-      <b>④ 우측 상단 ⚙️ 버튼</b>에서 파일 ID 입력 후 저장
-    </div>
+    <button class="nav-page-btn" id="nextBtn" onclick="nextSlide()" title="다음 슬라이드">▼</button>
   </div>
 
-  <!-- Google Slides 임베드 iframe -->
-  <iframe
-    class="slides-frame"
-    id="slidesFrame"
-    allowfullscreen="true"
-    mozallowfullscreen="true"
-    webkitallowfullscreen="true">
-  </iframe>
+  <!-- 뷰어 본체 -->
+  <div class="viewer-main">
+
+    <!-- 미설정 안내 -->
+    <div class="placeholder" id="placeholder">
+      <div class="placeholder-icon">📊</div>
+      <div class="placeholder-title">조직도 파일이 연결되지 않았습니다</div>
+      <div class="placeholder-desc">
+        관리자가 Google Drive에 저장된 PPTX 파일을 연결하면<br>여기에 조직도 슬라이드가 표시됩니다.
+      </div>
+      <div class="placeholder-steps">
+        <b>① Google Drive</b>에서 PPTX 파일을 연다<br>
+        <b>② 공유 설정</b> → 링크가 있는 모든 사용자 → <b>뷰어</b><br>
+        <b>③ 주소창 URL</b>에서 파일 ID 복사<br>
+        <b>④ 우측 상단 ⚙️ 버튼</b>에서 파일 ID + 슬라이드 수 입력 후 저장
+      </div>
+    </div>
+
+    <!-- Google Slides 임베드 iframe -->
+    <iframe
+      class="slides-frame"
+      id="slidesFrame"
+      allowfullscreen="true"
+      mozallowfullscreen="true"
+      webkitallowfullscreen="true">
+    </iframe>
+
+  </div>
 
 </div>
 
 <!-- 인쇄 버튼 -->
-<button class="print-btn hidden" id="printBtn"
-  onclick="window.print()">🖨️ 인쇄하기</button>
+<button class="print-btn hidden" id="printBtn" onclick="printSlides()">🖨️ 인쇄하기</button>
 
 <!-- 토스트 -->
 <div class="toast" id="toast"></div>
 
 <script>
-// ── 설정 저장/불러오기 ──
-const STORAGE_KEY = 'org_chart_file_id';
+const STORAGE_KEY      = 'org_chart_file_id';
+const STORAGE_PAGES    = 'org_chart_total_pages';
+
+let currentSlide = 1;
+let totalSlides  = 1;
 
 function getFileId() {
   return localStorage.getItem(STORAGE_KEY) || '';
 }
 
-function buildEmbedUrl(fileId) {
-  // Google Drive PPTX → Google Slides 뷰어 embed URL
-  return `https://docs.google.com/presentation/d/${fileId}/embed?start=false&loop=false&delayms=3000&rm=minimal`;
+function buildEmbedUrl(fileId, page) {
+  return `https://docs.google.com/presentation/d/${fileId}/embed?start=false&loop=false&rm=minimal&slide=id.p${page}`;
 }
 
-function loadViewer(fileId) {
+function loadViewer(fileId, pages) {
   if (!fileId) return;
 
-  const frame = document.getElementById('slidesFrame');
-  const placeholder = document.getElementById('placeholder');
-  const printBtn = document.getElementById('printBtn');
+  totalSlides  = pages || parseInt(localStorage.getItem(STORAGE_PAGES)) || 1;
+  currentSlide = 1;
 
-  frame.src = buildEmbedUrl(fileId);
+  const frame       = document.getElementById('slidesFrame');
+  const placeholder = document.getElementById('placeholder');
+  const printBtn    = document.getElementById('printBtn');
+  const navPanel    = document.getElementById('navPanel');
+
+  frame.src = buildEmbedUrl(fileId, currentSlide);
   frame.classList.add('show');
   placeholder.style.display = 'none';
   printBtn.classList.remove('hidden');
+
+  // 슬라이드가 2장 이상일 때만 패널 표시
+  if (totalSlides > 1) navPanel.classList.add('show');
+  else navPanel.classList.remove('show');
+
+  updateNavUI();
 }
 
+function goSlide(page) {
+  const fileId = getFileId();
+  if (!fileId) return;
+  currentSlide = Math.max(1, Math.min(page, totalSlides));
+  document.getElementById('slidesFrame').src = buildEmbedUrl(fileId, currentSlide);
+  updateNavUI();
+}
+function prevSlide() { goSlide(currentSlide - 1); }
+function nextSlide() { goSlide(currentSlide + 1); }
+
+function updateNavUI() {
+  document.getElementById('currentPage').textContent = currentSlide;
+  document.getElementById('totalPages').textContent  = totalSlides + 'p';
+  document.getElementById('prevBtn').disabled = currentSlide <= 1;
+  document.getElementById('nextBtn').disabled = currentSlide >= totalSlides;
+}
+
+// 키보드 방향키 지원
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  prevSlide();
+  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') nextSlide();
+});
+
 function saveAndLoad() {
-  const fileId = document.getElementById('fileIdInput').value.trim();
+  const rawId = document.getElementById('fileIdInput').value.trim();
+  const pages = parseInt(document.getElementById('totalPagesInput').value) || 1;
 
-  if (!fileId) {
-    showToast('⚠️ 파일 ID를 입력해주세요');
-    return;
-  }
+  if (!rawId) { showToast('⚠️ 파일 ID를 입력해주세요'); return; }
 
-  // URL 전체가 입력된 경우 ID만 추출
-  const match = fileId.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  const cleanId = match ? match[1] : fileId;
+  const match   = rawId.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  const cleanId = match ? match[1] : rawId;
 
   localStorage.setItem(STORAGE_KEY, cleanId);
+  localStorage.setItem(STORAGE_PAGES, pages);
   document.getElementById('fileIdInput').value = cleanId;
 
-  loadViewer(cleanId);
+  loadViewer(cleanId, pages);
   toggleAdminPanel();
   showToast('✅ 조직도가 연결되었습니다');
 }
 
-// ── 설정 패널 토글 ──
-function toggleAdminPanel() {
-  const panel = document.getElementById('adminPanel');
+function printSlides() {
+  const fileId = getFileId();
+  if (!fileId) return;
+  // Google Slides 인쇄 전용 URL (새 탭에서 바로 인쇄 다이얼로그 오픈)
+  const printUrl = `https://docs.google.com/presentation/d/${fileId}/print`;
+  const win = window.open(printUrl, '_blank');
+  showToast('📄 새 탭에서 인쇄 창이 열립니다');
+}
+  const panel  = document.getElementById('adminPanel');
   const isOpen = panel.classList.contains('show');
   if (isOpen) {
     panel.classList.remove('show');
   } else {
-    const saved = getFileId();
-    if (saved) document.getElementById('fileIdInput').value = saved;
+    const savedId    = getFileId();
+    const savedPages = localStorage.getItem(STORAGE_PAGES) || '';
+    if (savedId)    document.getElementById('fileIdInput').value      = savedId;
+    if (savedPages) document.getElementById('totalPagesInput').value  = savedPages;
     panel.classList.add('show');
   }
 }
 
-// ── 토스트 메시지 ──
 function showToast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -462,9 +554,8 @@ function showToast(msg) {
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-// ── 관리자 UI 업데이트 ──
 function updateAdminUI() {
-  const isAdmin = typeof AUTH !== 'undefined' && AUTH.isAdmin();
+  const isAdmin    = typeof AUTH !== 'undefined' && AUTH.isAdmin();
   const settingsBtn = document.getElementById('settingsBtn');
   if (isAdmin) {
     settingsBtn.classList.add('show');
@@ -474,14 +565,14 @@ function updateAdminUI() {
   }
 }
 
-window.onAdminLogin  = updateAdminUI;
-window.onAdminLogout = updateAdminUI;
+window.onAdminLogin      = updateAdminUI;
+window.onAdminLogout     = updateAdminUI;
 window.onAuthStateChange = updateAdminUI;
 
-// ── 초기화 ──
 (function init() {
-  const saved = getFileId();
-  if (saved) loadViewer(saved);
+  const saved      = getFileId();
+  const savedPages = parseInt(localStorage.getItem(STORAGE_PAGES)) || 1;
+  if (saved) loadViewer(saved, savedPages);
   updateAdminUI();
 })();
 </script>
