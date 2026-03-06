@@ -6,6 +6,7 @@
 <title>안전 조직도</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
     --bg:     #0f1117;
@@ -16,234 +17,280 @@
     --orange2:#fb923c;
     --green:  #22c55e;
     --red:    #ef4444;
+    --blue:   #3b82f6;
     --text:   #f1f5f9;
     --muted:  #64748b;
     --muted2: #94a3b8;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
-
   body {
     font-family: 'Noto Sans KR', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    display: flex; flex-direction: column;
-    overflow: hidden;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; overflow: hidden;
   }
   body::before {
-    content: '';
-    position: fixed; inset: 0; z-index: 0;
+    content: ''; position: fixed; inset: 0; z-index: 0;
     background-image:
       linear-gradient(rgba(249,115,22,.03) 1px, transparent 1px),
       linear-gradient(90deg, rgba(249,115,22,.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
+    background-size: 40px 40px; pointer-events: none;
   }
 
-  /* ── 네비게이션 ── */
+  /* ── nav ── */
   nav {
     position: relative; z-index: 10;
-    background: rgba(15,17,23,.92);
-    backdrop-filter: blur(16px);
+    background: rgba(15,17,23,.92); backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--border);
-    padding: 0 24px;
-    display: flex; align-items: center;
-    height: 56px; gap: 16px;
-    flex-shrink: 0;
+    padding: 0 24px; display: flex; align-items: center;
+    height: 56px; gap: 16px; flex-shrink: 0;
   }
   .nav-logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px; letter-spacing: .1em;
-    color: var(--orange);
-    display: flex; align-items: center; gap: 8px;
-    text-decoration: none;
+    font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: .1em;
+    color: var(--orange); display: flex; align-items: center; gap: 8px; text-decoration: none;
   }
   .nav-logo span { color: var(--text); }
-  .nav-title {
-    font-size: 14px; font-weight: 500; color: var(--muted2);
-    padding-left: 16px;
-    border-left: 1px solid var(--border);
-  }
-  .nav-links {
-    display: flex; align-items: center; gap: 12px;
-    margin-left: auto;
-  }
+  .nav-title { font-size: 14px; font-weight: 500; color: var(--muted2); padding-left: 16px; border-left: 1px solid var(--border); }
+  .nav-links { display: flex; align-items: center; gap: 8px; margin-left: auto; }
   .settings-btn {
-    display: none;
-    align-items: center; justify-content: center;
-    width: 32px; height: 32px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all .15s;
-    color: var(--muted2);
+    display: none; align-items: center; justify-content: center;
+    width: 32px; height: 32px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 6px;
+    font-size: 14px; cursor: pointer; transition: all .15s; color: var(--muted2);
   }
   .settings-btn:hover { background: rgba(255,255,255,.08); border-color: var(--muted); }
   .settings-btn.show { display: flex; }
 
-  /* ── 관리자 패널 ── */
+  /* ── admin panel ── */
   .admin-panel {
-    display: none;
-    position: relative; z-index: 5;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 24px;
-    flex-direction: column;
-    gap: 10px;
-    flex-shrink: 0;
+    display: none; position: relative; z-index: 5;
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    padding: 14px 24px; flex-direction: column; gap: 10px; flex-shrink: 0;
   }
   .admin-panel.show { display: flex; }
   .admin-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .admin-badge {
-    background: rgba(239,68,68,.15); color: var(--red);
-    font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
-  }
-  .admin-label {
-    font-size: 12px; color: var(--muted);
-    display: flex; align-items: center; gap: 6px;
-    flex-shrink: 0; min-width: 120px;
-  }
+  .admin-badge { background: rgba(239,68,68,.15); color: var(--red); font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+  .admin-label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-shrink: 0; min-width: 110px; }
   .admin-input {
-    flex: 1; min-width: 200px;
-    background: var(--bg3); border: 1px solid var(--border);
-    border-radius: 8px; padding: 8px 12px;
-    font-size: 12px; color: var(--text);
-    font-family: 'Courier New', monospace;
-    outline: none; transition: border-color .2s;
+    flex: 1; min-width: 160px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; font-size: 12px; color: var(--text);
+    font-family: 'Courier New', monospace; outline: none; transition: border-color .2s;
   }
   .admin-input:focus { border-color: var(--orange); }
   .admin-input::placeholder { color: var(--muted); }
+  .admin-divider { width: 100%; height: 1px; background: var(--border); }
   .admin-btn {
-    background: var(--orange); border: none; color: #fff;
-    border-radius: 8px; padding: 8px 18px;
-    font-size: 12px; font-weight: 600;
-    cursor: pointer; font-family: inherit;
-    transition: background .15s; white-space: nowrap;
+    background: var(--orange); border: none; color: #fff; border-radius: 8px;
+    padding: 8px 16px; font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: background .15s; white-space: nowrap;
   }
   .admin-btn:hover { background: var(--orange2); }
-  .admin-btn.secondary {
-    background: var(--bg3); border: 1px solid var(--border); color: var(--muted2);
-  }
+  .admin-btn.secondary { background: var(--bg3); border: 1px solid var(--border); color: var(--muted2); }
   .admin-btn.secondary:hover { color: var(--text); border-color: var(--muted); }
+  .admin-btn.blue { background: var(--blue); }
+  .admin-btn.blue:hover { background: #2563eb; }
   .admin-help { font-size: 11px; color: var(--muted); line-height: 1.8; }
 
-  /* ── 툴바 ── */
+  /* 드롭존 */
+  .drop-zone {
+    border: 2px dashed var(--border); border-radius: 10px; padding: 12px 16px;
+    text-align: center; font-size: 12px; color: var(--muted);
+    cursor: pointer; transition: all .2s; position: relative;
+  }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--orange); color: var(--orange2); background: rgba(249,115,22,.05); }
+  .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+  /* ── toolbar ── */
   .toolbar {
-    position: relative; z-index: 5;
-    background: var(--bg2);
+    position: relative; z-index: 5; background: var(--bg2);
     border-bottom: 1px solid var(--border);
-    padding: 12px 24px;
-    display: flex; align-items: center; gap: 12px;
-    flex-shrink: 0;
+    padding: 10px 24px; display: flex; align-items: center; gap: 12px; flex-shrink: 0;
   }
-  .toolbar-center {
-    flex: 1; text-align: center;
-    font-size: 22px; font-weight: 800;
-    letter-spacing: .15em; color: var(--text);
-  }
+  .toolbar-center { flex: 1; text-align: center; font-size: 20px; font-weight: 800; letter-spacing: .15em; color: var(--text); }
   .btn {
-    background: var(--bg3); border: 1px solid var(--border);
-    color: var(--muted2); border-radius: 8px;
-    padding: 7px 14px; font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: all .15s;
-    font-family: inherit;
-    display: flex; align-items: center; gap: 6px;
-    text-decoration: none;
+    background: var(--bg3); border: 1px solid var(--border); color: var(--muted2);
+    border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all .15s; font-family: inherit;
+    display: flex; align-items: center; gap: 6px; text-decoration: none;
   }
   .btn:hover { color: var(--text); border-color: var(--muted); background: rgba(255,255,255,.05); }
 
-  /* ── 뷰어 영역 ── */
-  .viewer-wrap {
-    position: relative; z-index: 1;
+  /* ── main layout ── */
+  .main-content {
     flex: 1; display: flex; flex-direction: row;
-    overflow: hidden; background: #1a1a2e;
-    min-height: 0;
+    overflow: hidden; min-height: 0; position: relative; z-index: 1;
   }
 
-  /* ── 왼쪽 페이지 네비게이션 패널 ── */
-  .nav-panel {
-    display: none;
-    flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 12px; width: 64px; flex-shrink: 0;
-    background: var(--bg2);
-    border-right: 1px solid var(--border);
-    padding: 16px 0;
+  /* ════ 연락망 패널 ════ */
+  .contact-panel {
+    width: 272px; flex-shrink: 0;
+    background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
   }
-  .nav-panel.show { display: flex; }
-  .nav-page-btn {
-    width: 44px; height: 44px;
+  .contact-header {
+    padding: 11px 14px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  }
+  .contact-header-title { font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px; }
+  .contact-count {
+    font-size: 11px; font-weight: 600; color: var(--orange);
+    background: rgba(249,115,22,.12); border: 1px solid rgba(249,115,22,.25);
+    padding: 1px 7px; border-radius: 10px;
+  }
+  .contact-search { padding: 8px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .contact-search input {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 10px 6px 28px;
+    font-size: 12px; color: var(--text); font-family: inherit; outline: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: 8px center;
+    transition: border-color .2s;
+  }
+  .contact-search input:focus { border-color: var(--orange); }
+  .contact-search input::placeholder { color: var(--muted); }
+  .contact-filter {
+    display: flex; gap: 4px; padding: 6px 10px;
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .contact-filter::-webkit-scrollbar { display: none; }
+  .filter-tab {
+    padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border); background: var(--bg3);
+    color: var(--muted2); white-space: nowrap; transition: all .15s; font-family: inherit;
+  }
+  .filter-tab:hover { color: var(--text); border-color: var(--muted); }
+  .filter-tab.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .contact-list {
+    flex: 1; overflow-y: auto; padding: 8px;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .contact-list::-webkit-scrollbar { width: 4px; }
+  .contact-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .contact-card {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+    padding: 9px 11px; margin-bottom: 5px; cursor: pointer; transition: all .15s;
+    display: flex; gap: 9px; align-items: flex-start;
+  }
+  .contact-card:hover { border-color: var(--orange); background: rgba(249,115,22,.06); }
+  .contact-avatar {
+    width: 34px; height: 34px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    background: var(--bg3); border: 1px solid var(--border);
-    border-radius: 10px; color: var(--muted2);
-    font-size: 20px; cursor: pointer;
-    transition: all .15s; user-select: none;
+    font-size: 14px; font-weight: 700; flex-shrink: 0; color: #fff;
   }
-  .nav-page-btn:hover:not(:disabled) {
-    background: var(--orange); border-color: var(--orange); color: #fff;
-    transform: scale(1.05);
+  .contact-info { flex: 1; min-width: 0; }
+  .contact-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 1px; }
+  .contact-title { font-size: 11px; color: var(--orange2); font-weight: 500; margin-bottom: 2px; }
+  .contact-company { font-size: 10px; color: var(--muted2); margin-bottom: 3px; }
+  .contact-phone { font-size: 11px; color: var(--text); display: flex; align-items: center; gap: 3px; }
+  .contact-phone::before { content: '📞'; font-size: 9px; }
+  .contact-email { font-size: 10px; color: var(--muted); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .contact-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; color: var(--muted); padding: 32px 16px; text-align: center; min-height: 200px;
   }
-  .nav-page-btn:disabled { opacity: .3; cursor: default; }
-  .nav-page-info { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .nav-page-current { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--text); line-height: 1; }
-  .nav-page-divider { width: 20px; height: 1px; background: var(--border); }
-  .nav-page-total { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .contact-empty-icon { font-size: 36px; }
+  .contact-empty-title { font-size: 13px; font-weight: 600; color: var(--muted2); }
+  .contact-empty-desc { font-size: 11px; line-height: 1.7; }
 
-  /* ── 뷰어 본체 ── */
+  /* ════ 뷰어 영역 ════ */
+  .viewer-wrap {
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; background: #1a1a2e; min-height: 0; position: relative;
+  }
+  .slide-controls {
+    display: none; align-items: center; justify-content: center; gap: 16px;
+    padding: 8px 16px; background: var(--bg2);
+    border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  .slide-controls.show { display: flex; }
+  .slide-nav-btn {
+    width: 38px; height: 38px; display: flex; align-items: center; justify-content: center;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--muted2); font-size: 16px; cursor: pointer; transition: all .15s; user-select: none;
+  }
+  .slide-nav-btn:hover:not(:disabled) { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .slide-nav-btn:disabled { opacity: .3; cursor: default; }
+  .slide-indicator { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--text); min-width: 80px; text-align: center; letter-spacing: .05em; }
+  .slide-indicator small { font-family: 'Noto Sans KR', sans-serif; font-size: 11px; color: var(--muted); margin-left: 2px; letter-spacing: 0; }
   .viewer-main {
     flex: 1; display: flex; flex-direction: column;
-    overflow: hidden; position: relative; min-height: 0;
+    overflow: hidden; min-height: 0; position: relative;
   }
   .placeholder {
     flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 16px; color: var(--muted);
+    align-items: center; justify-content: center; gap: 14px; color: var(--muted);
   }
-  .placeholder-icon { font-size: 64px; }
-  .placeholder-title { font-size: 18px; font-weight: 600; color: var(--muted2); }
-  .placeholder-desc { font-size: 13px; line-height: 1.8; text-align: center; max-width: 400px; }
+  .placeholder-icon { font-size: 52px; }
+  .placeholder-title { font-size: 16px; font-weight: 600; color: var(--muted2); }
+  .placeholder-desc { font-size: 12px; line-height: 1.8; text-align: center; max-width: 360px; }
   .placeholder-steps {
-    background: var(--bg3); border: 1px solid var(--border);
-    border-radius: 10px; padding: 16px 24px;
-    font-size: 12px; color: var(--muted2); line-height: 2;
-    max-width: 420px; width: 100%;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 20px; font-size: 11px; color: var(--muted2); line-height: 2.1;
+    max-width: 380px; width: 100%;
   }
   .placeholder-steps b { color: var(--orange); }
-
-  .slides-frame {
-    display: none; flex: 1;
-    width: 100%; height: 100%;
-    min-height: 0; border: none; background: #fff;
-  }
+  .slides-frame { display: none; flex: 1; width: 100%; height: 100%; min-height: 0; border: none; background: #fff; }
   .slides-frame.show { display: block; }
 
-  /* ── 토스트 ── */
+  /* 토스트 */
   .toast {
-    position: fixed; bottom: 32px; left: 50%;
-    transform: translateX(-50%) translateY(16px);
-    background: var(--bg3); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px 24px;
-    font-size: 13px; color: var(--text);
-    opacity: 0; transition: all .3s;
-    pointer-events: none; z-index: 200;
+    position: fixed; bottom: 28px; left: 50%;
+    transform: translateX(-50%) translateY(12px);
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 20px; font-size: 13px; color: var(--text); opacity: 0;
+    transition: all .3s; pointer-events: none; z-index: 200;
     box-shadow: 0 8px 32px rgba(0,0,0,.4);
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* ── 인쇄 버튼 ── */
+  /* 인쇄 버튼 */
   .print-btn {
     position: fixed; bottom: 24px; right: 24px; z-index: 90;
     display: flex; align-items: center; gap: 8px;
-    background: var(--bg2); border: 1px solid var(--border);
-    color: var(--muted2); border-radius: 10px;
-    padding: 10px 18px; font-size: 13px; font-weight: 500;
-    cursor: pointer; font-family: inherit;
-    transition: all .2s; box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    background: var(--bg2); border: 1px solid var(--border); color: var(--muted2);
+    border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: inherit; transition: all .2s;
+    box-shadow: 0 4px 16px rgba(0,0,0,.4);
   }
   .print-btn:hover { color: var(--text); border-color: var(--orange); background: var(--bg3); }
   .print-btn.hidden { display: none; }
+
+  /* 연락처 모달 */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,.6); backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
+    width: 340px; max-width: 90vw; padding: 28px;
+    box-shadow: 0 24px 64px rgba(0,0,0,.6);
+  }
+  .modal-avatar {
+    width: 60px; height: 60px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 700; color: #fff; margin: 0 auto 14px;
+  }
+  .modal-name { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 4px; }
+  .modal-role { font-size: 13px; color: var(--orange2); text-align: center; margin-bottom: 2px; }
+  .modal-org  { font-size: 12px; color: var(--muted2); text-align: center; margin-bottom: 18px; }
+  .modal-info { display: flex; flex-direction: column; gap: 8px; }
+  .modal-info-row {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+  }
+  .modal-info-icon { font-size: 15px; flex-shrink: 0; }
+  .modal-info-label { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+  .modal-info-text { font-size: 13px; color: var(--text); }
+  .modal-close {
+    margin-top: 18px; width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    color: var(--muted2); border-radius: 8px; padding: 10px;
+    font-size: 13px; cursor: pointer; font-family: inherit; transition: all .15s;
+  }
+  .modal-close:hover { color: var(--text); border-color: var(--muted); }
 
   @media print { * { display: none !important; } }
 </style>
@@ -252,198 +299,381 @@
 </head>
 <body>
 
-<!-- 네비게이션 -->
 <nav>
   <a class="nav-logo" href="index.html">⚠ <span>SAFETY</span> PORTAL</a>
   <span class="nav-title">안전 조직도</span>
   <div class="nav-links">
-    <button class="settings-btn" id="settingsBtn" onclick="toggleAdminPanel()" title="조직도 설정">⚙️</button>
+    <button class="settings-btn" id="settingsBtn" onclick="toggleAdminPanel()" title="설정">⚙️</button>
   </div>
 </nav>
 
 <!-- 관리자 패널 -->
 <div class="admin-panel" id="adminPanel">
   <div class="admin-row">
-    <span class="admin-label"><span class="admin-badge">ADMIN</span> Google Drive 파일 ID</span>
-    <input class="admin-input" id="fileIdInput" type="text" placeholder="예: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms">
-    <input class="admin-input" id="totalPagesInput" type="number" min="1" max="100" placeholder="총 슬라이드 수" style="max-width:140px;">
+    <span class="admin-label"><span class="admin-badge">ADMIN</span> 조직도 파일 ID</span>
+    <input class="admin-input" id="fileIdInput" type="text" placeholder="Google Drive 파일 ID 또는 URL 전체">
+    <input class="admin-input" id="totalPagesInput" type="number" min="1" max="100" placeholder="슬라이드 수" style="max-width:110px;">
     <button class="admin-btn" onclick="saveAndLoad()">저장 및 표시</button>
-    <button class="admin-btn secondary" onclick="toggleAdminPanel()">닫기</button>
   </div>
   <div class="admin-help">
-    📋 <b>파일 ID 확인:</b> Google Drive에서 파일 열기 → 주소창 URL의
-    <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;">/d/<b style="color:var(--orange)">파일ID</b>/</code> 부분 복사 (URL 전체 붙여넣기도 가능)<br>
-    🔓 <b>공유 설정:</b> 파일을 <b style="color:var(--green)">링크가 있는 모든 사용자 → 뷰어</b>로 공유해야 표시됩니다.
+    📋 Drive에서 파일 열기 → 주소창 URL의 <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;">/d/<b style="color:var(--orange)">파일ID</b>/</code> 복사 &nbsp;|&nbsp;
+    🔓 공유 → 링크가 있는 모든 사용자 → <b style="color:var(--green)">뷰어</b> 로 설정 필수
+  </div>
+  <div class="admin-divider"></div>
+  <div class="admin-row">
+    <span class="admin-label"><span class="admin-badge">ADMIN</span> 연락망 업로드</span>
+    <div class="drop-zone" id="dropZone" style="flex:1;min-width:180px;">
+      <input type="file" id="contactFileInput" accept=".xlsx,.xls,.csv" onchange="handleContactFile(this.files[0])">
+      📂 엑셀(.xlsx/.xls) 또는 CSV — 클릭하거나 드래그
+      <div style="margin-top:3px;font-size:10px;color:var(--muted);">필수 열: 이름 | 권장: 직책, 회사명, 전화번호, 이메일</div>
+    </div>
+    <button class="admin-btn blue" onclick="downloadTemplate()">📥 양식</button>
+    <button class="admin-btn secondary" onclick="clearContacts()">🗑 초기화</button>
+  </div>
+  <div class="admin-row" style="justify-content:flex-end;">
+    <button class="admin-btn secondary" onclick="toggleAdminPanel()">닫기</button>
   </div>
 </div>
 
-<!-- 툴바 -->
 <div class="toolbar">
   <div class="toolbar-center">안 전 조 직 도</div>
-  <a class="btn" href="safety_org_editor_v2.html">✏️ 편집기로 이동</a>
+  <a class="btn" href="safety_org_editor_v2.html">✏️ 편집기</a>
 </div>
 
-<!-- 뷰어 -->
-<div class="viewer-wrap" id="viewerWrap">
+<div class="main-content">
 
-  <!-- 왼쪽 페이지 네비게이션 패널 -->
-  <div class="nav-panel" id="navPanel">
-    <button class="nav-page-btn" id="prevBtn" onclick="prevSlide()" title="이전 슬라이드" disabled>▲</button>
-    <div class="nav-page-info">
-      <div class="nav-page-current" id="currentPage">1</div>
-      <div class="nav-page-divider"></div>
-      <div class="nav-page-total" id="totalPages">-</div>
-    </div>
-    <button class="nav-page-btn" id="nextBtn" onclick="nextSlide()" title="다음 슬라이드">▼</button>
-  </div>
-
-  <!-- 뷰어 본체 -->
-  <div class="viewer-main">
-    <div class="placeholder" id="placeholder">
-      <div class="placeholder-icon">📊</div>
-      <div class="placeholder-title">조직도 파일이 연결되지 않았습니다</div>
-      <div class="placeholder-desc">관리자가 Google Drive에 저장된 파일을 연결하면<br>여기에 조직도 슬라이드가 표시됩니다.</div>
-      <div class="placeholder-steps">
-        <b>① Google Drive</b>에서 파일을 연다<br>
-        <b>② 공유 설정</b> → 링크가 있는 모든 사용자 → <b>뷰어</b><br>
-        <b>③ 주소창 URL</b>에서 파일 ID 복사<br>
-        <b>④ 우측 상단 ⚙️ 버튼</b>에서 파일 ID + 슬라이드 수 입력 후 저장
+  <!-- 연락망 패널 -->
+  <div class="contact-panel">
+    <div class="contact-header">
+      <div class="contact-header-title">
+        📋 비상연락망
+        <span class="contact-count" id="contactCount">0명</span>
       </div>
     </div>
-    <iframe class="slides-frame" id="slidesFrame" allowfullscreen></iframe>
+    <div class="contact-search">
+      <input type="text" id="searchInput" placeholder="이름, 직책, 회사 검색..." oninput="renderContacts()">
+    </div>
+    <div class="contact-filter" id="filterBar">
+      <button class="filter-tab active" onclick="setFilter('전체',this)">전체</button>
+    </div>
+    <div class="contact-list" id="contactList">
+      <div class="contact-empty">
+        <div class="contact-empty-icon">📋</div>
+        <div class="contact-empty-title">연락망이 비어있습니다</div>
+        <div class="contact-empty-desc">관리자가 엑셀/CSV 파일을 업로드하면<br>여기에 연락처가 표시됩니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 뷰어 -->
+  <div class="viewer-wrap">
+    <div class="slide-controls" id="slideControls">
+      <button class="slide-nav-btn" id="prevBtn" onclick="prevSlide()" disabled>◀ 이전</button>
+      <div class="slide-indicator">
+        <span id="currentPage">1</span> / <span id="totalPagesLabel">1</span>
+        <small>슬라이드</small>
+      </div>
+      <button class="slide-nav-btn" id="nextBtn" onclick="nextSlide()">다음 ▶</button>
+    </div>
+    <div class="viewer-main">
+      <div class="placeholder" id="placeholder">
+        <div class="placeholder-icon">📊</div>
+        <div class="placeholder-title">조직도 파일이 연결되지 않았습니다</div>
+        <div class="placeholder-desc">관리자가 Google Drive 파일을 연결하면<br>여기에 조직도 슬라이드가 표시됩니다.</div>
+        <div class="placeholder-steps">
+          <b>① Google Drive</b>에서 파일 열기<br>
+          <b>② 공유 설정</b> → 링크가 있는 모든 사용자 → <b>뷰어</b><br>
+          <b>③</b> 주소창 URL에서 <b>파일 ID</b> 복사<br>
+          <b>④ 우측 상단 ⚙️</b>에서 파일 ID + 슬라이드 수 입력 후 저장
+        </div>
+      </div>
+      <iframe class="slides-frame" id="slidesFrame" allowfullscreen></iframe>
+    </div>
   </div>
 
 </div>
 
-<!-- 인쇄 버튼 -->
 <button class="print-btn hidden" id="printBtn" onclick="printSlides()">🖨️ 인쇄하기</button>
-
-<!-- 토스트 -->
 <div class="toast" id="toast"></div>
 
+<!-- 연락처 모달 -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-avatar"  id="modalAvatar"></div>
+    <div class="modal-name"    id="modalName"></div>
+    <div class="modal-role"    id="modalRole"></div>
+    <div class="modal-org"     id="modalOrg"></div>
+    <div class="modal-info"    id="modalInfo"></div>
+    <button class="modal-close" onclick="closeModal()">닫기</button>
+  </div>
+</div>
+
 <script>
-const STORAGE_KEY   = 'org_chart_file_id';
-const STORAGE_PAGES = 'org_chart_total_pages';
+/* ══════════════════════════════════════════
+   슬라이드 뷰어
+══════════════════════════════════════════ */
+const SK_FILE  = 'org_chart_file_id';
+const SK_PAGES = 'org_chart_total_pages';
+let curSlide = 1, totSlides = 1;
 
-let currentSlide = 1;
-let totalSlides  = 1;
+const $  = id => document.getElementById(id);
+const gt = () => localStorage.getItem(SK_FILE) || '';
 
-function getFileId() { return localStorage.getItem(STORAGE_KEY) || ''; }
-
-function buildEmbedUrl(fileId, page) {
-  return `https://docs.google.com/presentation/d/${fileId}/embed?start=false&loop=false&rm=minimal&slide=id.p${page}`;
+function embedUrl(id, p) {
+  return `https://docs.google.com/presentation/d/${id}/embed?start=false&loop=false&rm=minimal&slide=id.p${p}`;
 }
 
-function loadViewer(fileId, pages) {
-  if (!fileId) return;
-  totalSlides  = pages || parseInt(localStorage.getItem(STORAGE_PAGES)) || 1;
-  currentSlide = 1;
-
-  document.getElementById('slidesFrame').src = buildEmbedUrl(fileId, currentSlide);
-  document.getElementById('slidesFrame').classList.add('show');
-  document.getElementById('placeholder').style.display = 'none';
-  document.getElementById('printBtn').classList.remove('hidden');
-
-  const navPanel = document.getElementById('navPanel');
-  if (totalSlides > 1) navPanel.classList.add('show');
-  else navPanel.classList.remove('show');
-
-  updateNavUI();
+function loadViewer(id, pages) {
+  if (!id) return;
+  totSlides = pages || parseInt(localStorage.getItem(SK_PAGES)) || 1;
+  curSlide  = 1;
+  $('slidesFrame').src = embedUrl(id, curSlide);
+  $('slidesFrame').classList.add('show');
+  $('placeholder').style.display = 'none';
+  $('printBtn').classList.remove('hidden');
+  if (totSlides > 1) $('slideControls').classList.add('show');
+  else               $('slideControls').classList.remove('show');
+  updateSlideUI();
 }
 
-function goSlide(page) {
-  const fileId = getFileId();
-  if (!fileId) return;
-  currentSlide = Math.max(1, Math.min(page, totalSlides));
-  document.getElementById('slidesFrame').src = buildEmbedUrl(fileId, currentSlide);
-  updateNavUI();
+function goSlide(p) {
+  const id = gt(); if (!id) return;
+  curSlide = Math.max(1, Math.min(p, totSlides));
+  $('slidesFrame').src = embedUrl(id, curSlide);
+  updateSlideUI();
 }
-function prevSlide() { goSlide(currentSlide - 1); }
-function nextSlide() { goSlide(currentSlide + 1); }
+function prevSlide() { goSlide(curSlide - 1); }
+function nextSlide() { goSlide(curSlide + 1); }
 
-function updateNavUI() {
-  document.getElementById('currentPage').textContent = currentSlide;
-  document.getElementById('totalPages').textContent  = totalSlides + 'p';
-  document.getElementById('prevBtn').disabled = currentSlide <= 1;
-  document.getElementById('nextBtn').disabled = currentSlide >= totalSlides;
+function updateSlideUI() {
+  $('currentPage').textContent    = curSlide;
+  $('totalPagesLabel').textContent = totSlides;
+  $('prevBtn').disabled = curSlide <= 1;
+  $('nextBtn').disabled = curSlide >= totSlides;
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  prevSlide();
-  if (e.key === 'ArrowDown' || e.key === 'ArrowRight') nextSlide();
+  if (document.activeElement.tagName === 'INPUT') return;
+  if (e.key === 'ArrowLeft')  prevSlide();
+  if (e.key === 'ArrowRight') nextSlide();
 });
 
 function saveAndLoad() {
-  const rawId = document.getElementById('fileIdInput').value.trim();
-  const pages = parseInt(document.getElementById('totalPagesInput').value) || 1;
-  if (!rawId) { showToast('⚠️ 파일 ID를 입력해주세요'); return; }
-
-  const match   = rawId.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  const cleanId = match ? match[1] : rawId;
-
-  localStorage.setItem(STORAGE_KEY, cleanId);
-  localStorage.setItem(STORAGE_PAGES, pages);
-  document.getElementById('fileIdInput').value = cleanId;
-
-  loadViewer(cleanId, pages);
-  toggleAdminPanel();
+  const raw   = $('fileIdInput').value.trim();
+  const pages = parseInt($('totalPagesInput').value) || 1;
+  if (!raw) { showToast('⚠️ 파일 ID를 입력해주세요'); return; }
+  const m = raw.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  const id = m ? m[1] : raw;
+  localStorage.setItem(SK_FILE, id);
+  localStorage.setItem(SK_PAGES, pages);
+  $('fileIdInput').value = id;
+  loadViewer(id, pages);
   showToast('✅ 조직도가 연결되었습니다');
 }
 
 function printSlides() {
-  const fileId = getFileId();
-  if (!fileId) return;
-  window.open(`https://docs.google.com/presentation/d/${fileId}/print`, '_blank');
+  const id = gt(); if (!id) return;
+  window.open(`https://docs.google.com/presentation/d/${id}/print`, '_blank');
   showToast('📄 새 탭에서 인쇄 창이 열립니다');
 }
 
-function toggleAdminPanel() {
-  const panel  = document.getElementById('adminPanel');
-  const isOpen = panel.classList.contains('show');
-  if (isOpen) {
-    panel.classList.remove('show');
-  } else {
-    const savedId    = getFileId();
-    const savedPages = localStorage.getItem(STORAGE_PAGES) || '';
-    if (savedId)    document.getElementById('fileIdInput').value     = savedId;
-    if (savedPages) document.getElementById('totalPagesInput').value = savedPages;
-    panel.classList.add('show');
+/* ══════════════════════════════════════════
+   연락망
+══════════════════════════════════════════ */
+const SK_CON = 'org_contacts';
+let contacts = [], activeFilter = '전체';
+
+const COLORS = ['#f97316','#3b82f6','#22c55e','#a855f7','#ef4444','#06b6d4','#eab308','#ec4899'];
+function avatarColor(n) {
+  let h = 0; for (const c of n) h = n.charCodeAt(0) + ((h<<5)-h);
+  return COLORS[Math.abs(h) % COLORS.length];
+}
+
+function loadContacts() {
+  try { contacts = JSON.parse(localStorage.getItem(SK_CON)) || []; } catch { contacts = []; }
+  buildTabs(); renderContacts();
+}
+function saveContacts() { localStorage.setItem(SK_CON, JSON.stringify(contacts)); }
+
+function buildTabs() {
+  const cos = ['전체', ...new Set(contacts.map(c => c.company||'').filter(Boolean))];
+  $('filterBar').innerHTML = cos.map(c =>
+    `<button class="filter-tab${c===activeFilter?' active':''}" onclick="setFilter('${c}',this)">${c}</button>`
+  ).join('');
+}
+
+function setFilter(v, btn) {
+  activeFilter = v;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderContacts();
+}
+
+function renderContacts() {
+  const q = ($('searchInput').value||'').toLowerCase();
+  const filtered = contacts.filter(c => {
+    const mf = activeFilter==='전체' || (c.company||')===activeFilter');
+    const mq = !q || ['name','title','company'].some(k => (c[k]||'').toLowerCase().includes(q));
+    return mf && mq;
+  });
+  $('contactCount').textContent = contacts.length + '명';
+  if (!filtered.length) {
+    $('contactList').innerHTML = `<div class="contact-empty">
+      <div class="contact-empty-icon">${contacts.length?'🔍':'📋'}</div>
+      <div class="contact-empty-title">${contacts.length?'검색 결과 없음':'연락망이 비어있습니다'}</div>
+      <div class="contact-empty-desc">${contacts.length?'다른 검색어를 입력해보세요':'관리자가 파일을 업로드하면 표시됩니다'}</div>
+    </div>`; return;
   }
+  $('contactList').innerHTML = filtered.map(c => {
+    const idx   = contacts.indexOf(c);
+    const color = avatarColor(c.name||'?');
+    const init  = (c.name||'?').charAt(0);
+    return `<div class="contact-card" onclick="showModal(${idx})">
+      <div class="contact-avatar" style="background:${color}">${init}</div>
+      <div class="contact-info">
+        <div class="contact-name">${c.name||'-'}</div>
+        ${c.title  ?`<div class="contact-title">${c.title}</div>`:''}
+        ${c.company?`<div class="contact-company">🏢 ${c.company}</div>`:''}
+        ${c.phone  ?`<div class="contact-phone">${c.phone}</div>`:''}
+        ${c.email  ?`<div class="contact-email">✉ ${c.email}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showModal(idx) {
+  const c = contacts[idx]; if (!c) return;
+  const color = avatarColor(c.name||'?');
+  $('modalAvatar').style.background = color;
+  $('modalAvatar').textContent = (c.name||'?').charAt(0);
+  $('modalName').textContent = c.name||'-';
+  $('modalRole').textContent = c.title||'';
+  $('modalOrg').textContent  = c.company||'';
+  const rows = [];
+  if (c.phone) rows.push(`<div class="modal-info-row"><div class="modal-info-icon">📞</div><div><div class="modal-info-label">전화번호</div><div class="modal-info-text">${c.phone}</div></div></div>`);
+  if (c.email) rows.push(`<div class="modal-info-row"><div class="modal-info-icon">✉️</div><div><div class="modal-info-label">이메일</div><div class="modal-info-text">${c.email}</div></div></div>`);
+  if (c.company) rows.push(`<div class="modal-info-row"><div class="modal-info-icon">🏢</div><div><div class="modal-info-label">소속</div><div class="modal-info-text">${c.company}</div></div></div>`);
+  $('modalInfo').innerHTML = rows.join('');
+  $('modalOverlay').classList.add('show');
+}
+function closeModal() { $('modalOverlay').classList.remove('show'); }
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
+
+/* 파일 파싱 */
+const COL_MAP = {
+  name:    ['이름','name','성명','담당자'],
+  title:   ['직책','직위','직급','title','position'],
+  company: ['회사','회사명','소속','company','organization'],
+  phone:   ['전화','전화번호','연락처','phone','tel','mobile','휴대폰'],
+  email:   ['이메일','email','mail'],
+};
+function mapRow(row) {
+  const res = {}, keys = Object.keys(row);
+  for (const [f, aliases] of Object.entries(COL_MAP)) {
+    const found = keys.find(k => aliases.some(a => k.toLowerCase().replace(/\s/g,'').includes(a)));
+    res[f] = found ? String(row[found]).trim() : '';
+  }
+  return res;
+}
+
+function handleContactFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = e => {
+    let rows;
+    if (ext === 'csv') {
+      rows = parseCSV(e.target.result);
+    } else {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type:'array' });
+      rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval:'' });
+    }
+    const parsed = rows.map(mapRow).filter(c => c.name);
+    if (!parsed.length) { showToast('⚠️ 이름 열을 찾을 수 없습니다'); return; }
+    contacts = parsed;
+    activeFilter = '전체';
+    saveContacts(); buildTabs(); renderContacts();
+    showToast(`✅ ${contacts.length}명 등록 완료`);
+    $('contactFileInput').value = '';
+  };
+  if (ext === 'csv') reader.readAsText(file, 'utf-8');
+  else reader.readAsArrayBuffer(file);
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const hdrs  = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  return lines.slice(1).map(line => {
+    const vals = line.split(',').map(v => v.trim().replace(/^"|"$/g,''));
+    const obj  = {};
+    hdrs.forEach((h,i) => obj[h] = vals[i]||'');
+    return obj;
+  });
+}
+
+function clearContacts() {
+  if (!confirm('연락망을 모두 삭제하시겠습니까?')) return;
+  contacts = []; activeFilter = '전체';
+  saveContacts(); buildTabs(); renderContacts();
+  showToast('🗑 연락망 초기화 완료');
+}
+
+function downloadTemplate() {
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet([
+    ['이름','직책','회사명','전화번호','이메일'],
+    ['홍길동','안전관리자','MK E&C','010-0000-0000','example@email.com'],
+    ['김철수','안전반장','협력업체A','010-1111-2222',''],
+  ]);
+  ws['!cols'] = [{wch:10},{wch:14},{wch:16},{wch:16},{wch:24}];
+  XLSX.utils.book_append_sheet(wb, ws, '연락망');
+  XLSX.writeFile(wb, '비상연락망_양식.xlsx');
+}
+
+/* 드래그앤드롭 */
+const dz = $('dropZone');
+dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0]; if (f) handleContactFile(f);
+});
+
+/* ══════════════════════════════════════════
+   공통
+══════════════════════════════════════════ */
+function toggleAdminPanel() {
+  const p = $('adminPanel'), open = p.classList.contains('show');
+  if (open) { p.classList.remove('show'); return; }
+  const sid = gt(), sp = localStorage.getItem(SK_PAGES)||'';
+  if (sid) $('fileIdInput').value     = sid;
+  if (sp)  $('totalPagesInput').value = sp;
+  p.classList.add('show');
 }
 
 function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
+  const el = $('toast'); el.textContent = msg; el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2500);
 }
 
 function updateAdminUI() {
   const isAdmin = typeof AUTH !== 'undefined' && AUTH.isAdmin();
-  if (isAdmin) {
-    document.getElementById('settingsBtn').classList.add('show');
-  } else {
-    document.getElementById('settingsBtn').classList.remove('show');
-    document.getElementById('adminPanel').classList.remove('show');
-  }
+  if (isAdmin) $('settingsBtn').classList.add('show');
+  else { $('settingsBtn').classList.remove('show'); $('adminPanel').classList.remove('show'); }
 }
 
-window.onAdminLogin      = updateAdminUI;
-window.onAdminLogout     = updateAdminUI;
-window.onAuthStateChange = updateAdminUI;
-
-// AUTH 로딩 타이밍 보완
-let _lastAdmin = null;
+window.onAdminLogin = window.onAdminLogout = window.onAuthStateChange = updateAdminUI;
+let _la = null;
 setInterval(() => {
-  const isAdmin = typeof AUTH !== 'undefined' && AUTH.isAdmin();
-  if (isAdmin !== _lastAdmin) { _lastAdmin = isAdmin; updateAdminUI(); }
+  const a = typeof AUTH !== 'undefined' && AUTH.isAdmin();
+  if (a !== _la) { _la = a; updateAdminUI(); }
 }, 500);
 
 (function init() {
-  const saved      = getFileId();
-  const savedPages = parseInt(localStorage.getItem(STORAGE_PAGES)) || 1;
-  if (saved) loadViewer(saved, savedPages);
+  const id = gt(), pages = parseInt(localStorage.getItem(SK_PAGES))||1;
+  if (id) loadViewer(id, pages);
   updateAdminUI();
+  loadContacts();
 })();
 </script>
 </body>
