@@ -569,6 +569,16 @@ window.onAdminLogin      = updateAdminUI;
 window.onAdminLogout     = updateAdminUI;
 window.onAuthStateChange = updateAdminUI;
 
+// auth.js 로딩 타이밍 보완 — 로그인 상태 변경 감지 폴링
+let _lastAdmin = null;
+setInterval(() => {
+  const isAdmin = typeof AUTH !== 'undefined' && AUTH.isAdmin();
+  if (isAdmin !== _lastAdmin) {
+    _lastAdmin = isAdmin;
+    updateAdminUI();
+  }
+}, 500);
+
 (function init() {
   const saved      = getFileId();
   const savedPages = parseInt(localStorage.getItem(STORAGE_PAGES)) || 1;
