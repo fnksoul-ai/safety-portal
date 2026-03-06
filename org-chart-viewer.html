@@ -512,7 +512,7 @@ function setFilter(v, btn) {
 function renderContacts() {
   const q = ($('searchInput').value||'').toLowerCase();
   const filtered = contacts.filter(c => {
-    const mf = activeFilter==='전체' || (c.company||')===activeFilter');
+    const mf = activeFilter==='전체' || (c.company||'') === activeFilter;
     const mq = !q || ['name','title','company'].some(k => (c[k]||'').toLowerCase().includes(q));
     return mf && mq;
   });
@@ -562,16 +562,27 @@ document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); 
 /* 파일 파싱 */
 const COL_MAP = {
   name:    ['이름','name','성명','담당자'],
-  title:   ['직책','직위','직급','title','position'],
-  company: ['회사','회사명','소속','company','organization'],
-  phone:   ['전화','전화번호','연락처','phone','tel','mobile','휴대폰'],
-  email:   ['이메일','email','mail'],
+  title:   ['직책','직위','직급','title','position','직위/직책'],
+  company: ['회사명','회사','소속','company','organization'],
+  phone:   ['전화번호','휴대폰','연락처','전화','mobile','phone','tel'],
+  email:   ['이메일','email','e-mail','mail'],
 };
 function mapRow(row) {
-  const res = {}, keys = Object.keys(row);
+  const res = {};
+  const keys = Object.keys(row);
+  // 양쪽 모두 NFC 정규화 + 공백 제거 + 소문자
+  const norm = s => String(s).normalize('NFC').toLowerCase().replace(/\s/g,'');
+  const normKeys = keys.map(k => norm(k));
+
   for (const [f, aliases] of Object.entries(COL_MAP)) {
-    const found = keys.find(k => aliases.some(a => k.toLowerCase().replace(/\s/g,'').includes(a)));
-    res[f] = found ? String(row[found]).trim() : '';
+    const normAliases = aliases.map(a => norm(a));
+    // 1차: 정확 일치
+    let idx = normKeys.findIndex(k => normAliases.includes(k));
+    // 2차: 포함 일치 (alias가 key에 포함)
+    if (idx === -1) idx = normKeys.findIndex(k => normAliases.some(a => k.includes(a)));
+    // 3차: key가 alias에 포함
+    if (idx === -1) idx = normKeys.findIndex(k => normAliases.some(a => a.includes(k) && k.length >= 2));
+    res[f] = idx !== -1 ? String(row[keys[idx]]).trim() : '';
   }
   return res;
 }
