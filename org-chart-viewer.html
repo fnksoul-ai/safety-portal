@@ -8,20 +8,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:       #0f1117;
-    --bg2:      #171b24;
-    --bg3:      #1e2330;
-    --border:   #2c3347;
-    --orange:   #f97316;
-    --orange2:  #fb923c;
-    --blue:     #3b82f6;
-    --green:    #22c55e;
-    --red:      #ef4444;
-    --text:     #f1f5f9;
-    --muted:    #64748b;
-    --muted2:   #94a3b8;
+    --bg:     #0f1117;
+    --bg2:    #171b24;
+    --bg3:    #1e2330;
+    --border: #2c3347;
+    --orange: #f97316;
+    --orange2:#fb923c;
+    --green:  #22c55e;
+    --red:    #ef4444;
+    --text:   #f1f5f9;
+    --muted:  #64748b;
+    --muted2: #94a3b8;
   }
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
 
@@ -32,7 +30,6 @@
     display: flex; flex-direction: column;
     overflow: hidden;
   }
-
   body::before {
     content: '';
     position: fixed; inset: 0; z-index: 0;
@@ -86,6 +83,52 @@
   .settings-btn:hover { background: rgba(255,255,255,.08); border-color: var(--muted); }
   .settings-btn.show { display: flex; }
 
+  /* ── 관리자 패널 ── */
+  .admin-panel {
+    display: none;
+    position: relative; z-index: 5;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 24px;
+    flex-direction: column;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .admin-panel.show { display: flex; }
+  .admin-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .admin-badge {
+    background: rgba(239,68,68,.15); color: var(--red);
+    font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+  }
+  .admin-label {
+    font-size: 12px; color: var(--muted);
+    display: flex; align-items: center; gap: 6px;
+    flex-shrink: 0; min-width: 120px;
+  }
+  .admin-input {
+    flex: 1; min-width: 200px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px;
+    font-size: 12px; color: var(--text);
+    font-family: 'Courier New', monospace;
+    outline: none; transition: border-color .2s;
+  }
+  .admin-input:focus { border-color: var(--orange); }
+  .admin-input::placeholder { color: var(--muted); }
+  .admin-btn {
+    background: var(--orange); border: none; color: #fff;
+    border-radius: 8px; padding: 8px 18px;
+    font-size: 12px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: background .15s; white-space: nowrap;
+  }
+  .admin-btn:hover { background: var(--orange2); }
+  .admin-btn.secondary {
+    background: var(--bg3); border: 1px solid var(--border); color: var(--muted2);
+  }
+  .admin-btn.secondary:hover { color: var(--text); border-color: var(--muted); }
+  .admin-help { font-size: 11px; color: var(--muted); line-height: 1.8; }
+
   /* ── 툴바 ── */
   .toolbar {
     position: relative; z-index: 5;
@@ -96,273 +139,117 @@
     flex-shrink: 0;
   }
   .toolbar-center {
-    flex: 1;
-    text-align: center;
-    font-size: 22px;
-    font-weight: 800;
-    letter-spacing: .15em;
-    color: var(--text);
+    flex: 1; text-align: center;
+    font-size: 22px; font-weight: 800;
+    letter-spacing: .15em; color: var(--text);
   }
   .btn {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    color: var(--muted2);
-    border-radius: 8px;
-    padding: 7px 14px;
-    font-size: 13px; font-weight: 500;
-    cursor: pointer;
-    transition: all .15s;
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--muted2); border-radius: 8px;
+    padding: 7px 14px; font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: all .15s;
     font-family: inherit;
     display: flex; align-items: center; gap: 6px;
     text-decoration: none;
   }
   .btn:hover { color: var(--text); border-color: var(--muted); background: rgba(255,255,255,.05); }
-  .btn.primary { background: var(--orange); border-color: var(--orange); color: #fff; }
-  .btn.primary:hover { background: var(--orange2); border-color: var(--orange2); }
 
   /* ── 뷰어 영역 ── */
   .viewer-wrap {
     position: relative; z-index: 1;
-    flex: 1;
-    display: flex;
-    flex-direction: row;
-    overflow: hidden;
-    background: #1a1a2e;
+    flex: 1; display: flex; flex-direction: row;
+    overflow: hidden; background: #1a1a2e;
+    min-height: 0;
   }
 
   /* ── 왼쪽 페이지 네비게이션 패널 ── */
   .nav-panel {
     display: none;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    width: 64px;
-    flex-shrink: 0;
+    align-items: center; justify-content: center;
+    gap: 12px; width: 64px; flex-shrink: 0;
     background: var(--bg2);
     border-right: 1px solid var(--border);
     padding: 16px 0;
-    z-index: 2;
   }
   .nav-panel.show { display: flex; }
-
   .nav-page-btn {
     width: 44px; height: 44px;
     display: flex; align-items: center; justify-content: center;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    color: var(--muted2);
-    font-size: 20px;
-    cursor: pointer;
-    transition: all .15s;
-    user-select: none;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--muted2);
+    font-size: 20px; cursor: pointer;
+    transition: all .15s; user-select: none;
   }
   .nav-page-btn:hover:not(:disabled) {
-    background: var(--orange);
-    border-color: var(--orange);
-    color: #fff;
+    background: var(--orange); border-color: var(--orange); color: #fff;
     transform: scale(1.05);
   }
-  .nav-page-btn:disabled {
-    opacity: .3;
-    cursor: default;
-  }
+  .nav-page-btn:disabled { opacity: .3; cursor: default; }
+  .nav-page-info { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .nav-page-current { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: var(--text); line-height: 1; }
+  .nav-page-divider { width: 20px; height: 1px; background: var(--border); }
+  .nav-page-total { font-size: 11px; color: var(--muted); font-weight: 500; }
 
-  .nav-page-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-  }
-  .nav-page-current {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 26px;
-    color: var(--text);
-    line-height: 1;
-  }
-  .nav-page-divider {
-    width: 20px; height: 1px;
-    background: var(--border);
-  }
-  .nav-page-total {
-    font-size: 11px;
-    color: var(--muted);
-    font-weight: 500;
-  }
-
-  /* 뷰어 본체 (iframe 감싸는 영역) */
+  /* ── 뷰어 본체 ── */
   .viewer-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-    min-height: 0;
+    flex: 1; display: flex; flex-direction: column;
+    overflow: hidden; position: relative; min-height: 0;
   }
-
-  /* 파일 미설정 시 안내 화면 */
   .placeholder {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 16px;
-    color: var(--muted);
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; color: var(--muted);
   }
   .placeholder-icon { font-size: 64px; }
   .placeholder-title { font-size: 18px; font-weight: 600; color: var(--muted2); }
   .placeholder-desc { font-size: 13px; line-height: 1.8; text-align: center; max-width: 400px; }
   .placeholder-steps {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 24px;
-    font-size: 12px;
-    color: var(--muted2);
-    line-height: 2;
-    max-width: 420px;
-    width: 100%;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 24px;
+    font-size: 12px; color: var(--muted2); line-height: 2;
+    max-width: 420px; width: 100%;
   }
   .placeholder-steps b { color: var(--orange); }
 
-  /* iframe 뷰어 */
   .slides-frame {
-    display: none;
-    flex: 1;
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    border: none;
-    background: #fff;
+    display: none; flex: 1;
+    width: 100%; height: 100%;
+    min-height: 0; border: none; background: #fff;
   }
-  .slides-frame.show { display: flex; }
+  .slides-frame.show { display: block; }
 
-  /* ── 관리자 패널 ── */
-  .admin-panel {
-    display: none;
-    position: relative; z-index: 5;
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    padding: 14px 24px;
-    flex-direction: column;
-    gap: 12px;
-    flex-shrink: 0;
-  }
-  .admin-panel.show { display: flex; }
-  .admin-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .admin-label {
-    font-size: 12px; color: var(--muted);
-    flex-shrink: 0;
-    display: flex; align-items: center; gap: 6px;
-    min-width: 120px;
-  }
-  .admin-badge {
-    background: rgba(239,68,68,.15);
-    color: var(--red);
-    font-size: 10px; font-weight: 700;
-    padding: 2px 6px; border-radius: 4px;
-  }
-  .admin-input {
-    flex: 1;
-    min-width: 200px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 12px;
-    color: var(--text);
-    font-family: 'Courier New', monospace;
-    outline: none;
-    transition: border-color .2s;
-  }
-  .admin-input:focus { border-color: var(--orange); }
-  .admin-input::placeholder { color: var(--muted); }
-  .admin-help {
-    font-size: 11px;
-    color: var(--muted);
-    line-height: 1.7;
-  }
-  .admin-help a { color: var(--orange); text-decoration: none; }
-  .admin-help a:hover { text-decoration: underline; }
-  .admin-btn {
-    background: var(--orange);
-    border: none;
-    color: #fff;
-    border-radius: 8px;
-    padding: 8px 18px;
-    font-size: 12px; font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: background .15s;
-    white-space: nowrap;
-  }
-  .admin-btn:hover { background: var(--orange2); }
-  .admin-btn.secondary {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    color: var(--muted2);
-  }
-  .admin-btn.secondary:hover { color: var(--text); border-color: var(--muted); background: rgba(255,255,255,.05); }
-
-  /* 토스트 */
+  /* ── 토스트 ── */
   .toast {
-    position: fixed;
-    bottom: 32px; left: 50%;
+    position: fixed; bottom: 32px; left: 50%;
     transform: translateX(-50%) translateY(16px);
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 24px;
-    font-size: 13px;
-    color: var(--text);
-    opacity: 0;
-    transition: all .3s;
-    pointer-events: none;
-    z-index: 200;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 24px;
+    font-size: 13px; color: var(--text);
+    opacity: 0; transition: all .3s;
+    pointer-events: none; z-index: 200;
     box-shadow: 0 8px 32px rgba(0,0,0,.4);
   }
-  .toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
   /* ── 인쇄 버튼 ── */
   .print-btn {
-    position: fixed;
-    bottom: 24px; right: 24px;
-    z-index: 90;
+    position: fixed; bottom: 24px; right: 24px; z-index: 90;
     display: flex; align-items: center; gap: 8px;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    color: var(--muted2);
-    border-radius: 10px;
-    padding: 10px 18px;
-    font-size: 13px; font-weight: 500;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all .2s;
-    box-shadow: 0 4px 16px rgba(0,0,0,.4);
+    background: var(--bg2); border: 1px solid var(--border);
+    color: var(--muted2); border-radius: 10px;
+    padding: 10px 18px; font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: inherit;
+    transition: all .2s; box-shadow: 0 4px 16px rgba(0,0,0,.4);
   }
-  .print-btn:hover {
-    color: var(--text);
-    border-color: var(--orange);
-    background: var(--bg3);
-  }
+  .print-btn:hover { color: var(--text); border-color: var(--orange); background: var(--bg3); }
   .print-btn.hidden { display: none; }
 
-  @media print {
-    * { display: none !important; }
-  }
+  @media print { * { display: none !important; } }
 </style>
 <script src="auth.js"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
+</head>
 <body>
 
 <!-- 네비게이션 -->
@@ -384,8 +271,8 @@
     <button class="admin-btn secondary" onclick="toggleAdminPanel()">닫기</button>
   </div>
   <div class="admin-help">
-    📋 <b>파일 ID 확인 방법:</b>
-    Google Drive에서 파일 열기 → 주소창 URL에서 <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;">/d/<b style="color:var(--orange)">여기가 파일ID</b>/</code> 부분 복사<br>
+    📋 <b>파일 ID 확인:</b> Google Drive에서 파일 열기 → 주소창 URL의
+    <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;">/d/<b style="color:var(--orange)">파일ID</b>/</code> 부분 복사 (URL 전체 붙여넣기도 가능)<br>
     🔓 <b>공유 설정:</b> 파일을 <b style="color:var(--green)">링크가 있는 모든 사용자 → 뷰어</b>로 공유해야 표시됩니다.
   </div>
 </div>
@@ -412,31 +299,18 @@
 
   <!-- 뷰어 본체 -->
   <div class="viewer-main">
-
-    <!-- 미설정 안내 -->
     <div class="placeholder" id="placeholder">
       <div class="placeholder-icon">📊</div>
       <div class="placeholder-title">조직도 파일이 연결되지 않았습니다</div>
-      <div class="placeholder-desc">
-        관리자가 Google Drive에 저장된 PPTX 파일을 연결하면<br>여기에 조직도 슬라이드가 표시됩니다.
-      </div>
+      <div class="placeholder-desc">관리자가 Google Drive에 저장된 파일을 연결하면<br>여기에 조직도 슬라이드가 표시됩니다.</div>
       <div class="placeholder-steps">
-        <b>① Google Drive</b>에서 PPTX 파일을 연다<br>
+        <b>① Google Drive</b>에서 파일을 연다<br>
         <b>② 공유 설정</b> → 링크가 있는 모든 사용자 → <b>뷰어</b><br>
         <b>③ 주소창 URL</b>에서 파일 ID 복사<br>
         <b>④ 우측 상단 ⚙️ 버튼</b>에서 파일 ID + 슬라이드 수 입력 후 저장
       </div>
     </div>
-
-    <!-- Google Slides 임베드 iframe -->
-    <iframe
-      class="slides-frame"
-      id="slidesFrame"
-      allowfullscreen="true"
-      mozallowfullscreen="true"
-      webkitallowfullscreen="true">
-    </iframe>
-
+    <iframe class="slides-frame" id="slidesFrame" allowfullscreen></iframe>
   </div>
 
 </div>
@@ -448,15 +322,13 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const STORAGE_KEY      = 'org_chart_file_id';
-const STORAGE_PAGES    = 'org_chart_total_pages';
+const STORAGE_KEY   = 'org_chart_file_id';
+const STORAGE_PAGES = 'org_chart_total_pages';
 
 let currentSlide = 1;
 let totalSlides  = 1;
 
-function getFileId() {
-  return localStorage.getItem(STORAGE_KEY) || '';
-}
+function getFileId() { return localStorage.getItem(STORAGE_KEY) || ''; }
 
 function buildEmbedUrl(fileId, page) {
   return `https://docs.google.com/presentation/d/${fileId}/embed?start=false&loop=false&rm=minimal&slide=id.p${page}`;
@@ -464,21 +336,15 @@ function buildEmbedUrl(fileId, page) {
 
 function loadViewer(fileId, pages) {
   if (!fileId) return;
-
   totalSlides  = pages || parseInt(localStorage.getItem(STORAGE_PAGES)) || 1;
   currentSlide = 1;
 
-  const frame       = document.getElementById('slidesFrame');
-  const placeholder = document.getElementById('placeholder');
-  const printBtn    = document.getElementById('printBtn');
-  const navPanel    = document.getElementById('navPanel');
+  document.getElementById('slidesFrame').src = buildEmbedUrl(fileId, currentSlide);
+  document.getElementById('slidesFrame').classList.add('show');
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('printBtn').classList.remove('hidden');
 
-  frame.src = buildEmbedUrl(fileId, currentSlide);
-  frame.classList.add('show');
-  placeholder.style.display = 'none';
-  printBtn.classList.remove('hidden');
-
-  // 슬라이드가 2장 이상일 때만 패널 표시
+  const navPanel = document.getElementById('navPanel');
   if (totalSlides > 1) navPanel.classList.add('show');
   else navPanel.classList.remove('show');
 
@@ -502,7 +368,6 @@ function updateNavUI() {
   document.getElementById('nextBtn').disabled = currentSlide >= totalSlides;
 }
 
-// 키보드 방향키 지원
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  prevSlide();
   if (e.key === 'ArrowDown' || e.key === 'ArrowRight') nextSlide();
@@ -511,7 +376,6 @@ document.addEventListener('keydown', e => {
 function saveAndLoad() {
   const rawId = document.getElementById('fileIdInput').value.trim();
   const pages = parseInt(document.getElementById('totalPagesInput').value) || 1;
-
   if (!rawId) { showToast('⚠️ 파일 ID를 입력해주세요'); return; }
 
   const match   = rawId.match(/\/d\/([a-zA-Z0-9_-]+)/);
@@ -529,11 +393,11 @@ function saveAndLoad() {
 function printSlides() {
   const fileId = getFileId();
   if (!fileId) return;
-  // Google Slides 인쇄 전용 URL (새 탭에서 바로 인쇄 다이얼로그 오픈)
-  const printUrl = `https://docs.google.com/presentation/d/${fileId}/print`;
-  const win = window.open(printUrl, '_blank');
+  window.open(`https://docs.google.com/presentation/d/${fileId}/print`, '_blank');
   showToast('📄 새 탭에서 인쇄 창이 열립니다');
 }
+
+function toggleAdminPanel() {
   const panel  = document.getElementById('adminPanel');
   const isOpen = panel.classList.contains('show');
   if (isOpen) {
@@ -541,8 +405,8 @@ function printSlides() {
   } else {
     const savedId    = getFileId();
     const savedPages = localStorage.getItem(STORAGE_PAGES) || '';
-    if (savedId)    document.getElementById('fileIdInput').value      = savedId;
-    if (savedPages) document.getElementById('totalPagesInput').value  = savedPages;
+    if (savedId)    document.getElementById('fileIdInput').value     = savedId;
+    if (savedPages) document.getElementById('totalPagesInput').value = savedPages;
     panel.classList.add('show');
   }
 }
@@ -555,12 +419,11 @@ function showToast(msg) {
 }
 
 function updateAdminUI() {
-  const isAdmin    = typeof AUTH !== 'undefined' && AUTH.isAdmin();
-  const settingsBtn = document.getElementById('settingsBtn');
+  const isAdmin = typeof AUTH !== 'undefined' && AUTH.isAdmin();
   if (isAdmin) {
-    settingsBtn.classList.add('show');
+    document.getElementById('settingsBtn').classList.add('show');
   } else {
-    settingsBtn.classList.remove('show');
+    document.getElementById('settingsBtn').classList.remove('show');
     document.getElementById('adminPanel').classList.remove('show');
   }
 }
@@ -569,14 +432,11 @@ window.onAdminLogin      = updateAdminUI;
 window.onAdminLogout     = updateAdminUI;
 window.onAuthStateChange = updateAdminUI;
 
-// auth.js 로딩 타이밍 보완 — 로그인 상태 변경 감지 폴링
+// AUTH 로딩 타이밍 보완
 let _lastAdmin = null;
 setInterval(() => {
   const isAdmin = typeof AUTH !== 'undefined' && AUTH.isAdmin();
-  if (isAdmin !== _lastAdmin) {
-    _lastAdmin = isAdmin;
-    updateAdminUI();
-  }
+  if (isAdmin !== _lastAdmin) { _lastAdmin = isAdmin; updateAdminUI(); }
 }, 500);
 
 (function init() {
