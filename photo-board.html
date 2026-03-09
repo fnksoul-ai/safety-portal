@@ -172,7 +172,7 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 .shdr-top{position:relative;display:flex;align-items:baseline;margin-bottom:4px}
 .stitle{font-size:20px;font-weight:700;cursor:text;font-family:'Malgun Gothic',sans-serif;color:#002060;letter-spacing:4px}
 .stitle:focus{outline:2px solid #f97316;background:#fffbf0}
-.smeta{display:flex;align-items:center;position:absolute;right:0;top:50%;transform:translateY(-50%);white-space:nowrap;}
+.smeta{display:flex;align-items:center;white-space:nowrap;}
 .smeta-lbl{font-size:11px;font-weight:700;padding-right:7px;white-space:nowrap;cursor:pointer}
 .smeta-inp{font-size:12px;outline:none;background:transparent;font-family:'Malgun Gothic',sans-serif;min-width:20px;display:inline-block;white-space:nowrap;cursor:text;}
 .smeta-inp:focus{background:#fffbf0;outline:none}
@@ -208,6 +208,7 @@ body{background:var(--bg1);color:#e2e8f0;font-family:'Noto Sans KR',sans-serif;h
 /* page wrap */
 .pagewrap{position:relative}
 .pgnum{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:10px;color:#888;pointer-events:none;white-space:nowrap;font-family:'Malgun Gothic',sans-serif}
+.site-footer{position:absolute;bottom:36px;right:56.7px;display:flex;align-items:center;}
 .delpg{position:absolute;top:-11px;right:-11px;width:24px;height:24px;border-radius:50%;background:#ef4444;border:none;color:#fff;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10;transition:.15s;line-height:1}
 .delpg:hover{background:#b91c1c;transform:scale(1.1)}
 .addpgwrap{display:flex;justify-content:center;padding:18px 0 38px}
@@ -773,6 +774,9 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="sg"><label>쪽 표시</label>
     <button class="pntoggle on" id="pntoggle" onclick="togglePN()">표시 켜짐</button>
   </div>
+  <div class="sg"><label>현장명 표시</label>
+    <button class="pntoggle on" id="sitetoggle" onclick="toggleSite()">표시 켜짐</button>
+  </div>
 </div>
 
 <!-- 저장 모달 -->
@@ -839,6 +843,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════════════
 let slotCount = 6;
 let showPN = true;
+let showSite = true;
 let currentTemplate = 'default'; // 'default' or 'id-cert'
 let pageOrientation = 'portrait'; // 'portrait' or 'landscape'
 const pages = [];
@@ -982,7 +987,7 @@ function undo() {
 // ══════════════════════════════════════════════
 //  동기화
 // ══════════════════════════════════════════════
-function syncTitle(v) { document.querySelectorAll('.sync-title').forEach(e=>e.textContent=v); }
+function syncTitle(v, skip) { document.querySelectorAll('.sync-title').forEach(e=>{ if(e !== skip) e.textContent=v; }); }
 function syncNavSite(v) {
   const ns = document.getElementById('navSite');
   if (ns) ns.textContent = v ? `${v} — 사진대지` : '사진대지 작성';
@@ -1782,9 +1787,10 @@ function renderAll() {
     tEl.dataset.hdrPage=pi; tEl.dataset.hdrType='title';
     const tf = pg.titleFmt||{}; tEl.style.fontFamily=tf.font||"'Malgun Gothic',sans-serif"; tEl.style.fontSize=tf.sz||'20px'; tEl.style.color=tf.color||'#002060'; tEl.style.fontWeight=tf.bold===false?'400':'700'; tEl.style.letterSpacing=tf.spacing||'4px'; tEl.style.textIndent=tf.spacing||'4px';
     tEl.addEventListener('click',e=>{e.stopPropagation();selHdr(pi,'title');});
+    tEl.classList.add('sync-title');
     if (pi===0) {
       tEl.contentEditable = 'true';
-      tEl.oninput = ()=>{ document.getElementById('docTitle').value=tEl.textContent; syncTitle(tEl.textContent); };
+      tEl.oninput = ()=>{ document.getElementById('docTitle').value=tEl.textContent; syncTitle(tEl.textContent, tEl); };
     } else {
       tEl.classList.add('sync-title');
     }
@@ -1817,7 +1823,7 @@ function renderAll() {
       sv.addEventListener('click',e=>{e.stopPropagation();selHdr(pi,'site');});
       mDiv.append(mLbl, sv);
     }
-    htop.append(tEl, mDiv);
+    htop.append(tEl);
     const deco = document.createElement('img'); deco.className='sdeco'; deco.src=DECO;
     hdr.append(htop, deco); sheet.appendChild(hdr);
 
@@ -1839,6 +1845,13 @@ function renderAll() {
       em.textContent='빈 칸'; grid.appendChild(em);
     }
     sheet.appendChild(grid);
+
+    // 현장명 — 우하단 절대위치
+    const siteFooter = document.createElement('div');
+    siteFooter.className = 'site-footer';
+    if (!showSite) siteFooter.style.display = 'none';
+    siteFooter.appendChild(mDiv);
+    sheet.appendChild(siteFooter);
 
     const pn = document.createElement('div'); pn.className='pgnum';
     pn.textContent=`${pi+1} / ${pages.length}`;
@@ -2195,6 +2208,14 @@ function togglePN() {
   document.querySelectorAll('.pgnum').forEach(e=>e.style.display=showPN?'':'none');
 }
 
+function toggleSite() {
+  showSite = !showSite;
+  const btn = document.getElementById('sitetoggle');
+  btn.textContent = showSite ? '표시 켜짐' : '표시 꺼짐';
+  btn.classList.toggle('on', showSite);
+  document.querySelectorAll('.site-footer').forEach(e=>e.style.display=showSite?'flex':'none');
+}
+
 // ══════════════════════════════════════════════
 //  줌
 // ══════════════════════════════════════════════
@@ -2531,7 +2552,7 @@ function confirmSave() {
     name, date: dateStr, pages: snapshot.length,
     siteName: document.getElementById('siteName').value,
     docTitle: document.getElementById('docTitle').value,
-    slotCount, showPN,
+    slotCount, showPN, showSite,
     template: currentTemplate,
     orientation: pageOrientation,
     data: snapshot,
@@ -2553,6 +2574,7 @@ function loadSave(idx) {
   entry.data.forEach(pg => pages.push(pg));
   slotCount = entry.slotCount || 6;
   showPN = entry.showPN ?? true;
+  showSite = entry.showSite ?? true;
   currentTemplate = entry.template || 'default';
   pageOrientation = entry.orientation || 'portrait';
   document.getElementById('siteName').value = entry.siteName || '';
