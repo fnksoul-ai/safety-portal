@@ -194,6 +194,383 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 
 @media(max-width:768px){.sidebar{display:none;}.page{padding:12px 14px 40px;}.content{margin-left:0;}}
 </style>
+
+<style>
+/* ════════════════════════════════════════
+   THEME OVERRIDE — watch2.co.kr/gw-intro 팔레트
+   Primary: #046BD2  Dark Navy: #1E293B
+   Teal: #0891B2    Light BG: #F1F5F9
+════════════════════════════════════════ */
+:root {
+  --bg:        #F1F5F9 !important;
+  --bg2:       #FFFFFF !important;
+  --bg3:       #E2E8F0 !important;
+  --bg4:       #CBD5E1 !important;
+  --border:    #E2E8F0 !important;
+  --border2:   #CBD5E1 !important;
+  --orange:    #046BD2 !important;
+  --orange2:   #0560BE !important;
+  --orange-glow: rgba(4,107,210,.18) !important;
+  --blue:      #046BD2 !important;
+  --green:     #046BD2 !important;
+  --red:       #DC2626 !important;
+  --yellow:    #D97706 !important;
+  --purple:    #0891B2 !important;
+  --text:      #1E293B !important;
+  --text2:     #0F172A !important;
+  --muted:     #94A3B8 !important;
+  --muted2:    #64748B !important;
+}
+
+html, body {
+  background: #F1F5F9 !important;
+  color: #1E293B !important;
+}
+
+body::before {
+  background-image:
+    linear-gradient(rgba(4,107,210,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(4,107,210,.04) 1px, transparent 1px) !important;
+}
+body::after { opacity: .06 !important; }
+
+/* ── NAV ── */
+nav {
+  background: rgba(255,255,255,.96) !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  box-shadow: 0 1px 16px rgba(15,23,42,.06) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+.nav-logo { color: #1E293B !important; }
+.nav-logo-text { color: #1E293B !important; }
+.nav-logo-badge { background: #046BD2 !important; color: #fff !important; }
+.nav-link { color: #64748B !important; }
+.nav-link:hover { color: #1E293B !important; background: #F1F5F9 !important; }
+.nav-link.active { color: #046BD2 !important; background: #EFF6FF !important; }
+.nav-badge { background: #046BD2 !important; color: #fff !important; }
+
+/* ── 햄버거 ── */
+.hamburger span { background: #1E293B !important; }
+.hamburger:hover { background: #F1F5F9 !important; }
+
+/* ── 모바일 드로어 ── */
+.mobile-drawer {
+  background: rgba(255,255,255,.98) !important;
+  border-right: 1px solid #E2E8F0 !important;
+}
+.drawer-link { color: #64748B !important; border-color: transparent !important; }
+.drawer-link:hover { color: #1E293B !important; background: #F1F5F9 !important; border-color: #E2E8F0 !important; }
+.drawer-link-icon { background: #F8FAFC !important; border-color: #E2E8F0 !important; }
+.drawer-divider { background: #E2E8F0 !important; }
+
+/* ── 히어로 — watch2 시그니처 그라디언트 ── */
+.hero-bg {
+  background:
+    linear-gradient(135deg, #0F2C59 0%, #1E4E8C 25%, #0C6E9E 55%, #0891B2 80%, #06B6D4 100%) !important;
+}
+.hero-bg::after {
+  background-image:
+    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px) !important;
+}
+.hero-eyebrow {
+  background: rgba(255,255,255,.15) !important;
+  border-color: rgba(255,255,255,.3) !important;
+  color: #FFFFFF !important;
+}
+.hero-eyebrow::before { background: #06B6D4 !important; }
+.hero h1 { color: #FFFFFF !important; }
+.hero h1 .outline {
+  -webkit-text-stroke: 2px rgba(255,255,255,.9) !important;
+  color: transparent !important;
+}
+.hero-desc { color: rgba(255,255,255,.75) !important; }
+.hero-desc strong { color: #FFFFFF !important; }
+.hero-stats { }
+.hero-stat { color: rgba(255,255,255,.7) !important; }
+.hero-stat strong { color: #FFFFFF !important; }
+
+/* ── 히어로 미니 카드 ── */
+.hero-mini-card {
+  background: rgba(255,255,255,.12) !important;
+  border-color: rgba(255,255,255,.2) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,.1) !important;
+}
+.hero-mini-card:hover {
+  background: rgba(255,255,255,.2) !important;
+  border-color: rgba(255,255,255,.4) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,.15) !important;
+}
+.mini-label { color: #FFFFFF !important; }
+.mini-sub { color: rgba(255,255,255,.7) !important; }
+
+/* 상태 도트 */
+.dot-green  { background: #06B6D4 !important; box-shadow: 0 0 8px rgba(6,182,212,.6) !important; }
+.dot-yellow { background: #F59E0B !important; box-shadow: 0 0 8px rgba(245,158,11,.4) !important; }
+.dot-orange { background: #06B6D4 !important; box-shadow: 0 0 8px rgba(6,182,212,.4) !important; }
+
+/* ── 공지 ── */
+.notice-section { }
+.notice-strip {
+  background: linear-gradient(90deg, rgba(4,107,210,.08), rgba(4,107,210,.03)) !important;
+  border-color: rgba(4,107,210,.2) !important;
+}
+.notice-icon-wrap { background: rgba(4,107,210,.12) !important; }
+.notice-body strong { color: #046BD2 !important; }
+.notice-body p { color: #64748B !important; }
+.notice-date { color: #94A3B8 !important; }
+
+/* ── 섹션 헤더 ── */
+.row-label { color: #94A3B8 !important; }
+.row-label-accent {
+  background: #EFF6FF !important;
+  border-color: #BFDBFE !important;
+  color: #1D4ED8 !important;
+}
+.row-line { background: linear-gradient(90deg, #E2E8F0, transparent) !important; }
+.row-count { color: #94A3B8 !important; }
+.section-title { color: #94A3B8 !important; }
+.section-title::after { background: #E2E8F0 !important; }
+
+/* ── FEATURED CARDS ── */
+.feat-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 2px 10px rgba(15,23,42,.06) !important;
+}
+.feat-card:hover {
+  border-color: #046BD2 !important;
+  box-shadow: 0 16px 48px rgba(4,107,210,.12) !important;
+}
+.feat-card-thumb {
+  background: linear-gradient(135deg, #DBEAFE 0%, #BAE6FD 100%) !important;
+}
+.feat-card-thumb::after {
+  background: linear-gradient(180deg, transparent 40%, rgba(255,255,255,.9) 100%) !important;
+}
+/* feat-card별 썸네일 색상 — watch2 카드 아이콘 그라디언트 참조 */
+.feat-card:nth-child(1) .feat-card-thumb { background: linear-gradient(135deg, #DBEAFE, #BFDBFE) !important; }
+.feat-card:nth-child(2) .feat-card-thumb { background: linear-gradient(135deg, #CFFAFE, #A5F3FC) !important; }
+.feat-card:nth-child(3) .feat-card-thumb { background: linear-gradient(135deg, #DCFCE7, #BBF7D0) !important; }
+.feat-card:nth-child(4) .feat-card-thumb { background: linear-gradient(135deg, #EDE9FE, #DDD6FE) !important; }
+
+.feat-title { color: #1E293B !important; }
+.feat-desc { color: #64748B !important; }
+.feat-card-footer { border-top-color: #F1F5F9 !important; background: #F8FAFC !important; }
+.feat-arrow {
+  background: #EFF6FF !important;
+  border-color: #DBEAFE !important;
+  color: #046BD2 !important;
+}
+.feat-card:hover .feat-arrow {
+  background: #046BD2 !important;
+  border-color: #046BD2 !important;
+  color: #FFFFFF !important;
+}
+
+/* ── COMPACT CARDS ── */
+.compact-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 1px 6px rgba(15,23,42,.05) !important;
+}
+.compact-card:hover {
+  border-color: #046BD2 !important;
+  box-shadow: 0 8px 24px rgba(4,107,210,.1) !important;
+}
+.compact-card::before { background: #046BD2 !important; }
+.cc-icon { background: #EFF6FF !important; border-color: #DBEAFE !important; }
+.cc-title { color: #1E293B !important; }
+.cc-desc { color: #64748B !important; }
+.cc-foot { border-top-color: #F1F5F9 !important; }
+
+/* ── STATUS CHIPS ── */
+.chip-new    { background: #EFF6FF !important; color: #1D4ED8 !important; border-color: #BFDBFE !important; }
+.chip-ready  { background: #F0FDF4 !important; color: #15803D !important; border-color: #BBF7D0 !important; }
+.chip-soon   { background: #F8FAFC !important; color: #64748B !important; border-color: #E2E8F0 !important; }
+
+/* ── 구형 카드 ── */
+.card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+.card::before { background: #046BD2 !important; }
+.card:hover { border-color: #046BD2 !important; box-shadow: 0 12px 32px rgba(4,107,210,.1) !important; }
+.card-title { color: #1E293B !important; }
+.card-desc { color: #64748B !important; }
+.card-footer { border-top-color: #F1F5F9 !important; color: #94A3B8 !important; }
+.card-icon { background: #EFF6FF !important; border-color: #DBEAFE !important; }
+.card-arrow { color: #94A3B8 !important; }
+.card:hover .card-arrow { color: #046BD2 !important; }
+.card-status.ready { background: #F0FDF4 !important; color: #15803D !important; }
+.card-status.soon  { background: #F8FAFC !important; color: #64748B !important; }
+.card-status.new   { background: #EFF6FF !important; color: #1D4ED8 !important; }
+.card.blue  { --card-accent: #046BD2 !important; }
+.card.green { --card-accent: #0891B2 !important; }
+.card.red   { --card-accent: #DC2626 !important; }
+.card.yellow{ --card-accent: #D97706 !important; }
+
+/* ── 버튼 ── */
+.btn {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #64748B !important;
+}
+.btn:hover { color: #1E293B !important; border-color: #CBD5E1 !important; background: #F8FAFC !important; }
+.btn.primary { background: #046BD2 !important; border-color: #046BD2 !important; color: #fff !important; }
+.btn.primary:hover { background: #0560BE !important; border-color: #0560BE !important; }
+.btn.danger { border-color: #DC2626 !important; color: #DC2626 !important; background: transparent !important; }
+.btn.danger:hover { background: #DC2626 !important; color: #fff !important; }
+.btn.google { background: #fff !important; border-color: #E2E8F0 !important; color: #1E293B !important; }
+.btn.google:hover { background: #F8FAFC !important; }
+
+/* ── 관리자 버튼 ── */
+.admin-btn {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #64748B !important;
+}
+.admin-btn:hover { color: #1E293B !important; border-color: #CBD5E1 !important; }
+.admin-btn.logged { border-color: #046BD2 !important; color: #046BD2 !important; }
+.admin-btn .dot { background: #CBD5E1 !important; }
+.admin-btn.logged .dot { background: #046BD2 !important; box-shadow: 0 0 5px rgba(4,107,210,.5) !important; }
+
+/* ── 드롭다운 ── */
+.admin-dropdown {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 8px 32px rgba(15,23,42,.1) !important;
+}
+.admin-dropdown h4 { color: #1E293B !important; }
+.admin-dropdown p  { color: #64748B !important; }
+.admin-profile { background: #F8FAFC !important; }
+
+/* ── 브레드크럼 ── */
+.bc-item { color: #64748B !important; }
+.bc-item:hover { color: #1E293B !important; background: #F1F5F9 !important; }
+.bc-item.active { color: #1E293B !important; }
+.bc-sep { color: #CBD5E1 !important; }
+.nav-back { color: #64748B !important; }
+.nav-back:hover { color: #1E293B !important; background: #F1F5F9 !important; }
+
+/* ── 사이드바 / 트리 ── */
+.sidebar-card, .setup-card, .upload-panel {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  box-shadow: 0 2px 12px rgba(15,23,42,.06) !important;
+}
+.tree-item { color: #64748B !important; border-left-color: transparent !important; }
+.tree-item:hover { color: #1E293B !important; background: rgba(4,107,210,.05) !important; }
+.tree-item.active { color: #046BD2 !important; background: #EFF6FF !important; border-left-color: #046BD2 !important; }
+.tree-children { border-left-color: #E2E8F0 !important; }
+.tree::-webkit-scrollbar-thumb { background: #E2E8F0 !important; }
+
+/* ── 폴더 카드 ── */
+.folder-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+.folder-card:hover { border-color: #046BD2 !important; background: #F8FAFC !important; }
+.folder-card .fc-name { color: #1E293B !important; }
+.folder-card .fc-cnt { color: #94A3B8 !important; }
+
+/* ── 업로드 / 드롭존 ── */
+.dropzone {
+  border-color: #E2E8F0 !important;
+  background: #F8FAFC !important;
+}
+.dropzone:hover, .dropzone.drag {
+  border-color: #046BD2 !important;
+  background: #EFF6FF !important;
+}
+.upload-section { border-top-color: #E2E8F0 !important; }
+.upload-section-label { color: #94A3B8 !important; }
+.upload-section-label::after { background: #E2E8F0 !important; }
+
+/* ── 입력 폼 ── */
+.field input, .field textarea, .field select,
+input[type="text"], input[type="search"], input[type="number"],
+textarea, select {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+}
+.field input:focus, .field textarea:focus,
+input[type="text"]:focus, input[type="search"]:focus,
+textarea:focus, select:focus {
+  border-color: #046BD2 !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(4,107,210,.1) !important;
+}
+input::placeholder, textarea::placeholder { color: #CBD5E1 !important; }
+.field label { color: #64748B !important; }
+input[type="checkbox"]:checked { accent-color: #046BD2 !important; }
+
+/* ── 리사이저 ── */
+.resizer:hover, .resizer.active { background: #046BD2 !important; }
+
+/* ── 갤러리 이미지 카드 ── */
+.photo-card, .img-card {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+.photo-card:hover, .img-card:hover { border-color: #046BD2 !important; }
+
+/* ── 캘린더 ── */
+.cal-header, .calendar-header { background: #FFFFFF !important; border-color: #E2E8F0 !important; }
+.cal-day, .calendar-day {
+  border-color: #E2E8F0 !important;
+  background: #FFFFFF !important;
+  color: #1E293B !important;
+}
+.cal-day:hover { background: #EFF6FF !important; }
+.cal-day.today { border-color: #046BD2 !important; }
+.cal-day.today .day-num { background: #046BD2 !important; color: #fff !important; }
+.cal-day-header { color: #94A3B8 !important; }
+.event-item { background: #DBEAFE !important; color: #1D4ED8 !important; }
+
+/* ── 조직도 ── */
+.slide-nav { background: #FFFFFF !important; border-color: #E2E8F0 !important; }
+.slide-btn { background: #EFF6FF !important; border-color: #DBEAFE !important; color: #1E293B !important; }
+.slide-btn:hover { background: #046BD2 !important; color: #fff !important; border-color: #046BD2 !important; }
+.tab-btn { color: #64748B !important; border-color: #E2E8F0 !important; background: #FFFFFF !important; }
+.tab-btn.active { background: #046BD2 !important; color: #FFFFFF !important; border-color: #046BD2 !important; }
+.contact-panel { background: #F8FAFC !important; border-color: #E2E8F0 !important; }
+.contact-item { border-color: #E2E8F0 !important; background: #FFFFFF !important; }
+.contact-item:hover { border-color: #046BD2 !important; background: #EFF6FF !important; }
+
+/* ── 모달 ── */
+.modal-bg, .overlay { background: rgba(15,23,42,.4) !important; }
+.modal, .modal-inner {
+  background: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+  color: #1E293B !important;
+  box-shadow: 0 20px 60px rgba(15,23,42,.15) !important;
+}
+
+/* ── 스크롤바 ── */
+::-webkit-scrollbar-track { background: #F1F5F9 !important; }
+::-webkit-scrollbar-thumb { background: #CBD5E1 !important; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8 !important; }
+
+/* ── 푸터 ── */
+footer {
+  border-top-color: #E2E8F0 !important;
+  background: #FFFFFF !important;
+}
+footer span, .footer-brand { color: #1E293B !important; }
+.footer-copy { color: #94A3B8 !important; }
+
+/* ── 배지·태그 ── */
+.badge, .tag {
+  background: #EFF6FF !important;
+  color: #1D4ED8 !important;
+  border: 1px solid #BFDBFE !important;
+}
+
+</style>
 </head>
 <body>
 
