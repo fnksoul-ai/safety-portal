@@ -2553,45 +2553,86 @@ async function addImg(wb, ws, b64, r1, c1, r2, c2) {
 
 // ── 기본 양식 엑셀 ──
 async function buildDefaultExcel(wb, title, site) {
-  const isLand = pageOrientation === 'landscape';
+  const isLand   = pageOrientation === 'landscape';
   const gridCols = isLand ? (slotCount >= 6 ? 3 : 2) : (slotCount <= 2 ? 1 : 2);
 
-  // ── 색상 변환 (3자리/6자리 hex → 8자리 ARGB) ──
-  function toArgb(hex) {
-    if (!hex) return 'FF111111';
-    let h = hex.replace('#','');
-    if (h.length === 3) h = h.split('').map(c=>c+c).join('');
-    if (h.length === 6) return 'FF' + h.toUpperCase();
-    return h.length === 8 ? h.toUpperCase() : 'FF111111';
-  }
-  // ── px → pt (1px = 0.75pt) ──
-  const toPt = px => Math.round(parseFloat(px||'10') * 0.75 * 10) / 10;
-  // ── px → 행 높이 (엑셀 pt 기준) ──
-  const toH  = px => Math.max(13, Math.round(parseFloat(px||'22') * 0.75));
+  // ── 스타일 상수 (타겟 파일 기준) ──
+  const THIN  = {style:'thin',  color:{argb:'FF222222'}};
+  const allBd = {top:THIN, bottom:THIN, left:THIN, right:THIN};
+  const lrBd  = {left:THIN, right:THIN}; // 구분자 열용
 
-  // ── cells 기준 값셀 스타일 ──
-  function valStyle(f, extra={}) {
-    const base = {
-      size:  toPt(f?.sz  || '11px'),
-      bold:  !!f?.bold,
-      align: f?.align || 'left',
-      va:    f?.va    || 'middle',
-      color: toArgb(f?.color || '#111111'),
-    };
-    return {...base, ...extra};
+  // ── 라벨 셀 적용 ──
+  function applyLbl(cell, val) {
+    cell.value = val;
+    cell.font      = {name:'맑은 고딕', size:7.5, bold:true, color:{argb:'FF444444'}};
+    cell.alignment = {horizontal:'center', vertical:'middle'};
+    cell.fill      = {type:'pattern', pattern:'solid', fgColor:{argb:'FFFFFFFF'}};
+    cell.border    = allBd;
   }
-  // ── cells 기준 라벨셀 스타일 ──
-  function lblStyle(f, extra={}) {
-    const base = {
-      size:  toPt(f?.sz  || '10px'),
-      bold:  f?.bold !== false ? true : false,
-      align: f?.align || 'center',
-      va:    f?.va    || 'middle',
-      color: toArgb(f?.color || '#333333'),
-      fill:  'FFFFFFFF',
-    };
-    return {...base, ...extra};
+  // ── 값 셀 적용 ──
+  function applyVal(cell, val) {
+    cell.value = val ?? '';
+    cell.font      = {name:'맑은 고딕', size:8.3, color:{argb:'FF111111'}};
+    cell.alignment = {horizontal:'left', vertical:'middle', wrapText:true};
+    cell.border    = allBd;
   }
+  // ── 사진 영역 셀 적용 ──
+  function applyPhoto(cell) {
+    cell.fill   = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF5F5F5'}};
+    cell.border = allBd;
+  }
+  // ── 구분자 열 셀 적용 (좌우 얇은 선만) ──
+  function applyDivider(cell) {
+    cell.border = lrBd;
+  }
+
+  // ── 열 너비 정의 ──
+  // 2열: [라벨4.62 | 값15 | 라벨4.62 | 값15 | 구분자1.12 | 라벨4.62 | 값15 | 라벨4.62 | 값15]
+  // 1열: [라벨5 | 값20 | 라벨5 | 값20]
+  // 3열(가로): [라벨4 | 값10 | 라벨4 | 값10 | 구분자1 | 라벨4 | 값10 | 라벨4 | 값10 | 구분자1 | 라벨4 | 값10 | 라벨4 | 값10]
+  let colDefs;
+  if (gridCols === 1) {
+    colDefs = [{width:5},{width:20},{width:5},{width:20}];
+  } else if (gridCols === 2) {
+    colDefs = [
+      {width:4.62},{width:15},{width:4.62},{width:15},
+      {width:1.12},
+      {width:4.62},{width:15},{width:4.62},{width:15}
+    ];
+  } else { // 3열 (가로)
+    colDefs = [
+      {width:4},{width:10},{width:4},{width:10},
+      {width:1},
+      {width:4},{width:10},{width:4},{width:10},
+      {width:1},
+      {width:4},{width:10},{width:4},{width:10}
+    ];
+  }
+
+  // 슬롯 그룹에서의 시작 열 인덱스 (1-based)
+  // 1열: group0 → col1
+  // 2열: group0 → col1, group1 → col6 (구분자 col5)
+  // 3열: group0 → col1, group1 → col6, group2 → col11 (구분자 col5,col10)
+  function groupStartCol(gIdx) {
+    if (gridCols === 1) return 1;
+    if (gridCols === 2) return gIdx === 0 ? 1 : 6;
+    return [1, 6, 11][gIdx];
+  }
+  function dividerCols() {
+    if (gridCols === 2) return [5];
+    if (gridCols === 3) return [5, 10];
+    return [];
+  }
+  const totalCols = colDefs.length;
+
+  // ── 행 높이 상수 (타겟 파일 기준) ──
+  const PHOTO_ROW_H = 21.95;
+  const PHOTO_ROWS  = 9;
+  const META1_H     = 17.1;
+  const META2_H     = 21.0;
+  const GAP_H       = 8.1;
+  const TITLE_H     = 36;
+  const LINE_H      = 3;
 
   for (let pi = 0; pi < pages.length; pi++) {
     const pg = pages[pi];
@@ -2606,107 +2647,90 @@ async function buildDefaultExcel(wb, title, site) {
       }
     });
     ws.views = [{showGridLines: false}];
+    ws.columns = colDefs;
 
     const slots = pg.slots;
-    const colsPerSlot = 4; // [위치라벨 | 위치값 | 일시라벨 | 일시값]
-    const totalCols   = gridCols * colsPerSlot;
-
-    // 열 너비 (A4 기준 배분)
-    // 세로: A4=210mm → 내용영역≈170mm / 그리드열수
-    // 가로: A4=297mm → 내용영역≈257mm / 그리드열수
-    const paperMM  = isLand ? 257 : 170;
-    const slotMM   = paperMM / gridCols;
-    // 1 엑셀 width unit ≈ 2.17mm
-    const mmPerU   = 2.17;
-    const slotU    = slotMM / mmPerU;
-    const ref      = slots[0] || newSlot();
-    // 라벨 너비: 웹에서 lw/dw px → mm → 엑셀 단위
-    const lblU  = Math.max(4, (ref.lw || 38) / (mmPerU * 3.78));
-    const dateU = Math.max(4, (ref.dw || 38) / (mmPerU * 3.78));
-    const valU  = Math.max(6, (slotU - lblU - dateU) / 2);
-
-    const colPat = [{width: lblU}, {width: valU}, {width: dateU}, {width: valU}];
-    const allCols = [];
-    for (let g = 0; g < gridCols; g++) allCols.push(...colPat);
-    ws.columns = allCols;
-
     let row = 1;
 
-    // ── 제목 ──
-    mergeFill(ws, row, 1, row, totalCols, title, {size:16, bold:true, color:'FF002060', border:false});
-    ws.getRow(row).height = 36;
+    // ── Row 1: 제목 ──
+    ws.mergeCells(row, 1, row, totalCols);
+    const titleCell = ws.getCell(row, 1);
+    titleCell.value     = title;
+    titleCell.font      = {name:'맑은 고딕', size:16, bold:true, color:{argb:'FF002060'}};
+    titleCell.alignment = {horizontal:'left', vertical:'middle'};
+    ws.getRow(row).height = TITLE_H;
     row++;
 
-    // ── 구분선 (상단 파란선) ──
+    // ── Row 2: 파란 구분선 ──
     for (let c = 1; c <= totalCols; c++) {
       ws.getCell(row, c).border = {bottom:{style:'medium', color:{argb:'FF002060'}}};
     }
-    ws.getRow(row).height = 3;
+    ws.getRow(row).height = LINE_H;
     row++;
 
-    // ── 슬롯 ──
-    // 사진 행 수: A4 세로 = 297mm, 상하여백 제거하면 약 260mm
-    // 슬롯 세로 그룹 수 = Math.ceil(slotCount / gridCols)
+    // ── 슬롯 렌더링 ──
     const rowGroups = Math.ceil(slots.length / gridCols);
-    // 사진 영역 mm = (260mm - 헤더약36mm - 메타행약10mm*rowGroups) / rowGroups
-    const totalMM   = isLand ? 180 : 260;
-    const headerMM  = 12; // 제목+구분선
-    const metaMM    = 12; // 위치+내용 2행
-    const photoMM   = Math.max(30, (totalMM - headerMM - metaMM * rowGroups) / rowGroups);
-    // mm → 엑셀 행 높이 pt (1mm ≈ 2.83pt)
-    const photoRowH = 22;
-    const photoRowCount = Math.max(3, Math.round(photoMM * 2.83 / photoRowH));
+    for (let gi = 0; gi < rowGroups; gi++) {
+      const sr = row;
 
-    for (let i = 0; i < slots.length; i++) {
-      const d      = slots[i];
-      const colIdx = i % gridCols;
-      const c1     = colIdx * colsPerSlot + 1;
-
-      if (colIdx === 0) var slotStartRow = row;
-      const sr = slotStartRow;
-
-      // 사진 영역 (병합)
-      ws.mergeCells(sr, c1, sr + photoRowCount - 1, c1 + colsPerSlot - 1);
-      const photoCell = ws.getCell(sr, c1);
-      photoCell.fill  = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF5F5F5'}};
-      photoCell.border = allBorders;
-      for (let pr = sr; pr < sr + photoRowCount; pr++) {
-        ws.getRow(pr).height = photoRowH;
+      // 사진 행들 높이 설정
+      for (let pr = sr; pr < sr + PHOTO_ROWS; pr++) {
+        ws.getRow(pr).height = PHOTO_ROW_H;
       }
 
-      // 슬롯 번호
-      const numCell = ws.getCell(sr, c1);
-      numCell.value = (pi * slotCount) + i + 1;
-      numCell.font  = {name:'맑은 고딕', size:9, color:{argb:'FFCCCCCC'}};
-      numCell.alignment = {horizontal:'left', vertical:'top'};
-
-      // 사진
-      if (d.img) await addImg(wb, ws, d.img, sr, c1, sr + photoRowCount - 1, c1 + colsPerSlot - 1);
-
-      // 메타행 1: 위치라벨 | 위치값 | 일시라벨 | 일시값
-      const mr1 = sr + photoRowCount;
-      setCell(ws, mr1, c1,   d.locLbl  || '위치', lblStyle(d.cells?.locLabel));
-      setCell(ws, mr1, c1+1, d.loc     || '',      valStyle(d.cells?.loc,  {align:'left', wrap:true}));
-      setCell(ws, mr1, c1+2, d.dateLbl || '일시',  lblStyle(d.cells?.dateLabel));
-      setCell(ws, mr1, c1+3, d.date    || '',      valStyle(d.cells?.date, {align:'left'}));
-      ws.getRow(mr1).height = toH(d.mh || 22);
-
-      // 메타행 2: 내용라벨 | 내용값(3열 병합)
-      const mr2 = sr + photoRowCount + 1;
-      setCell(ws, mr2, c1, d.descLbl || '내용', lblStyle(d.cells?.descLabel));
-      ws.mergeCells(mr2, c1+1, mr2, c1+3);
-      setCell(ws, mr2, c1+1, d.desc || '', valStyle(d.cells?.desc, {align:'left', wrap:true}));
-      ws.getRow(mr2).height = toH(d.dh || 28);
-
-      if (colIdx === gridCols - 1 || i === slots.length - 1) {
-        row = sr + photoRowCount + 2 + 1; // 사진행 + 메타2행 + 간격
+      // 구분자 열: 사진행 + 메타행에 좌우 선만
+      for (const dc of dividerCols()) {
+        for (let pr = sr; pr < sr + PHOTO_ROWS + 2; pr++) {
+          applyDivider(ws.getCell(pr, dc));
+        }
       }
-    }
 
-    // 현장명 하단
-    if (site) {
-      mergeFill(ws, row, 1, row, totalCols, `현장명 : ${site}`, {size:9, align:'right', border:false, color:'FF444444'});
-      ws.getRow(row).height = 15;
+      for (let gIdx = 0; gIdx < gridCols; gIdx++) {
+        const si   = gi * gridCols + gIdx;
+        if (si >= slots.length) break;
+        const d    = slots[si];
+        const c1   = groupStartCol(gIdx);
+
+        // ── 사진 영역 병합 ──
+        ws.mergeCells(sr, c1, sr + PHOTO_ROWS - 1, c1 + 3);
+        const pc = ws.getCell(sr, c1);
+        applyPhoto(pc);
+        // 슬롯 번호
+        pc.value     = (pi * slotCount) + si + 1;
+        pc.font      = {name:'맑은 고딕', size:9, color:{argb:'FFCCCCCC'}};
+        pc.alignment = {horizontal:'left', vertical:'top'};
+
+        // 사진 이미지
+        if (d.img) await addImg(wb, ws, d.img, sr, c1, sr + PHOTO_ROWS - 1, c1 + 3);
+
+        // ── 메타행 1: 위치라벨 | 위치값 | 일시라벨 | 일시값 ──
+        const mr1 = sr + PHOTO_ROWS;
+        applyLbl(ws.getCell(mr1, c1),   d.locLbl  || '위치');
+        applyVal(ws.getCell(mr1, c1+1), d.loc     || '');
+        applyLbl(ws.getCell(mr1, c1+2), d.dateLbl || '일시');
+        applyVal(ws.getCell(mr1, c1+3), d.date    || '');
+
+        // ── 메타행 2: 내용라벨 | 내용값(3열 병합) ──
+        const mr2 = sr + PHOTO_ROWS + 1;
+        applyLbl(ws.getCell(mr2, c1), d.descLbl || '내용');
+        ws.mergeCells(mr2, c1+1, mr2, c1+3);
+        applyVal(ws.getCell(mr2, c1+1), d.desc || '');
+      }
+
+      ws.getRow(sr + PHOTO_ROWS    ).height = META1_H;
+      ws.getRow(sr + PHOTO_ROWS + 1).height = META2_H;
+
+      row = sr + PHOTO_ROWS + 2;
+
+      // 마지막 그룹 제외하고 간격행 추가
+      if (gi < rowGroups - 1) {
+        ws.getRow(row).height = GAP_H;
+        // 구분자 열 간격행에도 적용
+        for (const dc of dividerCols()) {
+          applyDivider(ws.getCell(row, dc));
+        }
+        row++;
+      }
     }
   }
 }
