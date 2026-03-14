@@ -2592,8 +2592,8 @@ async function addImg(wb, ws, b64, r1, c1, r2, c2) {
     const ext = b64.startsWith('data:image/png') ? 'png' : 'jpeg';
     const raw = b64.split(',')[1];
     const imgId = wb.addImage({base64: raw, extension: ext});
-    // 테두리 안쪽 95% — 각 방향 2.5% 여백 (1px ≈ 9525 EMU, ~8px padding)
-    const PAD = 76200; // ~8px in EMU
+    // 테두리 안쪽 95% — 각 방향 ~5% 여백 (190500 EMU ≈ 20px)
+    const PAD = 190500;
     ws.addImage(imgId, {
       tl: {col: c1-1, row: r1-1, nativeColOff: PAD, nativeRowOff: PAD},
       br: {col: c2,   row: r2,   nativeColOff: -PAD, nativeRowOff: -PAD},
