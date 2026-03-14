@@ -289,6 +289,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;height:60px;background:rgba(
 </style>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 // ── Safety Portal 공통 인증 모듈 ──────────────────────────────
 // 관리자(Admin) + 일반 사용자(User) Google OAuth 로그인
@@ -2488,6 +2489,52 @@ function printPDF() {
 // ══════════════════════════════════════════════
 //  엑셀 저장 (ExcelJS)
 // ══════════════════════════════════════════════
+
+// ── 평행사변형 도형 주입 (JSZip 포스트 프로세싱) ──
+async function injectParallelograms(buf, totalCols, gridCols) {
+  if (typeof JSZip === 'undefined') return buf;
+  const zip = await JSZip.loadAsync(buf);
+
+  // 도형 XML: 네이비 평행사변형(좌) + 초록 평행사변형(우)
+  // 위치: row0 내 하단 (y offset 381000 EMU), 높이 45719 EMU
+  // 2열 기준: 좌 col0~7, 우 col8
+  // totalCols로 우측 열 인덱스 조정
+  const rightCol = totalCols - 1;
+  const shapeXml = `<xdr:twoCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>381000</xdr:rowOff></xdr:from><xdr:to><xdr:col>${rightCol - 1}</xdr:col><xdr:colOff>353431</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>426719</xdr:rowOff></xdr:to><xdr:sp macro="" textlink=""><xdr:nvSpPr><xdr:cNvPr id="98" name="shape_navy"/><xdr:cNvSpPr/></xdr:nvSpPr><xdr:spPr><a:xfrm><a:off x="0" y="381000"/><a:ext cx="4932000" cy="45719"/></a:xfrm><a:prstGeom prst="parallelogram"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="014099"/></a:solidFill><a:ln><a:noFill/></a:ln><a:effectLst/></xdr:spPr><xdr:style><a:lnRef idx="1"><a:schemeClr val="accent1"/></a:lnRef><a:fillRef idx="3"><a:schemeClr val="accent1"/></a:fillRef><a:effectRef idx="2"><a:schemeClr val="accent1"/></a:effectRef><a:fontRef idx="minor"><a:schemeClr val="lt1"/></a:fontRef></xdr:style><xdr:txBody><a:bodyPr rtlCol="0" anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="l"/><a:endParaRPr lang="ko-KR" sz="1100"/></a:p></xdr:txBody></xdr:sp><xdr:clientData/></xdr:twoCellAnchor><xdr:twoCellAnchor><xdr:from><xdr:col>${rightCol}</xdr:col><xdr:colOff>6569</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>381000</xdr:rowOff></xdr:from><xdr:to><xdr:col>${rightCol}</xdr:col><xdr:colOff>1122569</xdr:colOff><xdr:row>0</xdr:row><xdr:rowOff>426719</xdr:rowOff></xdr:to><xdr:sp macro="" textlink=""><xdr:nvSpPr><xdr:cNvPr id="99" name="shape_green"/><xdr:cNvSpPr/></xdr:nvSpPr><xdr:spPr><a:xfrm flipV="1"><a:off x="4939862" y="381000"/><a:ext cx="1116000" cy="45719"/></a:xfrm><a:prstGeom prst="parallelogram"><a:avLst/></a:prstGeom><a:solidFill><a:srgbClr val="00B050"/></a:solidFill><a:ln><a:noFill/></a:ln><a:effectLst/></xdr:spPr><xdr:style><a:lnRef idx="1"><a:schemeClr val="accent1"/></a:lnRef><a:fillRef idx="3"><a:schemeClr val="accent1"/></a:fillRef><a:effectRef idx="2"><a:schemeClr val="accent1"/></a:effectRef><a:fontRef idx="minor"><a:schemeClr val="lt1"/></a:fontRef></xdr:style><xdr:txBody><a:bodyPr rtlCol="0" anchor="ctr"/><a:lstStyle/><a:p><a:pPr algn="l"/><a:endParaRPr lang="ko-KR" sz="1100"/></a:p></xdr:txBody></xdr:sp><xdr:clientData/></xdr:twoCellAnchor>`;
+
+  const pages = wb ? wb.worksheets.length : 1;
+
+  for (const wsName of zip.folder('xl/worksheets') ? [] : []) {} // dummy
+
+  // drawing 파일 찾아서 수정
+  const drawingPath = 'xl/drawings/drawing1.xml';
+  if (zip.file(drawingPath)) {
+    let xml = await zip.file(drawingPath).async('string');
+    xml = xml.replace('</xdr:wsDr>', shapeXml + '</xdr:wsDr>');
+    zip.file(drawingPath, xml);
+  } else {
+    // drawing 파일이 없으면 새로 생성 및 관계 파일 추가
+    const fullXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">${shapeXml}</xdr:wsDr>`;
+    zip.file(drawingPath, fullXml);
+    // _rels
+    const relsPath = 'xl/drawings/_rels/drawing1.xml.rels';
+    if (!zip.file(relsPath)) {
+      zip.file(relsPath, `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\r\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>`);
+    }
+    // sheet1.xml에 drawing 관계 추가
+    const sheetPath = 'xl/worksheets/sheet1.xml';
+    if (zip.file(sheetPath)) {
+      let sheetXml = await zip.file(sheetPath).async('string');
+      if (!sheetXml.includes('drawing r:id')) {
+        sheetXml = sheetXml.replace('</worksheet>', '<drawing xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:id="rId_drawing1"/></worksheet>');
+        zip.file(sheetPath, sheetXml);
+      }
+    }
+  }
+
+  return await zip.generateAsync({type:'arraybuffer', compression:'DEFLATE', compressionOptions:{level:6}});
+}
+
 async function saveExcel() {
   if (typeof ExcelJS === 'undefined') { toast('ExcelJS 라이브러리 로딩 중... 잠시 후 다시 시도'); return; }
   toast('엑셀 파일 생성 중...');
@@ -2506,7 +2553,16 @@ async function saveExcel() {
       await buildDefaultExcel(wb, title, site);
     }
 
-    const buf = await wb.xlsx.writeBuffer();
+    let buf = await wb.xlsx.writeBuffer();
+    // ── 도형(평행사변형) 주입 ──
+    if (currentTemplate !== 'id-cert') {
+      try {
+        const isLandTmp = pageOrientation === 'landscape';
+        const gcTmp = isLandTmp ? (slotCount >= 6 ? 3 : 2) : (slotCount <= 2 ? 1 : 2);
+        const nCols = gcTmp === 1 ? 4 : gcTmp === 2 ? 9 : 14;
+        buf = await injectParallelograms(buf, nCols, gcTmp);
+      } catch(e) { console.warn('도형 주입 실패:', e); }
+    }
     const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -2543,9 +2599,11 @@ async function addImg(wb, ws, b64, r1, c1, r2, c2) {
     const ext = b64.startsWith('data:image/png') ? 'png' : 'jpeg';
     const raw = b64.split(',')[1];
     const imgId = wb.addImage({base64: raw, extension: ext});
+    // 테두리 안쪽 95% — 각 방향 2.5% 여백 (1px ≈ 9525 EMU, ~8px padding)
+    const PAD = 76200; // ~8px in EMU
     ws.addImage(imgId, {
-      tl: {col: c1-1, row: r1-1},
-      br: {col: c2, row: r2},
+      tl: {col: c1-1, row: r1-1, nativeColOff: PAD, nativeRowOff: PAD},
+      br: {col: c2,   row: r2,   nativeColOff: -PAD, nativeRowOff: -PAD},
       editAs: 'oneCell'
     });
   } catch(e) { console.warn('이미지 삽입 실패:', e); }
@@ -2581,9 +2639,9 @@ async function buildDefaultExcel(wb, title, site) {
     cell.fill   = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF5F5F5'}};
     cell.border = allBd;
   }
-  // ── 구분자 열 셀 적용 (좌우 얇은 선만) ──
+  // ── 구분자 열: 완전 빈 공간 (테두리/스타일 없음) ──
   function applyDivider(cell) {
-    cell.border = lrBd;
+    // intentionally empty - divider column has no styling
   }
 
   // ── 열 너비 정의 ──
@@ -2661,8 +2719,10 @@ async function buildDefaultExcel(wb, title, site) {
     ws.getRow(row).height = TITLE_H;
     row++;
 
-    // ── Row 2: 파란 구분선 ──
+    // ── Row 2: 파란 구분선 (구분자 열 제외) ──
+    const divCols = new Set(dividerCols());
     for (let c = 1; c <= totalCols; c++) {
+      if (divCols.has(c)) continue;
       ws.getCell(row, c).border = {bottom:{style:'medium', color:{argb:'FF002060'}}};
     }
     ws.getRow(row).height = LINE_H;
@@ -2725,10 +2785,6 @@ async function buildDefaultExcel(wb, title, site) {
       // 마지막 그룹 제외하고 간격행 추가
       if (gi < rowGroups - 1) {
         ws.getRow(row).height = GAP_H;
-        // 구분자 열 간격행에도 적용
-        for (const dc of dividerCols()) {
-          applyDivider(ws.getCell(row, dc));
-        }
         row++;
       }
     }
