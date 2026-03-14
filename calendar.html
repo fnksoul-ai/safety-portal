@@ -1431,11 +1431,11 @@ function updateStatus(connected) {
 }
 
 function showError(msg) {
-  // 에러 배너 대신 콘솔 로그 + 툴바 상태로 표시
   console.warn('[캘린더 오류]', msg);
-  // 로딩 숨김
   const loading = document.getElementById('loading');
   if (loading) loading.classList.remove('show');
+  const grid = document.getElementById('calGrid');
+  if (grid) grid.innerHTML = `<div style="grid-column:1/-1;padding:40px;text-align:center;color:#DC2626;font-size:13px;">⚠️ ${msg}</div>`;
 }
 
 // ── 캘린더 렌더링 ──
