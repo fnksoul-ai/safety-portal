@@ -94,6 +94,7 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
 .content{flex:1;min-width:0;margin-left:340px;}
 
 /* 폴더 헤더 */
+.content-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;transition:margin-left .2s;}
 .folder-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
 .folder-icon{font-size:28px;}
 .folder-title{font-size:20px;font-weight:700;}
@@ -737,7 +738,15 @@ nav {
         </div>
       </div>
     </aside>
-    <div class="content" id="content"></div>
+    <div class="content-wrap" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <!-- 콘텐츠 상단 툴바 -->
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0;">
+        <div class="breadcrumb" id="breadcrumb" style="flex:1;"></div>
+        <button id="changeFolderBtn" class="btn sm" onclick="showFolderSetup()" style="display:none;">📁 폴더변경</button>
+        <button id="editBtn" class="btn sm" onclick="toggleEditMode()" style="display:none;">✏️ 편집</button>
+      </div>
+      <div class="content" id="content"></div>
+    </div>
   </div>
 </div>
 
@@ -1271,7 +1280,7 @@ async function renderDateMerged(dateStr,folderIds){
   resizer.addEventListener('mousedown',e=>{isDown=true;startX=e.clientX;startW=sidebar.offsetWidth;resizer.classList.add('active');document.body.style.cursor='col-resize';document.body.style.userSelect='none';e.preventDefault();});
   document.addEventListener('mousemove',e=>{if(!isDown)return;const w=Math.min(500,Math.max(180,startW+(e.clientX-startX)));sidebar.style.width=w+'px';updateM();});
   document.addEventListener('mouseup',()=>{if(!isDown)return;isDown=false;resizer.classList.remove('active');document.body.style.cursor='';document.body.style.userSelect='';localStorage.setItem('sidebarWidth',sidebar.offsetWidth);});
-  function updateM(){content.style.marginLeft=(sidebar.offsetWidth+20)+'px';}
+  function updateM(){const cw=document.getElementById('content').parentElement;if(cw)cw.style.marginLeft=(sidebar.offsetWidth+20)+'px';}
 })();
 
 // ── 토스트 ────────────────────────────────────────────────────
@@ -1288,6 +1297,7 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
     if (p.email)   document.getElementById('adminEmail').textContent = p.email;
   }
   AUTH.updateUI();
+  _updateAdminButtons();
 
   // 폴더 ID 있으면 바로 갤러리, 없으면 설정 화면
   if (rootFolderId) {
@@ -1299,21 +1309,26 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 
 
 // ── 로그인 상태 변화 시 콘텐츠 재렌더링 ──────────────────────────
-window.onAdminLogin  = () => {
-  const editBtn       = document.getElementById('editBtn');
+function _updateAdminButtons() {
+  const admin = AUTH.isAdmin();
+  const editBtn         = document.getElementById('editBtn');
   const changeFolderBtn = document.getElementById('changeFolderBtn');
-  if (editBtn)        editBtn.style.display = '';
-  if (changeFolderBtn) changeFolderBtn.style.display = '';
+  if (editBtn)          editBtn.style.display         = admin ? '' : 'none';
+  if (changeFolderBtn)  changeFolderBtn.style.display = admin ? '' : 'none';
+  if (!admin) editMode = false;
+}
+window.onAdminLogin  = () => {
+  _updateAdminButtons();
+  treeCache = {};
   if (currentFolderId) renderContent();
-  // 로그인 후 캘린더 재스캔
   calScanDone = false; calScanning = false;
   calDateFolders = new Set();
   Object.keys(calDateFolderMap).forEach(k => delete calDateFolderMap[k]);
   renderCal();
 };
 window.onAdminLogout = () => {
-  const editBtn       = document.getElementById('editBtn');
-  if (editBtn) editBtn.style.display = 'none';
+  _updateAdminButtons();
+  treeCache = {};
   if (currentFolderId) renderContent();
   calScanDone = false; calScanning = false;
   calDateFolders = new Set();
@@ -1321,6 +1336,8 @@ window.onAdminLogout = () => {
   renderCal();
 };
 window.onAuthStateChange = () => {
+  _updateAdminButtons();
+  treeCache = {};
   if (currentFolderId) renderContent();
 };
 
