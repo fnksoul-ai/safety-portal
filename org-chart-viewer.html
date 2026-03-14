@@ -9,19 +9,20 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
-    --nav-h: 60px;
-    --bg:     #0f1117;
-    --bg2:    #171b24;
-    --bg3:    #1e2330;
-    --border: #2c3347;
-    --orange: #f97316;
-    --orange2:#fb923c;
-    --green:  #22c55e;
-    --red:    #ef4444;
-    --blue:   #3b82f6;
-    --text:   #f1f5f9;
-    --muted:  #64748b;
-    --muted2: #94a3b8;
+    --nav-h:  60px;
+    --bg:     #F1F5F9;
+    --bg2:    #FFFFFF;
+    --bg3:    #F8FAFC;
+    --border: #E2E8F0;
+    --border2:#CBD5E1;
+    --orange: #046BD2;
+    --orange2:#0560BE;
+    --green:  #16a34a;
+    --red:    #DC2626;
+    --blue:   #046BD2;
+    --text:   #1E293B;
+    --muted:  #94A3B8;
+    --muted2: #64748B;
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -33,8 +34,8 @@
   body::before {
     content: ''; position: fixed; inset: 0; z-index: 0;
     background-image:
-      linear-gradient(rgba(249,115,22,.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(249,115,22,.03) 1px, transparent 1px);
+      linear-gradient(rgba(4,107,210,.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(4,107,210,.04) 1px, transparent 1px);
     background-size: 40px 40px; pointer-events: none;
   }
 
@@ -109,12 +110,14 @@
   .main-content {
     flex: 1; display: flex; flex-direction: row;
     overflow: hidden; min-height: 0; position: relative; z-index: 1;
+    margin-top: var(--nav-h);
+    background: #F1F5F9;
   }
 
   /* ════ 연락망 패널 ════ */
   .contact-panel {
     width: 272px; flex-shrink: 0;
-    background: var(--bg2); border-right: 1px solid var(--border);
+    background: #FFFFFF; border-right: 2px solid #E2E8F0;
     display: flex; flex-direction: column; overflow: hidden;
   }
   .contact-header {
@@ -124,7 +127,7 @@
   .contact-header-title { font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 6px; }
   .contact-count {
     font-size: 11px; font-weight: 600; color: var(--orange);
-    background: rgba(249,115,22,.12); border: 1px solid rgba(249,115,22,.25);
+    background: rgba(4,107,210,.1); border: 1px solid rgba(4,107,210,.25);
     padding: 1px 7px; border-radius: 10px;
   }
   .contact-search { padding: 8px 10px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
@@ -185,6 +188,7 @@
 
   /* ════ 뷰어 영역 ════ */
   .viewer-wrap {
+    background: #FFFFFF;
     flex: 1; display: flex; flex-direction: column;
     overflow: hidden; background: #1a1a2e; min-height: 0; position: relative;
   }
@@ -997,7 +1001,7 @@ function printSlides() {
 const SK_CON = 'org_contacts';
 let contacts = [], activeFilter = '전체';
 
-const COLORS = ['#f97316','#3b82f6','#22c55e','#a855f7','#ef4444','#06b6d4','#eab308','#ec4899'];
+const COLORS = ['#046BD2','#3b82f6','#22c55e','#a855f7','#ef4444','#06b6d4','#eab308','#ec4899'];
 function avatarColor(n) {
   let h = 0; for (const c of n) h = n.charCodeAt(0) + ((h<<5)-h);
   return COLORS[Math.abs(h) % COLORS.length];
