@@ -43,15 +43,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 노이즈 텍스처 오버레이 */
-body::after {
-  content: '';
-  position: fixed; inset: 0; z-index: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-  pointer-events: none;
-  opacity: .5;
-}
+
 
 img { display: block; max-width: 100%; }
 a { text-decoration: none; color: inherit; }
@@ -147,15 +139,7 @@ nav {
     linear-gradient(180deg, var(--bg) 0%, #0d0d14 100%);
   z-index: 0;
 }
-/* 대각선 그리드 */
-.hero-bg::after {
-  content: '';
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(rgba(249,115,22,.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(249,115,22,.03) 1px, transparent 1px);
-  background-size: 44px 44px;
-}
+
 
 .hero-inner {
   position: relative; z-index: 1;
@@ -667,22 +651,12 @@ html, body {
   color: #1E293B !important;
 }
 
-body::before {
-  background-image:
-    linear-gradient(rgba(4,107,210,.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(4,107,210,.04) 1px, transparent 1px) !important;
-}
 body::after { opacity: .06 !important; }
 
 /* ── NAV ── */
 /* ── 히어로 — watch2 시그니처 그라디언트 ── */
 .hero-bg {
   background: #FFFFFF !important;
-}
-.hero-bg::after {
-  background-image:
-    linear-gradient(rgba(4,107,210,.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(4,107,210,.04) 1px, transparent 1px) !important;
 }
 .hero-eyebrow {
   background: rgba(4,107,210,.08) !important;

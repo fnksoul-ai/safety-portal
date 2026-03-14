@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>현장사진 갤러리 · Safety Portal</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Bebas+Neue&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 :root{
     --nav-h: 70px;
@@ -16,10 +16,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-top:var(--nav-h);}
-body::before{content:'';position:fixed;inset:0;z-index:0;
-  background-image:linear-gradient(rgba(249,115,22,.025) 1px,transparent 1px),
-  linear-gradient(90deg,rgba(249,115,22,.025) 1px,transparent 1px);
-  background-size:40px 40px;pointer-events:none;}
+
 
 nav{position:sticky;top:0;z-index:100;background:rgba(15,17,23,.95);
   backdrop-filter:blur(16px);border-bottom:1px solid var(--border);
@@ -229,11 +226,6 @@ html, body {
   color: #1E293B !important;
 }
 
-body::before {
-  background-image:
-    linear-gradient(rgba(4,107,210,.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(4,107,210,.04) 1px, transparent 1px) !important;
-}
 body::after { opacity: .06 !important; }
 
 /* ── NAV ── */
@@ -264,11 +256,6 @@ body::after { opacity: .06 !important; }
 .hero-bg {
   background:
     linear-gradient(135deg, #0F2C59 0%, #1E4E8C 25%, #0C6E9E 55%, #0891B2 80%, #06B6D4 100%) !important;
-}
-.hero-bg::after {
-  background-image:
-    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px) !important;
 }
 .hero-eyebrow {
   background: rgba(255,255,255,.15) !important;
