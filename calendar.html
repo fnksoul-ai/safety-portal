@@ -35,6 +35,7 @@
     color: var(--text);
     display: flex; flex-direction: column;
     overflow: hidden;
+    padding-top: var(--nav-h);
   }
 
   /* ── 배경 그리드 패턴 ── */
@@ -84,15 +85,17 @@
   .settings-btn {
     display: none; /* 기본 숨김 */
     align-items: center; justify-content: center;
-    width: 32px; height: 32px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 14px;
+    width: 34px; height: 34px;
+    background: #F1F5F9;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    font-size: 16px;
     cursor: pointer;
     transition: all .15s;
+    margin-right: 8px;
+    flex-shrink: 0;
   }
-  .settings-btn:hover { background: rgba(255,255,255,.08); border-color: var(--muted); }
+  .settings-btn:hover { background: #E2E8F0; border-color: #94A3B8; }
   .settings-btn.show { display: flex; }
 
   /* ── 툴바 ── */
@@ -416,25 +419,7 @@
   .loading-text { font-size: 13px; color: #64748b; }
 
   /* ── 에러 배너 ── */
-  .error-banner {
-    display: none;
-    background: rgba(239,68,68,.1);
-    border: 1px solid rgba(239,68,68,.3);
-    border-radius: 8px;
-    padding: 12px 20px;
-    margin: 12px 24px;
-    font-size: 13px;
-    color: #fca5a5;
-    align-items: center; gap: 10px;
-    flex-shrink: 0;
-  }
-  .error-banner.show { display: flex; }
-  .error-banner .error-close {
-    margin-left: auto;
-    background: none; border: none;
-    color: #fca5a5; cursor: pointer;
-    font-size: 16px;
-  }
+
 
   @media (max-width: 768px) {
     nav { padding: 0 12px; }
@@ -1260,13 +1245,6 @@ nav {
   </a>
 </div>
 
-<!-- 에러 배너 -->
-<div class="error-banner" id="errorBanner">
-  <span>⚠️</span>
-  <span id="errorText"></span>
-  <button class="error-close" onclick="this.parentElement.classList.remove('show')">✕</button>
-</div>
-
 <!-- 툴바 -->
 <div class="toolbar">
   <div class="toolbar-nav">
@@ -1276,6 +1254,7 @@ nav {
   </div>
   <div class="toolbar-month" id="monthLabel"></div>
   <div class="toolbar-center">안 전 보 건 월 간 계 획</div>
+  <button class="settings-btn" id="settingsBtn" onclick="toggleAdminPanel()" title="설정">⚙️</button>
   <div class="toolbar-right">
     <div class="toolbar-right-inner">
       <div class="legend">
@@ -1292,6 +1271,14 @@ nav {
       </div>
     </div>
   </div>
+</div>
+
+<!-- 관리자 설정 패널 -->
+<div class="admin-panel" id="adminPanel">
+  <span class="admin-label"><span class="admin-badge">ADMIN</span> Google Calendar 설정</span>
+  <input class="admin-input" id="apiKeyInput" type="text" placeholder="Google API Key">
+  <input class="admin-input" id="calIdInput" type="text" placeholder="캘린더 ID">
+  <button class="admin-btn" onclick="saveConfig()">저장 및 연결</button>
 </div>
 
 <!-- 캘린더 -->
@@ -1333,13 +1320,7 @@ nav {
   </div>
 </div>
 
-<!-- 관리자 전용: Google Calendar 연결 패널 -->
-<div class="admin-panel" id="adminPanel">
-  <span class="admin-label"><span class="admin-badge">ADMIN</span> Google Calendar 설정</span>
-  <input class="admin-input" id="apiKeyInput" type="text" placeholder="Google API Key">
-  <input class="admin-input" id="calIdInput" type="text" placeholder="캘린더 ID">
-  <button class="admin-btn" onclick="saveConfig()">저장 및 연결</button>
-</div>
+
 
 <!-- 인쇄 버튼 -->
 <button class="print-btn" onclick="printWithGuide()">🖨️ 인쇄하기</button>
