@@ -27,7 +27,8 @@
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
+  html { height: 100%; }
+  body { height: 100%; }
 
   body {
     font-family: 'Noto Sans KR', sans-serif;
@@ -36,6 +37,7 @@
     display: flex; flex-direction: column;
     overflow: hidden;
     padding-top: var(--nav-h);
+    box-sizing: border-box;
   }
 
   /* ── 배경 그리드 패턴 ── */
