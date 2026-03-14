@@ -1425,6 +1425,7 @@ function classifyEvent(title) {
 // ── 연결 상태 표시 ──
 function updateStatus(connected) {
   const el = document.getElementById('statusIndicator');
+  if (!el) return;
   if (connected) {
     el.innerHTML = '<div class="dot on"></div><span>Google Calendar 연결됨</span>';
   } else {
@@ -1439,6 +1440,8 @@ function showError(msg) {
   const grid = document.getElementById('calGrid');
   if (grid) grid.innerHTML = `<div style="grid-column:1/-1;padding:40px;text-align:center;color:#DC2626;font-size:13px;">⚠️ ${msg}</div>`;
 }
+
+
 
 // ── 캘린더 렌더링 ──
 async function renderCalendar() {
