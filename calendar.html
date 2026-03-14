@@ -585,16 +585,31 @@
   @media print {
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
+    @page {
+      background: #ffffff;
+    }
+
+    :root {
+      --bg:  #ffffff !important;
+      --bg2: #ffffff !important;
+      --bg3: #f8fafc !important;
+    }
+
+    html {
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+    }
     html, body {
-      background: #fff !important;
-      background-color: #fff !important;
+      background: #ffffff !important;
+      background-color: #ffffff !important;
     }
     body {
       overflow: visible !important;
-      background: #fff !important;
+      background: #ffffff !important;
+      background-color: #ffffff !important;
       color: #111 !important;
     }
-    body::before { display: none !important; }
+    body::before, body::after { display: none !important; }
 
     /* 숨길 요소 */
     nav, .error-banner, .admin-panel, .print-btn,
