@@ -188,7 +188,7 @@ nav {
   .hamburger { display: flex; }
 }
 /* ─ Toolbar ─ */
-.toolbar{margin-top:60px;height:50px;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 12px;gap:7px;flex-shrink:0;overflow-x:auto}
+.toolbar{margin-top:var(--nav-h);height:50px;background:var(--bg2);border-bottom:1px solid var(--bdr);display:flex;align-items:center;padding:0 12px;gap:7px;flex-shrink:0;overflow-x:auto}
 .tl{flex:1;font-size:13px;color:var(--m2);font-weight:600}
 .btn{padding:6px 13px;border-radius:7px;font-size:13px;font-family:'Noto Sans KR',sans-serif;cursor:pointer;border:none;font-weight:500;white-space:nowrap;transition:.15s}
 .btn.g{background:var(--bg4);color:var(--m2);border:1px solid var(--bdr)}.btn.g:hover{background:#CBD5E1;color:#1E293B}
@@ -406,7 +406,7 @@ const AUTH = (() => {
 
       <!-- 관리자 드롭다운 -->
       <div id="adminDropdown" style="
-        display:none;position:fixed;top:60px;right:16px;width:290px;
+        display:none;position:fixed;top:var(--nav-h);right:16px;width:290px;
         background:var(--bg2,#171b24);border:1px solid var(--border,#2c3347);border-radius:12px;
         padding:20px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.6);">
         <div id="adminLoginView">
@@ -449,7 +449,7 @@ const AUTH = (() => {
 
       <!-- 사용자 드롭다운 -->
       <div id="userDropdown" style="
-        display:none;position:fixed;top:60px;right:130px;width:290px;
+        display:none;position:fixed;top:var(--nav-h);right:130px;width:290px;
         background:var(--bg2,#171b24);border:1px solid var(--border,#2c3347);border-radius:12px;
         padding:20px;z-index:9999;box-shadow:0 8px 32px rgba(0,0,0,.6);">
         <div id="userLoginView">
@@ -1044,7 +1044,7 @@ footer span, .footer-brand { color: #1E293B !important; }
   /* 툴바: 2줄 허용, 주요 버튼만 */
   .toolbar {
     height: auto; flex-wrap: wrap; padding: 6px 10px; gap: 6px;
-    margin-top: 60px;
+    margin-top: var(--nav-h);
   }
   .tl { width: 100%; font-size: 13px; order: -1; }
   .btn.g.mob-hide { display: none; }
