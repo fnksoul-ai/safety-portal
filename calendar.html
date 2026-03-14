@@ -40,6 +40,17 @@
     box-sizing: border-box;
   }
 
+  /* ── 배경 그리드 패턴 ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(249,115,22,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(249,115,22,.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
   /* ── 네비게이션 ── */
   nav {
     position: relative; z-index: 10;
@@ -52,13 +63,12 @@
     flex-shrink: 0;
   }
   .nav-logo {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 18px; letter-spacing: 0.16em; font-weight: 600;
-    color: var(--orange);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px; letter-spacing: 0.16em; font-weight: 600;
+    color: #1E293B;
     display: flex; align-items: center; gap: 8px;
-    text-decoration: none;
+    flex-shrink: 0; text-decoration: none;
   }
-  .nav-logo span { color: var(--text); }
   .nav-links {
     display: flex; align-items: center; gap: 12px;
     margin-left: auto;
@@ -793,6 +803,11 @@ html, body {
   color: #1E293B !important;
 }
 
+body::before {
+  background-image:
+    linear-gradient(rgba(4,107,210,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(4,107,210,.04) 1px, transparent 1px) !important;
+}
 body::after { opacity: .06 !important; }
 
 /* ── NAV ── */
@@ -823,6 +838,11 @@ body::after { opacity: .06 !important; }
 .hero-bg {
   background:
     linear-gradient(135deg, #0F2C59 0%, #1E4E8C 25%, #0C6E9E 55%, #0891B2 80%, #06B6D4 100%) !important;
+}
+.hero-bg::after {
+  background-image:
+    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px) !important;
 }
 .hero-eyebrow {
   background: rgba(255,255,255,.15) !important;
