@@ -59,8 +59,8 @@
     flex-shrink: 0;
   }
   .nav-logo {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 20px; letter-spacing: .1em;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 18px; letter-spacing: 0.16em; font-weight: 600;
     color: var(--orange);
     display: flex; align-items: center; gap: 8px;
     text-decoration: none;
@@ -1142,21 +1142,125 @@ footer span, .footer-brand { color: #1E293B !important; }
 }
 
 </style>
+<style>
+/* NAV OVERRIDE - index 통일 */
+/* ═══════════════════════════════════════════
+   NAV
+═══════════════════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 200;
+  height: var(--nav-h);
+  background: rgba(9,9,15,.88);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 24px;
+  gap: 0;
+}
+.nav-logo {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 18px; letter-spacing: 0.16em; font-weight: 600;
+  color: var(--orange);
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0; text-decoration: none;
+}
+.nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.nav-desktop-links { display: flex; align-items: center; gap: 2px; }
+.nav-link {
+  padding: 7px 13px; border-radius: 7px;
+  font-size: 13px; font-weight: 500; color: var(--muted2);
+  transition: all .15s; white-space: nowrap; text-decoration: none;
+}
+.nav-link:hover { color: var(--text); background: var(--bg3); }
+.nav-link.active { color: var(--orange); font-weight: 600; }
+.hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  width: 38px; height: 38px;
+  align-items: center; justify-content: center;
+  border-radius: 8px; transition: background .15s; cursor: pointer; padding: 7px;
+  background: none; border: none;
+}
+.hamburger:hover { background: var(--bg3); }
+.hamburger span {
+  display: block; width: 20px; height: 2px;
+  background: var(--text2); border-radius: 2px;
+  transition: all .3s cubic-bezier(.4,0,.2,1); transform-origin: center;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.mobile-drawer {
+  position: fixed; top: var(--nav-h); left: 0; right: 0; bottom: 0;
+  z-index: 190; background: rgba(9,9,15,.97);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  transform: translateX(-100%);
+  transition: transform .35s cubic-bezier(.4,0,.2,1);
+  padding: 28px 24px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto;
+}
+.mobile-drawer.open { transform: translateX(0); }
+.drawer-link {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: 10px;
+  font-size: 15px; font-weight: 500; color: var(--text2);
+  transition: all .15s; border: 1px solid transparent; text-decoration: none;
+}
+.drawer-link:hover, .drawer-link:active { background: var(--bg3); color: var(--text); border-color: var(--border2); }
+.drawer-link-icon {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--bg3); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+@media (max-width: 768px) {
+  .nav-desktop-links { display: none; }
+  .hamburger { display: flex; }
+}
+</style>
 </head>
 <body>
 
 <!-- 네비게이션 — auth.js가 로그인 버튼 자동 주입 (우측) -->
 <nav>
-  <a class="nav-logo" href="index.html">⚠ <span>SAFETY</span> PORTAL</a>
-  <span class="nav-title">안전보건 월간계획</span>
-  <div class="nav-links">
-    <div class="connect-indicator" id="statusIndicator">
-      <div class="dot off"></div>
-      <span>연결 안됨</span>
+  <a class="nav-logo" href="index.html">SAFENODE</a>
+  <div class="nav-right">
+    <div class="nav-desktop-links">
+      <a class="nav-link" href="photo-board.html">사진대지</a>
+      <a class="nav-link" href="gallery.html">갤러리</a>
+      <a class="nav-link active" href="calendar.html">캘린더</a>
+      <a class="nav-link" href="org-chart-viewer.html">조직도</a>
+      <a class="nav-link" href="nonconform.html">부적합관리</a>
     </div>
-    <button class="settings-btn" id="settingsBtn" onclick="toggleAdminPanel()" title="캘린더 설정">⚙️</button>
+    <button class="hamburger" id="hamburgerBtn" aria-label="메뉴 열기">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
+
+<!-- 모바일 드로어 -->
+<div class="mobile-drawer" id="mobileDrawer">
+  <a class="drawer-link" href="photo-board.html">
+    <div class="drawer-link-icon">📸</div>
+    사진대지
+  </a>
+  <a class="drawer-link" href="gallery.html">
+    <div class="drawer-link-icon">🖼️</div>
+    현장사진 갤러리
+  </a>
+  <a class="drawer-link" href="calendar.html">
+    <div class="drawer-link-icon">📅</div>
+    안전보건 월간계획
+  </a>
+  <a class="drawer-link" href="org-chart-viewer.html">
+    <div class="drawer-link-icon">👷</div>
+    안전관리 조직도
+  </a>
+  <a class="drawer-link" href="nonconform.html">
+    <div class="drawer-link-icon">⚠️</div>
+    부적합사항 관리
+  </a>
+</div>
 
 <!-- 에러 배너 -->
 <div class="error-banner" id="errorBanner">

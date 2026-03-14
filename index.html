@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lk 안전관리 포털</title>
+<title>SAFENODE 안전관리 포털</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Bebas+Neue&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════
    CSS VARIABLES & RESET
@@ -74,8 +74,8 @@ nav {
 }
 
 .nav-logo {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 20px; letter-spacing: .12em;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 18px; letter-spacing: 0.16em; font-weight: 600;
   color: var(--orange);
   display: flex; align-items: center; gap: 8px;
   flex-shrink: 0;
@@ -222,11 +222,11 @@ nav {
 .hero-inner--single {
   grid-template-columns: 1fr !important;
   max-width: 760px !important;
-  text-align: center;
+  text-align: left;
 }
 .hero-inner--single .hero-eyebrow { display: inline-flex; }
-.hero-inner--single .hero-desc { margin-left: auto; margin-right: auto; }
-.hero-inner--single .hero-stats { justify-content: center; }
+.hero-inner--single .hero-desc { margin-left: 0; margin-right: 0; }
+.hero-inner--single .hero-stats { justify-content: flex-start; }
 
 .hero-left {}
 
@@ -1071,11 +1071,7 @@ footer span, .footer-brand { color: #1E293B !important; }
      NAV
 ════════════════════════════ -->
 <nav>
-  <a class="nav-logo" href="#">
-    ⚠
-    <span class="nav-logo-text">SAFETY</span>
-    PORTAL
-  </a>
+  <a class="nav-logo" href="index.html">SAFENODE</a>
 
   <!-- 우측 링크 -->
   <div class="nav-right">
@@ -1084,6 +1080,7 @@ footer span, .footer-brand { color: #1E293B !important; }
       <a class="nav-link" href="gallery.html">갤러리</a>
       <a class="nav-link" href="calendar.html">캘린더</a>
       <a class="nav-link" href="org-chart-viewer.html">조직도</a>
+      <a class="nav-link" href="nonconform.html">부적합관리</a>
     </div>
     <!-- 햄버거 -->
     <button class="hamburger" id="hamburgerBtn" aria-label="메뉴 열기">
@@ -1109,6 +1106,10 @@ footer span, .footer-brand { color: #1E293B !important; }
   <a class="drawer-link" href="org-chart-viewer.html">
     <div class="drawer-link-icon">👷</div>
     안전관리 조직도
+  </a>
+  <a class="drawer-link" href="nonconform.html">
+    <div class="drawer-link-icon">⚠️</div>
+    부적합사항 관리
   </a>
 </div>
 
@@ -1245,7 +1246,7 @@ footer span, .footer-brand { color: #1E293B !important; }
      FOOTER
 ════════════════════════════ -->
 <footer>
-  <div class="footer-brand">⚠ <span>SAFETY</span> PORTAL</div>
+  <div class="footer-brand">SAFENODE</div>
   <div class="footer-copy">© 2026 Safety Portal · 건설 현장 안전관리 시스템 · Creative by link___you</div>
 </footer>
 
