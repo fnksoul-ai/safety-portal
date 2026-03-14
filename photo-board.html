@@ -2555,14 +2555,7 @@ async function saveExcel() {
 
     let buf = await wb.xlsx.writeBuffer();
     // ── 도형(평행사변형) 주입 ──
-    if (currentTemplate !== 'id-cert') {
-      try {
-        const isLandTmp = pageOrientation === 'landscape';
-        const gcTmp = isLandTmp ? (slotCount >= 6 ? 3 : 2) : (slotCount <= 2 ? 1 : 2);
-        const nCols = gcTmp === 1 ? 4 : gcTmp === 2 ? 9 : 14;
-        buf = await injectParallelograms(buf, nCols, gcTmp);
-      } catch(e) { console.warn('도형 주입 실패:', e); }
-    }
+
     const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -2620,19 +2613,23 @@ async function buildDefaultExcel(wb, title, site) {
   const lrBd  = {left:THIN, right:THIN}; // 구분자 열용
 
   // ── 라벨 셀 적용 ──
-  function applyLbl(cell, val) {
+  function applyLbl(cell, val, noTop=false) {
     cell.value = val;
     cell.font      = {name:'맑은 고딕', size:7.5, bold:true, color:{argb:'FF444444'}};
     cell.alignment = {horizontal:'center', vertical:'middle'};
     cell.fill      = {type:'pattern', pattern:'solid', fgColor:{argb:'FFFFFFFF'}};
-    cell.border    = allBd;
+    cell.border    = noTop
+      ? {bottom:THIN, left:THIN, right:THIN}
+      : allBd;
   }
   // ── 값 셀 적용 ──
-  function applyVal(cell, val) {
+  function applyVal(cell, val, noTop=false) {
     cell.value = val ?? '';
     cell.font      = {name:'맑은 고딕', size:8.3, color:{argb:'FF111111'}};
     cell.alignment = {horizontal:'left', vertical:'middle', wrapText:true};
-    cell.border    = allBd;
+    cell.border    = noTop
+      ? {bottom:THIN, left:THIN, right:THIN}
+      : allBd;
   }
   // ── 사진 영역 셀 적용 ──
   function applyPhoto(cell) {
@@ -2765,10 +2762,11 @@ async function buildDefaultExcel(wb, title, site) {
 
         // ── 메타행 1: 위치라벨 | 위치값 | 일시라벨 | 일시값 ──
         const mr1 = sr + PHOTO_ROWS;
-        applyLbl(ws.getCell(mr1, c1),   d.locLbl  || '위치');
-        applyVal(ws.getCell(mr1, c1+1), d.loc     || '');
-        applyLbl(ws.getCell(mr1, c1+2), d.dateLbl || '일시');
-        applyVal(ws.getCell(mr1, c1+3), d.date    || '');
+        const noTop = (gi === 0);
+        applyLbl(ws.getCell(mr1, c1),   d.locLbl  || '위치', noTop);
+        applyVal(ws.getCell(mr1, c1+1), d.loc     || '',     noTop);
+        applyLbl(ws.getCell(mr1, c1+2), d.dateLbl || '일시', noTop);
+        applyVal(ws.getCell(mr1, c1+3), d.date    || '',     noTop);
 
         // ── 메타행 2: 내용라벨 | 내용값(3열 병합) ──
         const mr2 = sr + PHOTO_ROWS + 1;
@@ -2782,12 +2780,16 @@ async function buildDefaultExcel(wb, title, site) {
 
       row = sr + PHOTO_ROWS + 2;
 
-      // 마지막 그룹 제외하고 간격행 추가
-      if (gi < rowGroups - 1) {
-        ws.getRow(row).height = GAP_H;
-        row++;
-      }
+      // 모든 그룹 뒤 간격행 추가 (마지막 포함)
+      ws.getRow(row).height = GAP_H;
+      row++;
     }
+    // ── 현장명 푸터 ──
+    ws.mergeCells(row, 1, row, totalCols);
+    const footerCell = ws.getCell(row, 1);
+    footerCell.value     = `현장명 : ${site || ''}`;
+    footerCell.font      = {name:'맑은 고딕', size:11};
+    footerCell.alignment = {horizontal:'right', vertical:'middle'};
   }
 }
 
