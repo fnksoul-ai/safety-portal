@@ -2554,43 +2554,43 @@ async function addImg(wb, ws, b64, r1, c1, r2, c2) {
 // ── 기본 양식 엑셀 ──
 async function buildDefaultExcel(wb, title, site) {
   const isLand = pageOrientation === 'landscape';
-  let gridCols;
-  if (isLand) {
-    gridCols = slotCount >= 6 ? 3 : 2;
-  } else {
-    gridCols = slotCount <= 2 ? 1 : 2;
-  }
+  const gridCols = isLand ? (slotCount >= 6 ? 3 : 2) : (slotCount <= 2 ? 1 : 2);
 
-  // px → pt 변환 (1px ≈ 0.75pt)
-  const px2pt = px => Math.round(parseFloat(px) * 0.75 * 10) / 10;
-  // px → 열 너비 (1 엑셀 단위 ≈ 7px)
-  const px2w  = px => Math.max(2, parseFloat(px) / 7);
-  // px → 행 높이 (1 엑셀 pt ≈ 1.33px)
-  const px2h  = px => Math.max(12, parseFloat(px) / 1.33);
-
-  // cells 정보에서 ExcelJS 폰트/정렬/색 추출
-  function cellOpts(f, extraOpts={}) {
-    if (!f) return extraOpts;
-    return {
-      size:  px2pt(f.sz || '10px'),
-      bold:  !!f.bold,
-      align: f.align || 'left',
-      va:    f.va || 'middle',
-      color: f.color ? f.color.replace('#','FF') : 'FF111111',
-      ...extraOpts
-    };
+  // ── 색상 변환 (3자리/6자리 hex → 8자리 ARGB) ──
+  function toArgb(hex) {
+    if (!hex) return 'FF111111';
+    let h = hex.replace('#','');
+    if (h.length === 3) h = h.split('').map(c=>c+c).join('');
+    if (h.length === 6) return 'FF' + h.toUpperCase();
+    return h.length === 8 ? h.toUpperCase() : 'FF111111';
   }
-  function lblOpts(f, extraOpts={}) {
-    if (!f) return {bold:true, size:8, align:'center', ...extraOpts};
-    return {
-      size:  px2pt(f.sz || '10px'),
-      bold:  !!f.bold,
-      align: f.align || 'center',
-      va:    f.va || 'middle',
-      color: f.color ? f.color.replace('#','FF') : 'FF333333',
-      fill:  'FFFFFFFF', // 라벨 배경 흰색 (웹과 동일)
-      ...extraOpts
+  // ── px → pt (1px = 0.75pt) ──
+  const toPt = px => Math.round(parseFloat(px||'10') * 0.75 * 10) / 10;
+  // ── px → 행 높이 (엑셀 pt 기준) ──
+  const toH  = px => Math.max(13, Math.round(parseFloat(px||'22') * 0.75));
+
+  // ── cells 기준 값셀 스타일 ──
+  function valStyle(f, extra={}) {
+    const base = {
+      size:  toPt(f?.sz  || '11px'),
+      bold:  !!f?.bold,
+      align: f?.align || 'left',
+      va:    f?.va    || 'middle',
+      color: toArgb(f?.color || '#111111'),
     };
+    return {...base, ...extra};
+  }
+  // ── cells 기준 라벨셀 스타일 ──
+  function lblStyle(f, extra={}) {
+    const base = {
+      size:  toPt(f?.sz  || '10px'),
+      bold:  f?.bold !== false ? true : false,
+      align: f?.align || 'center',
+      va:    f?.va    || 'middle',
+      color: toArgb(f?.color || '#333333'),
+      fill:  'FFFFFFFF',
+    };
+    return {...base, ...extra};
   }
 
   for (let pi = 0; pi < pages.length; pi++) {
@@ -2598,106 +2598,115 @@ async function buildDefaultExcel(wb, title, site) {
     ensureSlots(pg);
     const wsName = pages.length > 1 ? `${pi+1}페이지` : '사진대지';
     const ws = wb.addWorksheet(wsName, {
-      pageSetup: {paperSize:9, orientation: isLand?'landscape':'portrait', fitToPage:true, fitToHeight:1, fitToWidth:1, margins:{top:0.4,bottom:0.4,left:0.5,right:0.5,header:0.2,footer:0.2}}
+      pageSetup: {
+        paperSize: 9,
+        orientation: isLand ? 'landscape' : 'portrait',
+        fitToPage: true, fitToWidth: 1, fitToHeight: 1,
+        margins: {top:0.39, bottom:0.39, left:0.5, right:0.5, header:0.2, footer:0.2}
+      }
     });
+    ws.views = [{showGridLines: false}];
 
-    const slotsArr = pg.slots;
+    const slots = pg.slots;
+    const colsPerSlot = 4; // [위치라벨 | 위치값 | 일시라벨 | 일시값]
+    const totalCols   = gridCols * colsPerSlot;
 
-    // ── 열 너비: 슬롯 첫 번째 기준으로 라벨/값 너비 계산 ──
-    // 각 슬롯 = [위치라벨, 위치값, 일시라벨, 일시값] = 4열
-    const colsPerSlot = 4;
-    const totalCols = gridCols * colsPerSlot;
+    // 열 너비 (A4 기준 배분)
+    // 세로: A4=210mm → 내용영역≈170mm / 그리드열수
+    // 가로: A4=297mm → 내용영역≈257mm / 그리드열수
+    const paperMM  = isLand ? 257 : 170;
+    const slotMM   = paperMM / gridCols;
+    // 1 엑셀 width unit ≈ 2.17mm
+    const mmPerU   = 2.17;
+    const slotU    = slotMM / mmPerU;
+    const ref      = slots[0] || newSlot();
+    // 라벨 너비: 웹에서 lw/dw px → mm → 엑셀 단위
+    const lblU  = Math.max(4, (ref.lw || 38) / (mmPerU * 3.78));
+    const dateU = Math.max(4, (ref.dw || 38) / (mmPerU * 3.78));
+    const valU  = Math.max(6, (slotU - lblU - dateU) / 2);
 
-    // 첫 슬롯에서 라벨 너비 읽기 (없으면 기본값)
-    const ref = slotsArr[0] || newSlot();
-    const lwPx = ref.lw || 38;
-    const dwPx = ref.dw || 38;
-    // 값 열 너비 = 슬롯 전체 중 라벨 제외 나머지 (A4 기준으로 배분)
-    const totalSlotW = isLand ? (gridCols===3 ? 90 : 130) : (gridCols===1 ? 160 : 90);
-    const lblW  = Math.max(4, px2w(lwPx));
-    const dateW = Math.max(4, px2w(dwPx));
-    const valW  = Math.max(6, (totalSlotW - lblW - dateW) / 2);
-
-    const colPattern = [{width:lblW},{width:valW},{width:dateW},{width:valW}];
+    const colPat = [{width: lblU}, {width: valU}, {width: dateU}, {width: valU}];
     const allCols = [];
-    for (let g=0; g<gridCols; g++) allCols.push(...colPattern);
+    for (let g = 0; g < gridCols; g++) allCols.push(...colPat);
     ws.columns = allCols;
 
     let row = 1;
 
-    // 제목
-    const titleStyle = document.querySelector('.stitle');
-    const titleSz = titleStyle ? px2pt(window.getComputedStyle(titleStyle).fontSize) : 16;
-    mergeFill(ws, row, 1, row, totalCols, title, {size:titleSz||16, bold:true, color:'FF002060'});
-    ws.getRow(row).height = 34;
+    // ── 제목 ──
+    mergeFill(ws, row, 1, row, totalCols, title, {size:16, bold:true, color:'FF002060', border:false});
+    ws.getRow(row).height = 36;
     row++;
 
-    // 현장명
-    mergeFill(ws, row, 1, row, totalCols, site ? `현장명 : ${site}` : '', {size:10, bold:false, align:'right', border:false});
-    ws.getRow(row).height = 18;
-    row++;
-
-    // 구분선
+    // ── 구분선 (상단 파란선) ──
     for (let c = 1; c <= totalCols; c++) {
-      const cell = ws.getCell(row, c);
-      cell.border = {bottom:{style:'medium', color:{argb:'FF002060'}}};
+      ws.getCell(row, c).border = {bottom:{style:'medium', color:{argb:'FF002060'}}};
     }
-    ws.getRow(row).height = 4;
+    ws.getRow(row).height = 3;
     row++;
 
-    // ── 슬롯 렌더링 ──
-    for (let i = 0; i < slotsArr.length; i++) {
-      const d = slotsArr[i];
-      const colIdx = i % gridCols;
-      const c1 = colIdx * colsPerSlot + 1;
+    // ── 슬롯 ──
+    // 사진 행 수: A4 세로 = 297mm, 상하여백 제거하면 약 260mm
+    // 슬롯 세로 그룹 수 = Math.ceil(slotCount / gridCols)
+    const rowGroups = Math.ceil(slots.length / gridCols);
+    // 사진 영역 mm = (260mm - 헤더약36mm - 메타행약10mm*rowGroups) / rowGroups
+    const totalMM   = isLand ? 180 : 260;
+    const headerMM  = 12; // 제목+구분선
+    const metaMM    = 12; // 위치+내용 2행
+    const photoMM   = Math.max(30, (totalMM - headerMM - metaMM * rowGroups) / rowGroups);
+    // mm → 엑셀 행 높이 pt (1mm ≈ 2.83pt)
+    const photoRowH = 22;
+    const photoRowCount = Math.max(3, Math.round(photoMM * 2.83 / photoRowH));
 
-      if (colIdx === 0) { var slotStartRow = row; }
+    for (let i = 0; i < slots.length; i++) {
+      const d      = slots[i];
+      const colIdx = i % gridCols;
+      const c1     = colIdx * colsPerSlot + 1;
+
+      if (colIdx === 0) var slotStartRow = row;
       const sr = slotStartRow;
 
-      // 사진 높이: d.ph(px) → 행 수로 환산 (각 행 높이 22pt 기준)
-      const photoPx  = d.ph || 220;
-      const photoRowH = 22; // pt per row
-      const photoRowCount = Math.max(4, Math.round(photoPx / photoRowH));
-
-      // ── 사진 영역 ──
-      mergeFill(ws, sr, c1, sr + photoRowCount - 1, c1 + colsPerSlot - 1, '', {fill:'FFF5F5F5'});
+      // 사진 영역 (병합)
+      ws.mergeCells(sr, c1, sr + photoRowCount - 1, c1 + colsPerSlot - 1);
+      const photoCell = ws.getCell(sr, c1);
+      photoCell.fill  = {type:'pattern', pattern:'solid', fgColor:{argb:'FFF5F5F5'}};
+      photoCell.border = allBorders;
       for (let pr = sr; pr < sr + photoRowCount; pr++) {
-        const r = ws.getRow(pr);
-        r.height = photoRowH;
+        ws.getRow(pr).height = photoRowH;
       }
+
       // 슬롯 번호
       const numCell = ws.getCell(sr, c1);
       numCell.value = (pi * slotCount) + i + 1;
-      numCell.font  = {name:'맑은 고딕', size:10, color:{argb:'FFBBBBBB'}};
+      numCell.font  = {name:'맑은 고딕', size:9, color:{argb:'FFCCCCCC'}};
       numCell.alignment = {horizontal:'left', vertical:'top'};
 
+      // 사진
       if (d.img) await addImg(wb, ws, d.img, sr, c1, sr + photoRowCount - 1, c1 + colsPerSlot - 1);
 
-      // ── 메타행 1: 위치라벨 | 위치값 | 일시라벨 | 일시값 ──
+      // 메타행 1: 위치라벨 | 위치값 | 일시라벨 | 일시값
       const mr1 = sr + photoRowCount;
-      const mh = px2h(d.mh || 22);
-      setCell(ws, mr1, c1,   d.locLbl||'위치',  lblOpts(d.cells?.locLabel));
-      setCell(ws, mr1, c1+1, d.loc||'',         cellOpts(d.cells?.loc, {align:'left', wrap:true}));
-      setCell(ws, mr1, c1+2, d.dateLbl||'일시', lblOpts(d.cells?.dateLabel));
-      setCell(ws, mr1, c1+3, d.date||'',        cellOpts(d.cells?.date, {align:'left'}));
-      ws.getRow(mr1).height = mh;
+      setCell(ws, mr1, c1,   d.locLbl  || '위치', lblStyle(d.cells?.locLabel));
+      setCell(ws, mr1, c1+1, d.loc     || '',      valStyle(d.cells?.loc,  {align:'left', wrap:true}));
+      setCell(ws, mr1, c1+2, d.dateLbl || '일시',  lblStyle(d.cells?.dateLabel));
+      setCell(ws, mr1, c1+3, d.date    || '',      valStyle(d.cells?.date, {align:'left'}));
+      ws.getRow(mr1).height = toH(d.mh || 22);
 
-      // ── 메타행 2: 내용라벨 | 내용값(3열 병합) ──
+      // 메타행 2: 내용라벨 | 내용값(3열 병합)
       const mr2 = sr + photoRowCount + 1;
-      const dh = px2h(d.dh || 28);
-      setCell(ws, mr2, c1,   d.descLbl||'내용', lblOpts(d.cells?.descLabel));
-      mergeFill(ws, mr2, c1+1, mr2, c1+3, d.desc||'', cellOpts(d.cells?.desc, {align:'left', wrap:true}));
-      ws.getRow(mr2).height = dh;
+      setCell(ws, mr2, c1, d.descLbl || '내용', lblStyle(d.cells?.descLabel));
+      ws.mergeCells(mr2, c1+1, mr2, c1+3);
+      setCell(ws, mr2, c1+1, d.desc || '', valStyle(d.cells?.desc, {align:'left', wrap:true}));
+      ws.getRow(mr2).height = toH(d.dh || 28);
 
-      if (colIdx === gridCols - 1 || i === slotsArr.length - 1) {
-        row = sr + photoRowCount + 3;
+      if (colIdx === gridCols - 1 || i === slots.length - 1) {
+        row = sr + photoRowCount + 2 + 1; // 사진행 + 메타2행 + 간격
       }
     }
 
-    // ── 현장명 푸터 ──
+    // 현장명 하단
     if (site) {
-      mergeFill(ws, row, 1, row, totalCols, `현장명 : ${site}`, {size:9, align:'right', border:false});
-      ws.getRow(row).height = 16;
+      mergeFill(ws, row, 1, row, totalCols, `현장명 : ${site}`, {size:9, align:'right', border:false, color:'FF444444'});
+      ws.getRow(row).height = 15;
     }
   }
 }
