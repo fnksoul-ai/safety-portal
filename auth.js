@@ -43,19 +43,23 @@ const AUTH = (() => {
     wrapper.style.cssText = 'display:flex;align-items:center;gap:8px;position:relative;';
     wrapper.innerHTML = `
       <!-- 사용자 로그인 버튼 -->
-      <button id="userNavBtn" onclick="AUTH.toggleUserDropdown()" style="
-        display:flex;align-items:center;gap:7px;font-size:12px;padding:5px 12px;
-        border-radius:6px;border:1px solid var(--border,#2c3347);background:var(--bg3,#1e2330);
+      <button id="userNavBtn" onclick="AUTH.toggleUserDropdown()"
+        onmouseover="this.style.color='var(--text,#f1f5f9)';this.style.background='var(--bg3,#1e2330)'"
+        onmouseout="this.style.color='var(--muted2,#94a3b8)';this.style.background='transparent'"
+        style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:6px 14px;
+        border-radius:6px;border:none;background:transparent;
         color:var(--muted2,#94a3b8);cursor:pointer;font-family:inherit;transition:all .15s;">
-        <span id="userNavDot" style="width:7px;height:7px;border-radius:50%;background:var(--muted,#64748b);display:block;"></span>
+        <span id="userNavDot" style="width:6px;height:6px;border-radius:50%;background:var(--muted,#64748b);display:block;flex-shrink:0;"></span>
         <span id="userNavLabel">사용자 로그인</span>
       </button>
       <!-- 관리자 로그인 버튼 -->
-      <button id="adminNavBtn" onclick="AUTH.toggleDropdown()" style="
-        display:flex;align-items:center;gap:7px;font-size:12px;padding:5px 12px;
-        border-radius:6px;border:1px solid var(--border,#2c3347);background:var(--bg3,#1e2330);
+      <button id="adminNavBtn" onclick="AUTH.toggleDropdown()"
+        onmouseover="this.style.color='var(--text,#f1f5f9)';this.style.background='var(--bg3,#1e2330)'"
+        onmouseout="this.style.color='var(--muted2,#94a3b8)';this.style.background='transparent'"
+        style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:6px 14px;
+        border-radius:6px;border:none;background:transparent;
         color:var(--muted2,#94a3b8);cursor:pointer;font-family:inherit;transition:all .15s;">
-        <span id="adminNavDot" style="width:7px;height:7px;border-radius:50%;background:var(--muted,#64748b);display:block;"></span>
+        <span id="adminNavDot" style="width:6px;height:6px;border-radius:50%;background:var(--muted,#64748b);display:block;flex-shrink:0;"></span>
         <span id="adminNavLabel">관리자 로그인</span>
       </button>
 
