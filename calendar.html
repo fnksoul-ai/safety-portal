@@ -595,6 +595,7 @@
     /* 숨길 요소 */
     nav, .error-banner, .admin-panel, .print-btn,
     .loading-overlay, .modal-overlay, .connect-indicator,
+    .settings-btn, #settingsBtn,
     #authNavWrapper, #authToast { display: none !important; }
 
     /* 툴바 인쇄 스타일 */
@@ -686,24 +687,22 @@
       margin: 0mm !important;
     }
 
-    html {
-      width: 297mm !important;
-      height: 210mm !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-
     body {
       width: 297mm !important;
       height: 210mm !important;
-      margin: 0 !important;
-      padding: 4mm 6mm !important;
+      margin: 0 auto !important;
+      padding: 5mm 7mm !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: center !important;
       align-items: center !important;
       box-sizing: border-box !important;
       overflow: hidden !important;
+    }
+    html {
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
     }
 
     .toolbar {
