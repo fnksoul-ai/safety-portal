@@ -751,13 +751,18 @@
     .remarks-section {
       width: 100% !important;
       display: flex !important;
-      border: 1px solid #999 !important;
+      border: 1px solid #666 !important;
+      border-top: 1px solid #666 !important;
+      border-bottom: 1px solid #666 !important;
+      outline: 1px solid #666 !important;
       flex-shrink: 0 !important;
+      margin-top: 1px !important;
+      overflow: visible !important;
     }
     .remarks-label {
       background: #f5f5f5 !important;
       color: #333 !important;
-      border-right: 1px solid #999 !important;
+      border-right: 1px solid #666 !important;
     }
     .remarks-body {
       outline: none !important;
@@ -1136,6 +1141,20 @@ footer span, .footer-brand { color: #1E293B !important; }
   background: #EFF6FF !important;
   color: #1D4ED8 !important;
   border: 1px solid #BFDBFE !important;
+}
+
+/* ── 인쇄 시 배경 강제 흰색 (테마 override 무효화) ── */
+@media print {
+  :root {
+    --bg:  #ffffff !important;
+    --bg2: #ffffff !important;
+    --bg3: #f8fafc !important;
+    --bg4: #f1f5f9 !important;
+  }
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+  }
 }
 
 </style>
