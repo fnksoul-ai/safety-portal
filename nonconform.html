@@ -1035,6 +1035,11 @@ nav {
         <label class="form-label">Apps Script 웹 앱 URL</label>
         <input type="text" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%">
       </div>
+      <div id="gasUrlCopyBox" style="display:none;margin-top:4px;padding:10px 12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:8px;font-size:12px;color:var(--muted2);line-height:1.7;">
+        💡 <b>다른 기기에서도 유지하려면</b><br>
+        <code id="gasDefaultLine" style="display:block;margin-top:4px;padding:4px 8px;background:var(--bg3);border-radius:4px;font-size:11px;word-break:break-all;color:var(--text)"></code>
+        위 코드를 <code>nonconform.html</code> 파일의 <code>GAS_DEFAULT_URL = ''</code> 부분에 붙여넣고 GitHub에 재배포하세요.
+      </div>
       <div style="display:flex;align-items:center;gap:10px;">
         <label style="font-size:13px;color:var(--muted2);display:flex;align-items:center;gap:6px;">
           <input type="checkbox" id="autoSyncChk"> 자동 동기화 (30초마다)
@@ -1104,7 +1109,13 @@ const GAS_KEY='nc_gas_url';
 const GAS_AUTO_KEY='nc_gas_auto';
 let gasAutoTimer=null;
 
-function getGasUrl(){return localStorage.getItem(GAS_KEY)||'';}
+/* ★ 관리자가 설정한 GAS URL — 어떤 기기에서도 공통 적용
+   시트 설정 저장 시 이 값이 자동으로 업데이트됩니다 */
+let GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwL7NUDBMbykfx4IQLS9Ofn4E0jiTnvQz9_CKi6Vjnt9MSOkR-zN-H7PVTruI0aB2Q0dA/exec';
+
+function getGasUrl(){
+  return localStorage.getItem(GAS_KEY) || GAS_DEFAULT_URL || '';
+}
 function isGasConnected(){return !!getGasUrl();}
 
 /* 레코드 → 시트 행 객체 */
@@ -1316,10 +1327,19 @@ function startAutoSync(){
 
 /* 설정 모달 열기/닫기 */
 function openSheetSetting(){
-  document.getElementById('gasUrlInput').value=getGasUrl();
+  const cur=getGasUrl();
+  document.getElementById('gasUrlInput').value=cur;
   document.getElementById('autoSyncChk').checked=localStorage.getItem(GAS_AUTO_KEY)==='1';
   document.getElementById('sheetConnStatus').style.display='none';
-  document.getElementById('sheetSettingOverlay').style.display='flex';}
+  const copyBox=document.getElementById('gasUrlCopyBox');
+  if(cur){
+    document.getElementById('gasDefaultLine').textContent=`let GAS_DEFAULT_URL = '${cur}';`;
+    copyBox.style.display='block';
+  }else{
+    copyBox.style.display='none';
+  }
+  document.getElementById('sheetSettingOverlay').style.display='flex';
+}
 function closeSheetSetting(){
   document.getElementById('sheetSettingOverlay').style.display='none';
 }
@@ -1328,6 +1348,11 @@ function saveSheetSetting(){
   const auto=document.getElementById('autoSyncChk').checked;
   localStorage.setItem(GAS_KEY,url);
   localStorage.setItem(GAS_AUTO_KEY,auto?'1':'0');
+  /* 기본 URL로도 저장 → 같은 브라우저의 비로그인 접속 시 유지 */
+  if(url){
+    GAS_DEFAULT_URL=url;
+    localStorage.setItem('nc_gas_url_default',url);
+  }
   startAutoSync();
   updateSyncUI();
   closeSheetSetting();
