@@ -1134,12 +1134,22 @@ async function loadFromSheet(){
     if(!res.ok)throw new Error('HTTP '+res.status);
     const data=await res.json();
     if(!data.ok)throw new Error(data.error||'오류');
-    const sheetRecs=data.records.filter(r=>r['관리번호']).map(rowToRec);
-    /* IndexedDB 전체 교체 */
+    /* 기존 로컬 레코드 map (사진 카운트 보존용) */
+    const localRecs=await dbGetAll(SM);
+    const localMap=Object.fromEntries(localRecs.map(r=>[r.id,r]));
+    const sheetRecs=data.records.filter(r=>r['관리번호']).map(row=>{
+      const rec=rowToRec(row);
+      /* 시트에는 사진 카운트가 없으므로 기존 IndexedDB 값 유지 */
+      const existing=localMap[rec.id];
+      if(existing){
+        rec.beforeCount=existing.beforeCount||0;
+        rec.afterCount=existing.afterCount||0;
+      }
+      return rec;
+    });
     await Promise.all(sheetRecs.map(r=>dbPut(SM,r)));
     /* 시트에 없는 로컬 레코드 삭제 */
     const sheetIds=new Set(sheetRecs.map(r=>r.id));
-    const localRecs=await dbGetAll(SM);
     await Promise.all(localRecs.filter(r=>!sheetIds.has(r.id)).map(r=>dbDel(SM,r.id)));
     records=await dbGetAll(SM);
     renderTabs();renderTable();renderCharts();
