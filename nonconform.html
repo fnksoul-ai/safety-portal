@@ -1390,7 +1390,11 @@ window.addEventListener('DOMContentLoaded',async()=>{
   document.getElementById('fDate').value=today();
   updateSyncUI();
   startAutoSync();
-  if(getGasUrl())loadFromSheet();
+  /* GAS URL 있으면 시트에서 데이터 로드 (비로그인 포함 항상 실행) */
+  const gasUrl=getGasUrl();
+  if(gasUrl){
+    loadFromSheet().catch(()=>{});
+  }
   setTimeout(updateSyncUI, 100);
   setTimeout(updateSyncUI, 500);
 });
