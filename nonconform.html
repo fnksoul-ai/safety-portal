@@ -1173,8 +1173,22 @@ let   tokenClient      = null;
 let   driveAuthResolve = null;
 let   driveAuthReject  = null;
 
-/* 저장된 토큰 복원 */
+/* 저장된 토큰 복원 — auth.js 토큰 우선 사용 */
 function loadCachedToken(){
+  /* 1. auth.js admin/user 토큰 확인 (drive scope 포함) */
+  const adminToken  = localStorage.getItem('admin_token');
+  const adminExpiry = parseInt(localStorage.getItem('admin_expiry')||'0');
+  if(adminToken && adminExpiry > Date.now()){
+    driveToken = adminToken;
+    return true;
+  }
+  const userToken  = localStorage.getItem('user_token');
+  const userExpiry = parseInt(localStorage.getItem('user_expiry')||'0');
+  if(userToken && userExpiry > Date.now()){
+    driveToken = userToken;
+    return true;
+  }
+  /* 2. Drive 전용 캐시 토큰 확인 */
   const token  = localStorage.getItem(GDRIVE_TOKEN_KEY);
   const expiry = parseInt(localStorage.getItem(GDRIVE_EXPIRY_KEY)||'0');
   if(token && expiry > Date.now()){
