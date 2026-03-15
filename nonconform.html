@@ -873,7 +873,7 @@ nav {
         <span id="syncIcon">🔄</span> 시트 동기화
       </button>
       <button class="btn btn-ghost" id="sheetSettingBtn" onclick="openSheetSetting()" title="구글 시트 연동 설정" style="display:none">⚙️ 시트 설정</button>
-      <button class="btn btn-primary" id="addBtn" onclick="openAdd()" style="display:none">＋ 등록</button>
+      <button class="btn btn-primary" id="addBtn" onclick="openAdd()">＋ 등록</button>
     </div>
   </div>
 
@@ -942,8 +942,13 @@ nav {
       <div class="form-grid">
         <div class="form-group"><label class="form-label">협력업체 <span class="req">*</span></label><input type="text" id="fCompany" placeholder="OO건설" list="companyDL"><datalist id="companyDL"></datalist></div>
         <div class="form-group"><label class="form-label">위치 <span class="req">*</span></label><input type="text" id="fLocation" placeholder="3층 계단참"></div>
+        <div class="form-group"><label class="form-label">작성자 <span class="req">*</span></label><input type="text" id="fWriter" placeholder="홍길동"></div>
         <div class="form-group"><label class="form-label">카테고리 <span class="req">*</span></label>
-          <select id="fCat"><option>개인보호구</option><option>추락방지</option><option>정리정돈</option><option>화재예방</option><option>장비/기계</option><option>안전표지</option><option>기타</option></select></div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="fCat" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="openCatMgr()" title="카테고리 관리">⚙️</button>
+          </div>
+        </div>
         <div class="form-group"><label class="form-label">상태</label>
           <select id="fStat"><option>미조치</option><option>조치중</option><option>조치완료</option></select></div>
         <div class="form-group"><label class="form-label">지적일 <span class="req">*</span></label><input type="date" id="fDate"></div>
@@ -994,6 +999,26 @@ nav {
   <button class="lb-close">×</button>
   <img id="lbImg" src="" alt="">
 </div>
+<!-- 카테고리 관리 모달 -->
+<div id="catMgrOverlay" onclick="if(event.target===this)closeCatMgr()" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
+  <div class="modal" style="max-width:400px;width:100%">
+    <div class="modal-header">
+      <div class="modal-title">🏷️ 카테고리 관리</div>
+      <button class="modal-close" onclick="closeCatMgr()">×</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
+      <div id="catList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <input type="text" id="catNewInput" placeholder="새 카테고리 입력" style="flex:1" onkeydown="if(event.key==='Enter')addCategory()">
+        <button class="btn btn-primary btn-sm" onclick="addCategory()">추가</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeCatMgr()">닫기</button>
+    </div>
+  </div>
+</div>
+
 <!-- 구글 시트 연동 설정 모달 -->
 <div id="sheetSettingOverlay" onclick="if(event.target===this)closeSheetSetting()" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
   <div class="modal" style="max-width:540px;width:100%">
@@ -1031,10 +1056,8 @@ nav {
 <script>
 /* auth.js 로드 직후 즉시 콜백 등록 — 타이밍 문제 방지 */
 window.onAuthStateChange=function(){
-  const addBtn=document.getElementById('addBtn');
   const settingBtn=document.getElementById('sheetSettingBtn');
   const syncBtn=document.getElementById('sheetSyncBtn');
-  if(addBtn) addBtn.style.display=AUTH.isAdmin()?'inline-flex':'none';
   if(settingBtn) settingBtn.style.display=AUTH.isAdmin()?'inline-flex':'none';
   const connected=!!(localStorage.getItem('nc_gas_url')||'').trim();
   if(syncBtn) syncBtn.style.display=(AUTH.isAdmin()&&connected)?'inline-flex':'none';
@@ -1087,7 +1110,7 @@ function isGasConnected(){return !!getGasUrl();}
 /* 레코드 → 시트 행 객체 */
 function recToRow(r){
   return {
-    '관리번호':r.id,'협력업체':r.company,'위치':r.location,
+    '관리번호':r.id,'협력업체':r.company,'위치':r.location,'작성자':r.writer||'',
     '카테고리':r.category,'부적합내용':r.description,
     '지적일':r.reportDate,'조치기한':r.dueDate||'',
     '상태':r.status,'조치내용':r.actionNote||'',
@@ -1114,7 +1137,8 @@ function normalizeDate(val){
 function rowToRec(row){
   return {
     id:row['관리번호']||'',company:row['협력업체']||'',
-    location:row['위치']||'',category:row['카테고리']||'',
+    location:row['위치']||'',writer:row['작성자']||'',
+    category:row['카테고리']||'',
     description:row['부적합내용']||'',
     reportDate:normalizeDate(row['지적일']),
     dueDate:normalizeDate(row['조치기한']),
@@ -1333,23 +1357,20 @@ function updateSyncUI(){
   document.getElementById('sheetSettingBtn').style.display=admin?'inline-flex':'none';
   document.getElementById('sheetSyncBtn').style.display=(admin&&connected)?'inline-flex':'none';
 }
-
 window.addEventListener('DOMContentLoaded',async()=>{
   await initDB();
   records=await dbGetAll(SM);
+  renderCatSelect();
   updateAuth();renderTabs();renderTable();renderCharts();
   document.getElementById('fDate').value=today();
-  /* 구글 시트 연동 초기화 */
   updateSyncUI();
   startAutoSync();
   if(getGasUrl())loadFromSheet();
-  /* auth.js 초기화 타이밍 보정 — 100ms / 500ms 후 재확인 */
   setTimeout(updateSyncUI, 100);
   setTimeout(updateSyncUI, 500);
 });
 window.onAuthStateChange=()=>updateAuth();
 function updateAuth(){
-  document.getElementById('addBtn').style.display=AUTH.isAdmin()?'inline-flex':'none';
   updateSyncUI();
 }
 function today(){return new Date().toISOString().split('T')[0];}
@@ -1431,11 +1452,11 @@ function renderCharts(){
 }
 
 function openAdd(){
-  if(!AUTH.isAdmin()){toast('❌ 관리자만 등록할 수 있습니다');return;}
   editId=null;tmpB=[];tmpA=[];exB=[];exA=[];
   document.getElementById('editModalTitle').textContent='부적합사항 등록';
-  ['fCompany','fLocation','fDesc','fAction','fDue'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('fCat').value='개인보호구';document.getElementById('fStat').value='미조치';
+  ['fCompany','fLocation','fWriter','fDesc','fAction','fDue'].forEach(id=>document.getElementById(id).value='');
+  renderCatSelect();
+  document.getElementById('fStat').value='미조치';
   document.getElementById('fDate').value=today();
   renderGrids();document.getElementById('editOverlay').classList.add('open');
 }
@@ -1445,8 +1466,12 @@ async function openEdit(id){
   editId=id;tmpB=[];tmpA=[];
   const ph=await dbByIdx(SP,'rid',id);exB=ph.filter(p=>p.side==='before');exA=ph.filter(p=>p.side==='after');
   document.getElementById('editModalTitle').textContent='부적합사항 수정';
-  document.getElementById('fCompany').value=r.company;document.getElementById('fLocation').value=r.location;
-  document.getElementById('fCat').value=r.category;document.getElementById('fStat').value=r.status;
+  document.getElementById('fCompany').value=r.company;
+  document.getElementById('fLocation').value=r.location;
+  document.getElementById('fWriter').value=r.writer||'';
+  renderCatSelect();
+  document.getElementById('fCat').value=r.category;
+  document.getElementById('fStat').value=r.status;
   document.getElementById('fDate').value=r.reportDate;document.getElementById('fDue').value=r.dueDate||'';
   document.getElementById('fDesc').value=r.description;document.getElementById('fAction').value=r.actionNote||'';
   renderGrids();document.getElementById('editOverlay').classList.add('open');
@@ -1456,22 +1481,23 @@ function closeEdit(){document.getElementById('editOverlay').classList.remove('op
 async function saveRecord(){
   const co=document.getElementById('fCompany').value.trim();
   const lo=document.getElementById('fLocation').value.trim();
+  const wr=document.getElementById('fWriter').value.trim();
   const ca=document.getElementById('fCat').value;
   const st=document.getElementById('fStat').value;
   const rd=document.getElementById('fDate').value;
   const dd=document.getElementById('fDue').value;
   const de=document.getElementById('fDesc').value.trim();
   const an=document.getElementById('fAction').value.trim();
-  if(!co||!lo||!rd||!de){toast('❌ 필수 항목을 입력해주세요');return;}
+  if(!co||!lo||!wr||!rd||!de){toast('❌ 필수 항목을 입력해주세요 (협력업체, 위치, 작성자, 지적일, 내용)');return;}
   const id=editId||genId();
   if(editId){for(const p of exB.filter(p=>p._del))await dbDel(SP,p.pk);for(const p of exA.filter(p=>p._del))await dbDel(SP,p.pk);}
   let bc=exB.filter(p=>!p._del).length,ac=exA.filter(p=>!p._del).length;
   for(const p of tmpB){await dbPut(SP,{recordId:id,side:'before',dataURL:p.dataURL,name:p.name});bc++;}
   for(const p of tmpA){await dbPut(SP,{recordId:id,side:'after',dataURL:p.dataURL,name:p.name});ac++;}
-  const rec={id,company:co,location:lo,category:ca,status:st,reportDate:rd,dueDate:dd,description:de,actionNote:an,beforeCount:bc,afterCount:ac};
+  const rec={id,company:co,location:lo,writer:wr,category:ca,status:st,reportDate:rd,dueDate:dd,description:de,actionNote:an,beforeCount:bc,afterCount:ac};
   await dbPut(SM,rec);
-  syncToSheet(rec); /* 구글 시트 텍스트 동기화 */
-  syncPhotosToSheet(id); /* 구글 시트 사진 업로드 */
+  syncToSheet(rec);
+  syncPhotosToSheet(id);
   if(editId){const i=records.findIndex(r=>r.id===editId);if(i>=0)records[i]=rec;else records.push(rec);}else records.push(rec);
   closeEdit();renderTabs();renderTable();renderCharts();toast(editId?'✅ 수정 완료':'✅ 등록 완료');
 }
