@@ -1087,7 +1087,7 @@ window.onAuthStateChange=function(){
   if(settingBtn) settingBtn.style.display=admin?'inline-flex':'none';
   if(syncBtn) syncBtn.style.display=(admin&&connected)?'inline-flex':'none';
 };
-const DB='ncDB2',VER=1,SM='records',SP='photos';
+const DB='ncDB3',VER=1,SM='records';
 let db;
 function initDB(){
   return new Promise((res,rej)=>{
@@ -1095,10 +1095,6 @@ function initDB(){
     r.onupgradeneeded=e=>{
       const d=e.target.result;
       if(!d.objectStoreNames.contains(SM))d.createObjectStore(SM,{keyPath:'id'});
-      if(!d.objectStoreNames.contains(SP)){
-        const ps=d.createObjectStore(SP,{autoIncrement:true,keyPath:'pk'});
-        ps.createIndex('rid','recordId',{unique:false});
-      }
     };
     r.onsuccess=e=>{db=e.target.result;res(db);};
     r.onerror=e=>rej(e.target.error);
@@ -1108,17 +1104,9 @@ const txs=(store,mode='readonly')=>db.transaction(store,mode).objectStore(store)
 const dbGetAll=s=>new Promise((r,j)=>{const q=txs(s).getAll();q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});
 const dbPut=(s,o)=>new Promise((r,j)=>{const q=txs(s,'readwrite').put(o);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});
 const dbDel=(s,k)=>new Promise((r,j)=>{const q=txs(s,'readwrite').delete(k);q.onsuccess=()=>r();q.onerror=()=>j(q.error);});
-function dbByIdx(s,idx,val){return new Promise((r,j)=>{const q=txs(s).index(idx).getAll(val);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});}
-function dbDelByIdx(s,idx,val){
-  return new Promise((r,j)=>{
-    const t=db.transaction(s,'readwrite');
-    const c=t.objectStore(s).index(idx).openCursor(val);
-    c.onsuccess=e=>{const cur=e.target.result;if(cur){cur.delete();cur.continue();}};
-    t.oncomplete=()=>r();t.onerror=()=>j(t.error);
-  });
-}
 
 let records=[],editId=null,curCo='전체';
+/* tmpB/tmpA: 업로드 대기 파일, exB/exA: 기존 Drive URL 목록 */
 let tmpB=[],tmpA=[],exB=[],exA=[];
 let chartCo,chartCa;
 
@@ -1145,7 +1133,8 @@ function recToRow(r){
     '카테고리':r.category,'부적합내용':r.description,
     '지적일':r.reportDate,'조치기한':r.dueDate||'',
     '상태':r.status,'조치내용':r.actionNote||'',
-    '조치전사진':r.beforeCount||0,'조치후사진':r.afterCount||0
+    '조치전사진':(r.beforeUrls||[]).length,
+    '조치후사진':(r.afterUrls||[]).length
   };
 }
 /* 시트 행 객체 → 레코드 */
@@ -1166,6 +1155,8 @@ function normalizeDate(val){
 }
 
 function rowToRec(row){
+  const beforeUrl=row['_beforeUrl']||'';
+  const afterUrl=row['_afterUrl']||'';
   return {
     id:row['관리번호']||'',company:row['협력업체']||'',
     location:row['위치']||'',writer:row['작성자']||'',
@@ -1175,14 +1166,14 @@ function rowToRec(row){
     dueDate:normalizeDate(row['조치기한']),
     status:row['상태']||'미조치',
     actionNote:row['조치내용']||'',
-    beforeCount:Number(row['조치전사진'])||0,
-    afterCount:Number(row['조치후사진'])||0,
-    beforeUrl:row['_beforeUrl']||'',
-    afterUrl:row['_afterUrl']||''
+    beforeUrls:beforeUrl?[beforeUrl]:[],
+    afterUrls:afterUrl?[afterUrl]:[],
+    beforeCount:beforeUrl?1:0,
+    afterCount:afterUrl?1:0
   };
 }
 
-/* 시트에서 전체 데이터 로드 → IndexedDB와 병합 */
+/* 시트에서 전체 데이터 로드 */
 async function loadFromSheet(){
   const url=getGasUrl();if(!url)return false;
   setSyncIcon(true);
@@ -1191,21 +1182,9 @@ async function loadFromSheet(){
     if(!res.ok)throw new Error('HTTP '+res.status);
     const data=await res.json();
     if(!data.ok)throw new Error(data.error||'오류');
-    /* 기존 로컬 레코드 map (사진 카운트 보존용) */
-    const localRecs=await dbGetAll(SM);
-    const localMap=Object.fromEntries(localRecs.map(r=>[r.id,r]));
-    const sheetRecs=data.records.filter(r=>r['관리번호']).map(row=>{
-      const rec=rowToRec(row);
-      /* 시트에는 사진 카운트가 없으므로 기존 IndexedDB 값 유지 */
-      const existing=localMap[rec.id];
-      if(existing){
-        rec.beforeCount=existing.beforeCount||0;
-        rec.afterCount=existing.afterCount||0;
-      }
-      return rec;
-    });
+    const sheetRecs=data.records.filter(r=>r['관리번호']).map(rowToRec);
     await Promise.all(sheetRecs.map(r=>dbPut(SM,r)));
-    /* 시트에 없는 로컬 레코드 삭제 */
+    const localRecs=await dbGetAll(SM);
     const sheetIds=new Set(sheetRecs.map(r=>r.id));
     await Promise.all(localRecs.filter(r=>!sheetIds.has(r.id)).map(r=>dbDel(SM,r.id)));
     records=await dbGetAll(SM);
@@ -1233,7 +1212,7 @@ async function syncToSheet(rec){
 
 
 /* 이미지 압축 — 시트 표시용 (320px, 45%) → 약 4000~6000자 */
-function compressImage(dataURL, maxW=320, quality=0.45){
+function compressImage(dataURL, maxW=1920, quality=0.88){
   return new Promise(resolve=>{
     const img=new Image();
     img.onload=()=>{
@@ -1249,8 +1228,9 @@ function compressImage(dataURL, maxW=320, quality=0.45){
   });
 }
 
-/* 사진 1장을 청크(4000자)로 나눠 GET 전송 — 병렬 전송 후 완료 신호 전송 */
-async function uploadPhotoChunked(gasUrl, recordId, side, index, dataURL){
+/* 사진 1장 → Drive 업로드 → URL 반환 */
+async function uploadPhotoToDrive(recordId, side, index, dataURL){
+  const url=getGasUrl();if(!url)return null;
   const compressed = await compressImage(dataURL);
   const sep    = compressed.indexOf(',');
   const header = sep > -1 ? compressed.substring(0, sep) : '';
@@ -1260,65 +1240,32 @@ async function uploadPhotoChunked(gasUrl, recordId, side, index, dataURL){
   const CHUNK       = 4000;
   const totalChunks = Math.ceil(b64safe.length / CHUNK);
 
-  /* 청크 병렬 전송 (마지막 제외) */
-  const chunkRequests = [];
-  for(let i=0; i<totalChunks-1; i++){
-    const chunk = b64safe.substring(i*CHUNK, (i+1)*CHUNK);
-    const qs = `action=uploadChunk`
-      +`&recordId=${encodeURIComponent(recordId)}`
-      +`&side=${side}&index=${index}`
-      +`&chunkIdx=${i}&totalChunks=${totalChunks}`
-      +`&header=${encodeURIComponent(i===0?header:'')}`
-      +`&chunk=${chunk}`;
-    chunkRequests.push(fetch(gasUrl+'?'+qs, {method:'GET'}).catch(e=>({ok:false})));
+  /* 중간 청크 병렬 전송 */
+  const reqs=[];
+  for(let i=0;i<totalChunks-1;i++){
+    const chunk=b64safe.substring(i*CHUNK,(i+1)*CHUNK);
+    const qs=`action=uploadChunk&recordId=${encodeURIComponent(recordId)}&side=${side}&index=${index}&chunkIdx=${i}&totalChunks=${totalChunks}&header=${encodeURIComponent(i===0?header:'')}&chunk=${chunk}`;
+    reqs.push(fetch(url+'?'+qs,{method:'GET'}).catch(()=>null));
   }
-  await Promise.all(chunkRequests); /* 병렬 전송 */
+  await Promise.all(reqs);
 
-  /* 마지막 청크는 순서 보장을 위해 단독 await */
-  const lastIdx = totalChunks - 1;
-  const lastChunk = b64safe.substring(lastIdx*CHUNK);
-  const lastQs = `action=uploadChunk`
-    +`&recordId=${encodeURIComponent(recordId)}`
-    +`&side=${side}&index=${index}`
-    +`&chunkIdx=${lastIdx}&totalChunks=${totalChunks}`
-    +`&header=`
-    +`&chunk=${lastChunk}`;
+  /* 마지막 청크 — URL 반환 받음 */
+  const lastIdx=totalChunks-1;
+  const lastChunk=b64safe.substring(lastIdx*CHUNK);
+  const lastQs=`action=uploadChunk&recordId=${encodeURIComponent(recordId)}&side=${side}&index=${index}&chunkIdx=${lastIdx}&totalChunks=${totalChunks}&header=&chunk=${lastChunk}`;
   try{
-    const res  = await fetch(gasUrl+'?'+lastQs, {method:'GET'});
-    const json = await res.json().catch(()=>({}));
-    if(json.ok === false){
-      toast(`❌ 사진 업로드 실패: ${json.error||'오류'}`);
-      return false;
-    }
+    const res=await fetch(url+'?'+lastQs,{method:'GET'});
+    const json=await res.json().catch(()=>({}));
+    if(json.ok&&json.url) return json.url;
+    console.error('업로드 오류:',json.error);
+    return null;
   }catch(e){
-    toast(`❌ 사진 업로드 실패: ${e.message}`);
-    return false;
-  }
-  return true;
-}
-
-/* 레코드의 사진 전부 시트에 업로드 */
-async function syncPhotosToSheet(recordId){
-  const url=getGasUrl();if(!url)return;
-  try{
-    const photos=await dbByIdx(SP,'rid',recordId);
-    if(!photos.length)return;
-    let idx={before:0,after:0};
-    let uploaded=0;
-    for(const p of photos){
-      const i=idx[p.side]++;
-      if(i>=1)continue; /* 각 side 1장만 */
-      toast(`📸 사진 업로드 중...`);
-      const ok=await uploadPhotoChunked(url,recordId,p.side,i,p.dataURL);
-      if(ok)uploaded++;
-    }
-    if(uploaded>0)toast(`✅ 사진 ${uploaded}장 시트 업로드 완료`);
-  }catch(e){
-    console.error('사진 업로드 오류:',e);
+    console.error('업로드 fetch 오류:',e);
+    return null;
   }
 }
 
-/* 레코드 1건 시트에서 삭제 — GET 방식으로 CORS 우회 */
+/* 레코드 1건 시트에서 삭제 */
 async function deleteFromSheet(id){
   const url=getGasUrl();if(!url)return;
   try{
@@ -1513,7 +1460,7 @@ function renderTable(){
   const sb=s=>({'미조치':'<span class="badge badge-red">미조치</span>','조치중':'<span class="badge badge-yellow">조치중</span>','조치완료':'<span class="badge badge-green">완료</span>'}[s]||s);
   tb.innerHTML=[...f].sort((a,b)=>b.reportDate.localeCompare(a.reportDate)).map(r=>{
     const od=r.dueDate&&r.dueDate<td&&r.status!=='조치완료';
-    const ph=(r.beforeCount||0)+(r.afterCount||0)+(r.beforeUrl?1:0)+(r.afterUrl?1:0);
+    const ph=(r.beforeUrls||[]).length+(r.afterUrls||[]).length;
     return `<tr onclick="openDetail('${r.id}')">
       <td class="id-mono">${r.id}</td>
       <td style="font-weight:700;">${r.company}</td>
@@ -1607,7 +1554,9 @@ function openAdd(){
 async function openEdit(id){
   const r=records.find(x=>x.id===id);if(!r)return;
   editId=id;tmpB=[];tmpA=[];
-  const ph=await dbByIdx(SP,'rid',id);exB=ph.filter(p=>p.side==='before');exA=ph.filter(p=>p.side==='after');
+  /* exB/exA는 이제 Drive URL 객체 배열 */
+  exB=(r.beforeUrls||[]).map(u=>({url:u}));
+  exA=(r.afterUrls||[]).map(u=>({url:u}));
   document.getElementById('editModalTitle').textContent='부적합사항 수정';
   document.getElementById('fCompany').value=r.company;
   document.getElementById('fLocation').value=r.location;
@@ -1633,33 +1582,52 @@ async function saveRecord(){
   const an=document.getElementById('fAction').value.trim();
   if(!co||!lo||!wr||!rd||!de){toast('❌ 필수 항목을 입력해주세요 (협력업체, 위치, 작성자, 지적일, 내용)');return;}
   const id=editId||genId();
-  if(editId){for(const p of exB.filter(p=>p._del))await dbDel(SP,p.pk);for(const p of exA.filter(p=>p._del))await dbDel(SP,p.pk);}
-  let bc=exB.filter(p=>!p._del).length,ac=exA.filter(p=>!p._del).length;
-  for(const p of tmpB){await dbPut(SP,{recordId:id,side:'before',dataURL:p.dataURL,name:p.name});bc++;}
-  for(const p of tmpA){await dbPut(SP,{recordId:id,side:'after',dataURL:p.dataURL,name:p.name});ac++;}
-  const rec={id,company:co,location:lo,writer:wr,category:ca,status:st,reportDate:rd,dueDate:dd,description:de,actionNote:an,beforeCount:bc,afterCount:ac};
+
+  /* 기존 Drive URL 유지 (삭제 표시된 것 제외) */
+  const keptBefore=exB.filter(p=>!p._del).map(p=>p.url);
+  const keptAfter=exA.filter(p=>!p._del).map(p=>p.url);
+
+  /* 새 사진 Drive 업로드 */
+  toast('💾 저장 중...');
+  const newBeforeUrls=[];
+  for(let i=0;i<tmpB.length;i++){
+    const url=await uploadPhotoToDrive(id,'before',keptBefore.length+i,tmpB[i].dataURL);
+    if(url)newBeforeUrls.push(url);
+  }
+  const newAfterUrls=[];
+  for(let i=0;i<tmpA.length;i++){
+    const url=await uploadPhotoToDrive(id,'after',keptAfter.length+i,tmpA[i].dataURL);
+    if(url)newAfterUrls.push(url);
+  }
+
+  const beforeUrls=[...keptBefore,...newBeforeUrls];
+  const afterUrls=[...keptAfter,...newAfterUrls];
+  const rec={id,company:co,location:lo,writer:wr,category:ca,status:st,reportDate:rd,dueDate:dd,
+    description:de,actionNote:an,
+    beforeUrls,afterUrls,
+    beforeCount:beforeUrls.length,afterCount:afterUrls.length};
+
   await dbPut(SM,rec);
   syncToSheet(rec);
-  syncPhotosToSheet(id);
   if(editId){const i=records.findIndex(r=>r.id===editId);if(i>=0)records[i]=rec;else records.push(rec);}else records.push(rec);
   closeEdit();renderTabs();renderTable();renderCharts();toast(editId?'✅ 수정 완료':'✅ 등록 완료');
 }
 async function delRecord(id){
   if(!confirm('삭제하시겠습니까?'))return;
-  await dbDel(SM,id);await dbDelByIdx(SP,'rid',id);
-  deleteFromSheet(id); /* 구글 시트 삭제 */
+  await dbDel(SM,id);
+  deleteFromSheet(id);
   records=records.filter(r=>r.id!==id);renderTabs();renderTable();renderCharts();toast('🗑️ 삭제됨');
 }
 
 async function openDetail(id){
   const r=records.find(x=>x.id===id);if(!r)return;
-  const ph=await dbByIdx(SP,'rid',id);
-  const be=ph.filter(p=>p.side==='before'),af=ph.filter(p=>p.side==='after');
   const td=today(),od=r.dueDate&&r.dueDate<td&&r.status!=='조치완료';
   const sb={'미조치':'<span class="badge badge-red">미조치</span>','조치중':'<span class="badge badge-yellow">조치중</span>','조치완료':'<span class="badge badge-green">조치완료</span>'}[r.status];
   document.getElementById('detailTitle').textContent=`${r.company} — ${r.category}`;
   document.getElementById('detailId').textContent=r.id;
-  const pg=arr=>`<div class="photo-grid">${arr.map(p=>`<div class="photo-thumb" onclick="openLB('${p.dataURL}')"><img src="${p.dataURL}" alt=""></div>`).join('')}</div>`;
+  const be=r.beforeUrls||[];
+  const af=r.afterUrls||[];
+  const pg=urls=>`<div class="photo-grid">${urls.map(u=>`<div class="photo-thumb" onclick="openLB('${u}')"><img src="${u}" alt=""></div>`).join('')}</div>`;
   document.getElementById('detailBody').innerHTML=`
     <div class="detail-grid" style="margin-bottom:16px;">
       <div class="detail-item"><div class="detail-key">협력업체</div><div class="detail-val" style="font-weight:700;">${r.company}</div></div>
@@ -1673,15 +1641,11 @@ async function openDetail(id){
       ${r.actionNote?`<div class="detail-item span2"><div class="detail-key">조치 내용</div><div class="detail-val" style="white-space:pre-wrap;">${r.actionNote}</div></div>`:''}
     </div>
     <div class="photo-cols">
-      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-red"></div> 조치 전 (${be.length+(r.beforeUrl?1:0)}장)</div>
-        ${be.length?pg(be):''}
-        ${r.beforeUrl?`<div class="photo-thumb" onclick="openLB('${r.beforeUrl}')"><img src="${r.beforeUrl}" alt="조치전" style="width:100%;height:100%;object-fit:cover;"></div>`:''}
-        ${!be.length&&!r.beforeUrl?'<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">사진 없음</div>':''}
+      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-red"></div> 조치 전 (${be.length}장)</div>
+        ${be.length?pg(be):'<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">사진 없음</div>'}
       </div>
-      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-green"></div> 조치 후 (${af.length+(r.afterUrl?1:0)}장)</div>
-        ${af.length?pg(af):''}
-        ${r.afterUrl?`<div class="photo-thumb" onclick="openLB('${r.afterUrl}')"><img src="${r.afterUrl}" alt="조치후" style="width:100%;height:100%;object-fit:cover;"></div>`:''}
-        ${!af.length&&!r.afterUrl?`<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">${r.status!=='조치완료'?'조치 완료 후 등록':'사진 없음'}</div>`:''}
+      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-green"></div> 조치 후 (${af.length}장)</div>
+        ${af.length?pg(af):`<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">${r.status!=='조치완료'?'조치 완료 후 등록':'사진 없음'}</div>`}
       </div>
     </div>`;
   document.getElementById('detailFoot').innerHTML=`
@@ -1691,6 +1655,7 @@ async function openDetail(id){
     <button class="btn btn-ghost" onclick="closeDetail()">닫기</button>`;
   document.getElementById('detailOverlay').classList.add('open');
 }
+
 function closeDetail(){document.getElementById('detailOverlay').classList.remove('open');}
 
 function onDragOver(e,id){e.preventDefault();document.getElementById(id).classList.add('dragover');}
@@ -1699,11 +1664,33 @@ function onDrop(e,side){e.preventDefault();onDragLeave(side==='before'?'dzBefore
 function onFileInput(e,side){processFiles(e.target.files,side);e.target.value='';}
 function processFiles(files,side){
   const arr=side==='before'?tmpB:tmpA;
-  [...files].forEach(f=>{if(!f.type.startsWith('image/'))return;const rd=new FileReader();rd.onload=e=>{arr.push({dataURL:e.target.result,name:f.name});renderGrids();};rd.readAsDataURL(f);});
+  [...files].forEach(f=>{
+    if(!f.type.startsWith('image/'))return;
+    const rd=new FileReader();
+    rd.onload=e=>{arr.push({dataURL:e.target.result,name:f.name});renderGrids();};
+    rd.readAsDataURL(f);
+  });
 }
 function renderGrids(){
-  const rg=(gid,arr,side)=>{document.getElementById(gid).innerHTML=arr.filter(p=>!p._del).map((p,i)=>`<div class="photo-thumb" onclick="openLB('${p.dataURL}')"><img src="${p.dataURL}" alt="">${AUTH.isAdmin()?`<button class="thumb-del" onclick="event.stopPropagation();delEx('${side}',${i})">×</button>`:''}</div>`).join('');};
-  const rt=(gid,arr,side)=>{document.getElementById(gid).innerHTML+=arr.map((p,i)=>`<div class="photo-thumb" onclick="openLB('${p.dataURL}')"><img src="${p.dataURL}" alt="">${AUTH.isAdmin()?`<button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button>`:''}</div>`).join('');};
+  /* exB/exA: Drive URL 객체 {url, _del} */
+  const rg=(gid,arr,side)=>{
+    document.getElementById(gid).innerHTML=arr.filter(p=>!p._del).map((p,i)=>
+      `<div class="photo-thumb" onclick="openLB('${p.url}')">
+        <img src="${p.url}" alt="">
+        <button class="thumb-del" onclick="event.stopPropagation();delEx('${side}',${i})">×</button>
+      </div>`
+    ).join('');
+  };
+  /* tmpB/tmpA: 로컬 미리보기 (아직 업로드 전) */
+  const rt=(gid,arr,side)=>{
+    document.getElementById(gid).innerHTML+=arr.map((p,i)=>
+      `<div class="photo-thumb" onclick="openLB('${p.dataURL}')">
+        <img src="${p.dataURL}" alt="">
+        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.5);color:#fff;font-size:9px;text-align:center;padding:2px;">업로드 대기</div>
+        <button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button>
+      </div>`
+    ).join('');
+  };
   rg('gridBefore',exB,'before');rg('gridAfter',exA,'after');
   rt('gridBefore',tmpB,'before');rt('gridAfter',tmpA,'after');
 }
@@ -1720,8 +1707,8 @@ function exportExcel(){
 
 async function printReport(id){
   const r=records.find(x=>x.id===id);if(!r)return;
-  const ph=await dbByIdx(SP,'rid',id);
-  const be=ph.filter(p=>p.side==='before'),af=ph.filter(p=>p.side==='after');
+  const be=r.beforeUrls||[];
+  const af=r.afterUrls||[];
   const w=window.open('','_blank','width=900,height=700');
   w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>보고서 ${r.id}</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
@@ -2188,8 +2175,8 @@ nav {
   ${r.actionNote?`<div class="sec">조치 내용</div><div class="box">${r.actionNote}</div>`:''}
   <div class="sec">사진 기록</div>
   <div class="pcols">
-    <div><div class="plab b">▶ 조치 전 (${be.length}장)</div>${be.length?`<div class="pgrid">${be.map(p=>`<img src="${p.dataURL}">`).join('')}</div>`:'<div class="nophoto">없음</div>'}</div>
-    <div><div class="plab a">▶ 조치 후 (${af.length}장)</div>${af.length?`<div class="pgrid">${af.map(p=>`<img src="${p.dataURL}">`).join('')}</div>`:'<div class="nophoto">없음</div>'}</div>
+    <div><div class="plab b">▶ 조치 전 (${be.length}장)</div>${be.length?`<div class="pgrid">${be.map(u=>`<img src="${u}">`).join('')}</div>`:'<div class="nophoto">없음</div>'}</div>
+    <div><div class="plab a">▶ 조치 후 (${af.length}장)</div>${af.length?`<div class="pgrid">${af.map(u=>`<img src="${u}">`).join('')}</div>`:'<div class="nophoto">없음</div>'}</div>
   </div>
   <div class="foot">SAFENODE 안전관리 포털</div>
   <script>window.onload=()=>setTimeout(()=>window.print(),400);<\/script>
