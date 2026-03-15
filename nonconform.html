@@ -1175,8 +1175,8 @@ async function syncToSheet(rec){
 }
 
 
-/* 이미지 압축 — 시트 표시용 (500px, 60%) */
-function compressImage(dataURL, maxW=500, quality=0.6){
+/* 이미지 압축 — 시트 표시용 (320px, 45%) → 약 4000~6000자 */
+function compressImage(dataURL, maxW=320, quality=0.45){
   return new Promise(resolve=>{
     const img=new Image();
     img.onload=()=>{
@@ -1192,41 +1192,50 @@ function compressImage(dataURL, maxW=500, quality=0.6){
   });
 }
 
-/* 사진 1장을 청크(1500자)로 나눠 GET 요청으로 전송 */
+/* 사진 1장을 청크(4000자)로 나눠 GET 전송 — 병렬 전송 후 완료 신호 전송 */
 async function uploadPhotoChunked(gasUrl, recordId, side, index, dataURL){
   const compressed = await compressImage(dataURL);
   const sep    = compressed.indexOf(',');
   const header = sep > -1 ? compressed.substring(0, sep) : '';
   const b64raw = sep > -1 ? compressed.substring(sep+1) : compressed;
-
-  /* base64의 +→-, /→_, =제거 → URL-safe 변환 (서버에서 복원) */
   const b64safe = b64raw.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 
-  const CHUNK       = 1500;
+  const CHUNK       = 4000;
   const totalChunks = Math.ceil(b64safe.length / CHUNK);
 
-  for(let i=0; i<totalChunks; i++){
+  /* 청크 병렬 전송 (마지막 제외) */
+  const chunkRequests = [];
+  for(let i=0; i<totalChunks-1; i++){
     const chunk = b64safe.substring(i*CHUNK, (i+1)*CHUNK);
-    /* URLSearchParams 대신 직접 문자열 조합 — chunk는 이미 URL-safe */
     const qs = `action=uploadChunk`
       +`&recordId=${encodeURIComponent(recordId)}`
       +`&side=${side}&index=${index}`
       +`&chunkIdx=${i}&totalChunks=${totalChunks}`
       +`&header=${encodeURIComponent(i===0?header:'')}`
-      +`&chunk=${chunk}`;   /* URL-safe b64이므로 추가 인코딩 불필요 */
-    try{
-      const res  = await fetch(gasUrl+'?'+qs, {method:'GET'});
-      const json = await res.json().catch(()=>({}));
-      if(json.ok === false){
-        console.error(`청크 ${i}/${totalChunks} 오류:`, json.error);
-        toast(`❌ 사진 업로드 실패: ${json.error||'오류'}`);
-        return false;
-      }
-    }catch(e){
-      console.error(`청크 ${i} fetch 오류:`, e);
-      toast(`❌ 사진 업로드 실패: ${e.message}`);
+      +`&chunk=${chunk}`;
+    chunkRequests.push(fetch(gasUrl+'?'+qs, {method:'GET'}).catch(e=>({ok:false})));
+  }
+  await Promise.all(chunkRequests); /* 병렬 전송 */
+
+  /* 마지막 청크는 순서 보장을 위해 단독 await */
+  const lastIdx = totalChunks - 1;
+  const lastChunk = b64safe.substring(lastIdx*CHUNK);
+  const lastQs = `action=uploadChunk`
+    +`&recordId=${encodeURIComponent(recordId)}`
+    +`&side=${side}&index=${index}`
+    +`&chunkIdx=${lastIdx}&totalChunks=${totalChunks}`
+    +`&header=`
+    +`&chunk=${lastChunk}`;
+  try{
+    const res  = await fetch(gasUrl+'?'+lastQs, {method:'GET'});
+    const json = await res.json().catch(()=>({}));
+    if(json.ok === false){
+      toast(`❌ 사진 업로드 실패: ${json.error||'오류'}`);
       return false;
     }
+  }catch(e){
+    toast(`❌ 사진 업로드 실패: ${e.message}`);
+    return false;
   }
   return true;
 }
@@ -1241,15 +1250,14 @@ async function syncPhotosToSheet(recordId){
     let uploaded=0;
     for(const p of photos){
       const i=idx[p.side]++;
-      if(i>=2)continue;
-      toast(`📸 사진 업로드 중... (${p.side} ${i+1}번째)`);
+      if(i>=1)continue; /* 각 side 1장만 */
+      toast(`📸 사진 업로드 중...`);
       const ok=await uploadPhotoChunked(url,recordId,p.side,i,p.dataURL);
       if(ok)uploaded++;
     }
     if(uploaded>0)toast(`✅ 사진 ${uploaded}장 시트 업로드 완료`);
   }catch(e){
     console.error('사진 업로드 오류:',e);
-    toast('❌ 사진 업로드 중 오류 발생');
   }
 }
 
