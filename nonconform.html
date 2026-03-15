@@ -1168,7 +1168,7 @@ async function syncToSheet(rec){
 /* ── 구글 시트 사진 업로드 설정 ──
    Cloudflare Worker를 CORS 프록시로 활용
    Worker URL은 시트 설정과 동일한 localStorage 키로 관리 */
-const CF_WORKER_URL = 'https://red-hall-e692.fnksoul.workers.dev';
+const CF_WORKER_URL = 'https://safenode-proxy.fnksoul-ab5.workers.dev';
 
 /* 이미지 압축 — 시트 표시용 (800px, 70%) */
 function compressImage(dataURL, maxW=800, quality=0.7){
