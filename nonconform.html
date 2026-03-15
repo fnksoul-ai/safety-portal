@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Bebas+Neue&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
@@ -357,8 +358,10 @@ textarea:focus{border-color:var(--orange);}
   .header-actions,.overlay,.lightbox,.toast{display:none!important;}
   .page{padding:0;max-width:100%;}
   .chart-row{display:grid!important;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
-  .chart-card{border:1px solid #ccc!important;break-inside:avoid;}
-  .chart-wrap{height:180px!important;}
+  .chart-card{border:1px solid #ccc!important;break-inside:avoid;display:flex;flex-direction:column;}
+  .chart-title{padding:8px 12px!important;border-bottom:1px solid #eee;}
+  .chart-wrap{height:200px!important;flex:1;display:flex;align-items:flex-start;}
+  .chart-wrap canvas{width:100%!important;height:100%!important;object-position:top;}
   .stat-row{display:grid!important;grid-template-columns:repeat(5,1fr);}
   .table-card{border:1px solid #ccc!important;}
   table{font-size:10pt;}
@@ -1532,29 +1535,56 @@ function renderCharts(){
   const cl=Object.keys(cm);
   if(chartCo)chartCo.destroy();
   chartCo=new Chart(document.getElementById('companyChart').getContext('2d'),{type:'bar',
-    data:{labels:cl.length?cl:['없음'],datasets:[{label:'미조치',data:cl.map(k=>cm[k].p),backgroundColor:'rgba(239,68,68,.7)'},{label:'조치중',data:cl.map(k=>cm[k].pr),backgroundColor:'rgba(234,179,8,.7)'},{label:'완료',data:cl.map(k=>cm[k].d),backgroundColor:'rgba(34,197,94,.7)'}]},
+    data:{labels:cl.length?cl:['없음'],datasets:[
+      {label:'미조치',data:cl.map(k=>cm[k].p),backgroundColor:'rgba(239,68,68,.7)'},
+      {label:'조치중',data:cl.map(k=>cm[k].pr),backgroundColor:'rgba(234,179,8,.7)'},
+      {label:'완료',data:cl.map(k=>cm[k].d),backgroundColor:'rgba(34,197,94,.7)'}
+    ]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{
-        legend:{labels:{color:'#8888a0',font:{size:11}}},
-        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y}건`}}
+        legend:{position:'top',labels:{color:'#8888a0',font:{size:11},padding:12}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y}건`}},
+        datalabels:{
+          anchor:'end',align:'top',
+          color:'#555',font:{size:10,weight:'bold'},
+          formatter:(v)=>v>0?v:'',
+          clamp:true
+        }
       },
       scales:{
         x:{stacked:true,ticks:{color:'#8888a0',font:{size:11}},grid:{color:'#252530'}},
         y:{stacked:true,ticks:{color:'#8888a0',font:{size:11},stepSize:1},grid:{color:'#252530'},
-          afterDataLimits:axis=>{axis.max=Math.max(axis.max,1);}}
+          afterDataLimits:axis=>{axis.max=Math.max(axis.max*1.15,2);}}
       }
-    }});
+    },
+    plugins:[ChartDataLabels]
+  });
+
   const kam={};records.forEach(r=>{kam[r.category]=(kam[r.category]||0)+1;});
   const kl=Object.keys(kam);
+  const total=kl.reduce((s,k)=>s+kam[k],0)||1;
   if(chartCa)chartCa.destroy();
   chartCa=new Chart(document.getElementById('categoryChart').getContext('2d'),{type:'doughnut',
-    data:{labels:kl.length?kl:['없음'],datasets:[{data:kl.length?kl.map(k=>kam[k]):[1],backgroundColor:['#3b82f6','#ef4444','#eab308','#22c55e','#f97316','#a855f7','#2dd4bf'],borderWidth:0}]},
+    data:{labels:kl.length?kl:['없음'],datasets:[{
+      data:kl.length?kl.map(k=>kam[k]):[1],
+      backgroundColor:['#3b82f6','#ef4444','#eab308','#22c55e','#f97316','#a855f7','#2dd4bf'],
+      borderWidth:2,borderColor:'#fff'
+    }]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{
         legend:{position:'right',labels:{color:'#8888a0',font:{size:11},padding:10}},
-        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}건 (${Math.round(ctx.parsed/ctx.dataset.data.reduce((a,b)=>a+b,0)*100)}%)`}}
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}건 (${Math.round(ctx.parsed/total*100)}%)`}},
+        datalabels:{
+          color:'#fff',font:{size:11,weight:'bold'},
+          formatter:(v,ctx)=>{
+            const pct=Math.round(v/total*100);
+            return pct>=5?`${ctx.chart.data.labels[ctx.dataIndex]}\n${v}건`:'';
+          }
+        }
       }
-    }});
+    },
+    plugins:[ChartDataLabels]
+  });
 }
 
 function openAdd(){
