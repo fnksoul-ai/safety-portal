@@ -1035,6 +1035,38 @@ nav {
   </div>
 </div>
 
+<!-- 구글 로그인 안내 모달 -->
+<div id="driveAuthOverlay" onclick="if(event.target===this)closeDriveAuthModal()" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
+  <div class="modal" style="max-width:460px;width:100%">
+    <div class="modal-header">
+      <div class="modal-title">📸 사진 업로드를 위한 Google 로그인</div>
+      <button class="modal-close" onclick="closeDriveAuthModal()">×</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+      <div id="driveAuthMsg" style="font-size:13px;color:var(--muted2);line-height:1.8;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);">
+        📋 사진을 구글 드라이브에 저장하려면 <b>Google 계정 로그인</b>이 필요합니다.<br>
+        아래 버튼을 클릭하면 로그인 팝업이 열립니다.
+      </div>
+      <div id="popupBlockedMsg" style="display:none;font-size:13px;line-height:1.8;padding:12px 14px;background:rgba(239,68,68,.08);border-radius:8px;border:1px solid rgba(239,68,68,.25);color:#f87171;">
+        ⚠️ <b>팝업이 차단됐습니다.</b><br>
+        주소창 오른쪽의 <b>팝업 차단 아이콘</b>을 클릭하고<br>
+        <b>"항상 허용"</b> 선택 후 아래 버튼을 다시 눌러주세요.
+        <div style="margin-top:10px;padding:8px 12px;background:rgba(255,255,255,.05);border-radius:6px;font-size:12px;">
+          Chrome: 주소창 끝 🔒 또는 팝업차단 아이콘 클릭<br>
+          Safari: 환경설정 → 웹 사이트 → 팝업 창 → 허용
+        </div>
+      </div>
+      <div id="driveLoginStatus" style="font-size:12px;display:none;padding:8px 12px;border-radius:6px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDriveAuthModal()">취소</button>
+      <button class="btn btn-primary" id="driveLoginBtn" onclick="doGoogleLogin()">
+        <img src="https://www.google.com/favicon.ico" style="width:14px;height:14px;margin-right:4px;"> Google로 로그인
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- 구글 시트 연동 설정 모달 -->
 <div id="sheetSettingOverlay" onclick="if(event.target===this)closeSheetSetting()" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
   <div class="modal" style="max-width:540px;width:100%">
@@ -1128,65 +1160,120 @@ function isGasConnected(){return !!getGasUrl();}
 
 /* ══════════════════════════════════════
    Google Drive 직접 업로드 (OAuth 2.0)
-   브라우저 → Drive API — 청크 없음, 안정적
+   - localStorage로 토큰 캐시 (로그인 유지)
+   - 팝업 차단 시 안내 모달 표시
 ══════════════════════════════════════ */
 const GDRIVE_CLIENT_ID = '167323077293-8gsd86rn7fjvo7dvo4994fhm6opr19cd.apps.googleusercontent.com';
 const GDRIVE_FOLDER_ID = '1-R4T33Pu4AxBvMpn2ZuCqt_Yo6_LjjCy';
 const GDRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.file';
+const GDRIVE_TOKEN_KEY = 'nc_gdrive_token';
+const GDRIVE_EXPIRY_KEY= 'nc_gdrive_expiry';
 let   driveToken       = null;
 let   tokenClient      = null;
+let   driveAuthResolve = null;
+let   driveAuthReject  = null;
+
+/* 저장된 토큰 복원 */
+function loadCachedToken(){
+  const token  = localStorage.getItem(GDRIVE_TOKEN_KEY);
+  const expiry = parseInt(localStorage.getItem(GDRIVE_EXPIRY_KEY)||'0');
+  if(token && expiry > Date.now()){
+    driveToken = token;
+    return true;
+  }
+  driveToken = null;
+  return false;
+}
+
+/* 토큰 저장 (55분 유효) */
+function saveToken(token){
+  driveToken = token;
+  const expiry = Date.now() + 55 * 60 * 1000;
+  localStorage.setItem(GDRIVE_TOKEN_KEY, token);
+  localStorage.setItem(GDRIVE_EXPIRY_KEY, String(expiry));
+  /* 50분 후 조용히 자동 갱신 */
+  setTimeout(()=>silentRefresh(), 50*60*1000);
+}
+
+/* 백그라운드 조용한 토큰 갱신 — 사용자 개입 없음 */
+function silentRefresh(){
+  if(!tokenClient) return;
+  tokenClient.callback = (resp)=>{
+    if(resp.error){ console.warn('토큰 갱신 실패, 다음 업로드 시 재로그인 필요'); return; }
+    saveToken(resp.access_token);
+    console.log('Google 토큰 자동 갱신 완료');
+  };
+  /* prompt:'' → 팝업 없이 조용히 토큰 갱신 (이미 동의한 계정) */
+  tokenClient.requestAccessToken({ prompt: '' });
+}
 
 function initDriveAuth(){
-  if(typeof google==='undefined'||!google.accounts){return;}
+  if(typeof google==='undefined'||!google.accounts) return;
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GDRIVE_CLIENT_ID,
     scope:     GDRIVE_SCOPE,
     callback:  (resp)=>{
-      if(resp.error){console.error('Drive OAuth:',resp.error);return;}
-      driveToken=resp.access_token;
+      if(resp.error){
+        console.error('Drive OAuth:', resp.error);
+        showPopupBlocked();
+        if(driveAuthReject) driveAuthReject(new Error(resp.error_description||resp.error));
+        driveAuthResolve=driveAuthReject=null;
+        return;
+      }
+      saveToken(resp.access_token);
+      closeDriveAuthModal();
+      if(driveAuthResolve) driveAuthResolve(resp.access_token);
+      driveAuthResolve=driveAuthReject=null;
     }
   });
+  /* 저장된 토큰 자동 복원 */
+  if(loadCachedToken()){
+    /* 남은 유효시간 계산 후 갱신 타이머 설정 */
+    const expiry = parseInt(localStorage.getItem(GDRIVE_EXPIRY_KEY)||'0');
+    const remaining = expiry - Date.now() - 5*60*1000; /* 만료 5분 전 */
+    if(remaining > 0){
+      setTimeout(()=>silentRefresh(), remaining);
+    } else {
+      /* 이미 만료됐거나 곧 만료 → 즉시 갱신 */
+      setTimeout(()=>silentRefresh(), 1000);
+    }
+  }
 }
 
+/* 팝업 안내 모달 */
+function openDriveAuthModal(){
+  document.getElementById('popupBlockedMsg').style.display='none';
+  document.getElementById('driveLoginStatus').style.display='none';
+  document.getElementById('driveAuthMsg').style.display='block';
+  document.getElementById('driveAuthOverlay').style.display='flex';
+}
+function closeDriveAuthModal(){
+  document.getElementById('driveAuthOverlay').style.display='none';
+}
+function showPopupBlocked(){
+  document.getElementById('popupBlockedMsg').style.display='block';
+  document.getElementById('driveAuthMsg').style.display='none';
+}
+
+/* 모달에서 로그인 버튼 클릭 */
+function doGoogleLogin(){
+  if(!tokenClient){ initDriveAuth(); }
+  if(!tokenClient){ toast('❌ Google 로그인 초기화 실패. 페이지를 새로고침해주세요.'); return; }
+  const btn=document.getElementById('driveLoginBtn');
+  btn.textContent='⏳ 로그인 중...'; btn.disabled=true;
+  setTimeout(()=>{ btn.innerHTML='<img src="https://www.google.com/favicon.ico" style="width:14px;height:14px;margin-right:4px;"> Google로 로그인'; btn.disabled=false; }, 5000);
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
+/* 토큰 요청 — 있으면 즉시, 없으면 모달 표시 */
 function requestDriveToken(){
   return new Promise((resolve, reject)=>{
-    /* 유효한 토큰 있으면 바로 반환 */
     if(driveToken){ resolve(driveToken); return; }
-
-    /* tokenClient 없으면 초기화 재시도 */
-    if(!tokenClient){
-      initDriveAuth();
-      if(!tokenClient){
-        reject(new Error('Google 로그인을 초기화할 수 없습니다. 페이지를 새로고침해주세요.'));
-        return;
-      }
-    }
-
-    /* 타임아웃 — 팝업이 차단됐을 때 대비 */
-    const timer = setTimeout(()=>{
-      reject(new Error('Google 로그인 팝업이 차단됐습니다. 팝업 허용 후 다시 시도해주세요.'));
-    }, 30000);
-
-    tokenClient.callback = (resp)=>{
-      clearTimeout(timer);
-      if(resp.error){
-        console.error('OAuth 오류:', resp.error, resp.error_description);
-        reject(new Error('Google 로그인 오류: ' + (resp.error_description || resp.error)));
-        return;
-      }
-      driveToken = resp.access_token;
-      /* 토큰 만료 1시간 후 자동 초기화 */
-      setTimeout(()=>{ driveToken=null; }, 3500000);
-      resolve(driveToken);
-    };
-
-    try{
-      /* consent: 항상 계정 선택 팝업 표시 */
-      tokenClient.requestAccessToken({ prompt: 'consent' });
-    }catch(e){
-      clearTimeout(timer);
-      reject(e);
-    }
+    if(loadCachedToken()){ resolve(driveToken); return; }
+    /* 토큰 없음 → 로그인 모달 표시 */
+    driveAuthResolve = resolve;
+    driveAuthReject  = reject;
+    openDriveAuthModal();
   });
 }
 
