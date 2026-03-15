@@ -1126,6 +1126,90 @@ function getGasUrl(){
 }
 function isGasConnected(){return !!getGasUrl();}
 
+/* ══════════════════════════════════════
+   Google Drive 직접 업로드 (OAuth 2.0)
+   브라우저 → Drive API — 청크 없음, 안정적
+══════════════════════════════════════ */
+const GDRIVE_CLIENT_ID = '167323077293-8gsd86rn7fjvo7dvo4994fhm6opr19cd.apps.googleusercontent.com';
+const GDRIVE_FOLDER_ID = '1-R4T33Pu4AxBvMpn2ZuCqt_Yo6_LjjCy';
+const GDRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.file';
+let   driveToken       = null;
+let   tokenClient      = null;
+
+function initDriveAuth(){
+  if(typeof google==='undefined'||!google.accounts){return;}
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope:     GDRIVE_SCOPE,
+    callback:  (resp)=>{
+      if(resp.error){console.error('Drive OAuth:',resp.error);return;}
+      driveToken=resp.access_token;
+    }
+  });
+}
+
+function requestDriveToken(){
+  return new Promise((resolve,reject)=>{
+    if(driveToken){resolve(driveToken);return;}
+    if(!tokenClient){
+      // GIS 아직 안 로드됐으면 재시도
+      setTimeout(()=>{
+        initDriveAuth();
+        if(!tokenClient){reject(new Error('Google 로그인 초기화 실패'));return;}
+        tokenClient.callback=(resp)=>{
+          if(resp.error){reject(new Error(resp.error));return;}
+          driveToken=resp.access_token;resolve(driveToken);
+        };
+        tokenClient.requestAccessToken({prompt:''});
+      },1500);
+      return;
+    }
+    tokenClient.callback=(resp)=>{
+      if(resp.error){reject(new Error(resp.error));return;}
+      driveToken=resp.access_token;resolve(driveToken);
+    };
+    tokenClient.requestAccessToken({prompt:''});
+  });
+}
+
+async function uploadToDrive(filename, dataURL, onProgress){
+  const token=await requestDriveToken();
+  const sep=dataURL.indexOf(',');
+  const mimeType=dataURL.substring(5,sep).replace(';base64','');
+  const b64=dataURL.substring(sep+1);
+  const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+  const blob=new Blob([bytes],{type:mimeType});
+  const meta=JSON.stringify({name:filename,parents:[GDRIVE_FOLDER_ID]});
+  const body=new FormData();
+  body.append('metadata',new Blob([meta],{type:'application/json'}));
+  body.append('file',blob);
+  return new Promise((resolve,reject)=>{
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST','https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id');
+    xhr.setRequestHeader('Authorization','Bearer '+token);
+    xhr.upload.onprogress=e=>{if(e.lengthComputable)onProgress(Math.round(e.loaded/e.total*85));};
+    xhr.onload=async()=>{
+      if(xhr.status===200||xhr.status===201){
+        const fileId=JSON.parse(xhr.responseText).id;
+        await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,{
+          method:'POST',
+          headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+          body:JSON.stringify({role:'reader',type:'anyone'})
+        });
+        onProgress(100);
+        resolve(`https://drive.google.com/uc?export=view&id=${fileId}`);
+      }else if(xhr.status===401){
+        driveToken=null;
+        try{const url=await uploadToDrive(filename,dataURL,onProgress);resolve(url);}
+        catch(e){reject(e);}
+      }else{reject(new Error('Drive 업로드 실패: '+xhr.status));}
+    };
+    xhr.onerror=()=>reject(new Error('네트워크 오류'));
+    xhr.send(body);
+  });
+}
+
+
 /* 레코드 → 시트 행 객체 */
 function recToRow(r){
   return {
@@ -1134,7 +1218,9 @@ function recToRow(r){
     '지적일':r.reportDate,'조치기한':r.dueDate||'',
     '상태':r.status,'조치내용':r.actionNote||'',
     '조치전사진':(r.beforeUrls||[]).length,
-    '조치후사진':(r.afterUrls||[]).length
+    '조치후사진':(r.afterUrls||[]).length,
+    '_beforeUrl':(r.beforeUrls||[])[0]||'',
+    '_afterUrl':(r.afterUrls||[])[0]||''
   };
 }
 /* 시트 행 객체 → 레코드 */
@@ -1229,41 +1315,6 @@ function compressImage(dataURL, maxW=800, quality=0.75){
 }
 
 /* 사진 1장 → Drive 업로드 → URL 반환 */
-async function uploadPhotoToDrive(recordId, side, index, dataURL){
-  const url=getGasUrl();if(!url)return null;
-  const compressed = await compressImage(dataURL);
-  const sep    = compressed.indexOf(',');
-  const header = sep > -1 ? compressed.substring(0, sep) : '';
-  const b64raw = sep > -1 ? compressed.substring(sep+1) : compressed;
-  const b64safe = b64raw.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-
-  const CHUNK       = 4000;
-  const totalChunks = Math.ceil(b64safe.length / CHUNK);
-
-  /* 중간 청크 병렬 전송 */
-  const reqs=[];
-  for(let i=0;i<totalChunks-1;i++){
-    const chunk=b64safe.substring(i*CHUNK,(i+1)*CHUNK);
-    const qs=`action=uploadChunk&recordId=${encodeURIComponent(recordId)}&side=${side}&index=${index}&chunkIdx=${i}&totalChunks=${totalChunks}&header=${encodeURIComponent(i===0?header:'')}&chunk=${chunk}`;
-    reqs.push(fetch(url+'?'+qs,{method:'GET'}).catch(()=>null));
-  }
-  await Promise.all(reqs);
-
-  /* 마지막 청크 — URL 반환 받음 */
-  const lastIdx=totalChunks-1;
-  const lastChunk=b64safe.substring(lastIdx*CHUNK);
-  const lastQs=`action=uploadChunk&recordId=${encodeURIComponent(recordId)}&side=${side}&index=${index}&chunkIdx=${lastIdx}&totalChunks=${totalChunks}&header=&chunk=${lastChunk}`;
-  try{
-    const res=await fetch(url+'?'+lastQs,{method:'GET'});
-    const json=await res.json().catch(()=>({}));
-    if(json.ok&&json.url) return json.url;
-    console.error('업로드 오류:',json.error);
-    return null;
-  }catch(e){
-    console.error('업로드 fetch 오류:',e);
-    return null;
-  }
-}
 
 /* 레코드 1건 시트에서 삭제 */
 async function deleteFromSheet(id){
@@ -1374,6 +1425,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   }
   setTimeout(updateSyncUI, 100);
   setTimeout(updateSyncUI, 500);
+  setTimeout(()=>{if(typeof google!=='undefined'&&google.accounts)initDriveAuth();},1200);
 });
 function updateAuth(){
   updateSyncUI();
@@ -1600,13 +1652,15 @@ async function saveRecord(){
   for(let i=0;i<tmpB.length;i++){
     const p=tmpB[i];
     if(p.status==='done'&&p.url){
-      /* 임시 ID로 올라간 파일을 실제 ID로 이름 변경은 GAS에서 처리 불가,
-         대신 URL 그대로 사용 (파일은 이미 Drive에 있음) */
       newBeforeUrls.push(p.url);
-    }else if(p.status==='error'||!p.url){
-      /* 실패했으면 재시도 */
-      const url=await uploadPhotoToDrive(id,'before',keptBefore.length+newBeforeUrls.length,p.dataURL);
-      if(url)newBeforeUrls.push(url);
+    }else{
+      /* 실패했으면 Drive API로 재시도 */
+      try{
+        const compressed=await compressImage(p.dataURL);
+        const ext=compressed.startsWith('data:image/png')?'png':'jpg';
+        const url=await uploadToDrive(`${id}_before_${keptBefore.length+newBeforeUrls.length}.${ext}`,compressed,()=>{});
+        if(url)newBeforeUrls.push(url);
+      }catch(e){console.error('before 재업로드 실패:',e);}
     }
   }
   const newAfterUrls=[];
@@ -1614,9 +1668,13 @@ async function saveRecord(){
     const p=tmpA[i];
     if(p.status==='done'&&p.url){
       newAfterUrls.push(p.url);
-    }else if(p.status==='error'||!p.url){
-      const url=await uploadPhotoToDrive(id,'after',keptAfter.length+newAfterUrls.length,p.dataURL);
-      if(url)newAfterUrls.push(url);
+    }else{
+      try{
+        const compressed=await compressImage(p.dataURL);
+        const ext=compressed.startsWith('data:image/png')?'png':'jpg';
+        const url=await uploadToDrive(`${id}_after_${keptAfter.length+newAfterUrls.length}.${ext}`,compressed,()=>{});
+        if(url)newAfterUrls.push(url);
+      }catch(e){console.error('after 재업로드 실패:',e);}
     }
   }
 
@@ -1691,16 +1749,21 @@ function processFiles(files,side){
       const item={dataURL,name:f.name,status:'uploading',url:null,progress:0};
       arr.push(item);
       renderGrids();
-      const gasUrl=getGasUrl();
-      if(!gasUrl){item.status='error';renderGrids();return;}
-      /* 실제 ID 사용 (등록: pendingId, 수정: editId) */
-      const useId=editId||pendingId||'_tmp_';
-      const idx=arr.filter(p=>p!==item&&p.status==='done').length;
-      const url=await uploadPhotoToDriveWithProgress(gasUrl,useId,side,idx,dataURL,(pct)=>{
-        item.progress=pct;renderGrids();
-      });
-      if(url){item.status='done';item.url=url;}
-      else{item.status='error';}
+      try{
+        const useId=editId||pendingId||('_tmp_'+Date.now());
+        const idx=arr.filter(p=>p!==item&&p.status==='done').length;
+        const compressed=await compressImage(dataURL);
+        const ext=compressed.startsWith('data:image/png')?'png':'jpg';
+        const filename=`${useId}_${side}_${idx}.${ext}`;
+        const url=await uploadToDrive(filename,compressed,(pct)=>{
+          item.progress=pct;renderGrids();
+        });
+        item.status='done';item.url=url;
+      }catch(err){
+        console.error('Drive 업로드 오류:',err.message);
+        item.status='error';item.error=err.message;
+        toast('❌ 업로드 실패: '+err.message);
+      }
       renderGrids();
     };
     rd.readAsDataURL(f);
@@ -1708,42 +1771,6 @@ function processFiles(files,side){
 }
 
 /* 업로드 진행률 포함 버전 — 순차 전송으로 진행률 안정화 */
-async function uploadPhotoToDriveWithProgress(gasUrl, recordId, side, index, dataURL, onProgress){
-  try{
-    const compressed=await compressImage(dataURL);
-    const sep=compressed.indexOf(',');
-    const header=sep>-1?compressed.substring(0,sep):'';
-    const b64raw=sep>-1?compressed.substring(sep+1):compressed;
-    const b64safe=b64raw.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-    const CHUNK=4000;
-    const totalChunks=Math.ceil(b64safe.length/CHUNK);
-
-    /* 순차 전송 — 진행률이 안정적으로 올라감 */
-    for(let i=0;i<totalChunks;i++){
-      const chunk=b64safe.substring(i*CHUNK,(i+1)*CHUNK);
-      const qs=`action=uploadChunk`
-        +`&recordId=${encodeURIComponent(recordId)}`
-        +`&side=${side}&index=${index}`
-        +`&chunkIdx=${i}&totalChunks=${totalChunks}`
-        +`&header=${encodeURIComponent(i===0?header:'')}`
-        +`&chunk=${chunk}`;
-      const res=await fetch(gasUrl+'?'+qs,{method:'GET'});
-      const json=await res.json().catch(()=>({}));
-      /* 진행률: 각 청크 완료마다 업데이트 */
-      onProgress(Math.round((i+1)/totalChunks*100));
-      /* 마지막 청크에서 URL 반환 */
-      if(i===totalChunks-1){
-        if(json.ok&&json.url) return json.url;
-        console.error('마지막 청크 오류:', json.error);
-        return null;
-      }
-    }
-    return null;
-  }catch(e){
-    console.error('업로드 오류:', e.message);
-    return null;
-  }
-}
 
 function renderGrids(){
   /* exB/exA: 기존 Drive URL */
