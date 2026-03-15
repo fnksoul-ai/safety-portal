@@ -1674,9 +1674,8 @@ async function saveRecord(){
     }else{
       /* 실패했으면 Drive API로 재시도 */
       try{
-        const compressed=await compressImage(p.dataURL);
-        const ext=compressed.startsWith('data:image/png')?'png':'jpg';
-        const url=await uploadToDrive(`${id}_before_${keptBefore.length+newBeforeUrls.length}.${ext}`,compressed,()=>{});
+        const ext=p.dataURL.startsWith('data:image/png')?'png':'jpg';
+        const url=await uploadToDrive(`${id}_before_${keptBefore.length+newBeforeUrls.length}.${ext}`,p.dataURL,()=>{});
         if(url)newBeforeUrls.push(url);
       }catch(e){console.error('before 재업로드 실패:',e);}
     }
@@ -1688,9 +1687,8 @@ async function saveRecord(){
       newAfterUrls.push(p.url);
     }else{
       try{
-        const compressed=await compressImage(p.dataURL);
-        const ext=compressed.startsWith('data:image/png')?'png':'jpg';
-        const url=await uploadToDrive(`${id}_after_${keptAfter.length+newAfterUrls.length}.${ext}`,compressed,()=>{});
+        const ext=p.dataURL.startsWith('data:image/png')?'png':'jpg';
+        const url=await uploadToDrive(`${id}_after_${keptAfter.length+newAfterUrls.length}.${ext}`,p.dataURL,()=>{});
         if(url)newAfterUrls.push(url);
       }catch(e){console.error('after 재업로드 실패:',e);}
     }
@@ -1770,10 +1768,9 @@ function processFiles(files,side){
       try{
         const useId=editId||pendingId||('_tmp_'+Date.now());
         const idx=arr.filter(p=>p!==item&&p.status==='done').length;
-        const compressed=await compressImage(dataURL);
-        const ext=compressed.startsWith('data:image/png')?'png':'jpg';
+        const ext=dataURL.startsWith('data:image/png')?'png':(dataURL.startsWith('data:image/gif')?'gif':'jpg');
         const filename=`${useId}_${side}_${idx}.${ext}`;
-        const url=await uploadToDrive(filename,compressed,(pct)=>{
+        const url=await uploadToDrive(filename,dataURL,(pct)=>{
           item.progress=pct;renderGrids();
         });
         item.status='done';item.url=url;
