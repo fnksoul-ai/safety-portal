@@ -1149,26 +1149,44 @@ function initDriveAuth(){
 }
 
 function requestDriveToken(){
-  return new Promise((resolve,reject)=>{
-    if(driveToken){resolve(driveToken);return;}
+  return new Promise((resolve, reject)=>{
+    /* 유효한 토큰 있으면 바로 반환 */
+    if(driveToken){ resolve(driveToken); return; }
+
+    /* tokenClient 없으면 초기화 재시도 */
     if(!tokenClient){
-      // GIS 아직 안 로드됐으면 재시도
-      setTimeout(()=>{
-        initDriveAuth();
-        if(!tokenClient){reject(new Error('Google 로그인 초기화 실패'));return;}
-        tokenClient.callback=(resp)=>{
-          if(resp.error){reject(new Error(resp.error));return;}
-          driveToken=resp.access_token;resolve(driveToken);
-        };
-        tokenClient.requestAccessToken({prompt:''});
-      },1500);
-      return;
+      initDriveAuth();
+      if(!tokenClient){
+        reject(new Error('Google 로그인을 초기화할 수 없습니다. 페이지를 새로고침해주세요.'));
+        return;
+      }
     }
-    tokenClient.callback=(resp)=>{
-      if(resp.error){reject(new Error(resp.error));return;}
-      driveToken=resp.access_token;resolve(driveToken);
+
+    /* 타임아웃 — 팝업이 차단됐을 때 대비 */
+    const timer = setTimeout(()=>{
+      reject(new Error('Google 로그인 팝업이 차단됐습니다. 팝업 허용 후 다시 시도해주세요.'));
+    }, 30000);
+
+    tokenClient.callback = (resp)=>{
+      clearTimeout(timer);
+      if(resp.error){
+        console.error('OAuth 오류:', resp.error, resp.error_description);
+        reject(new Error('Google 로그인 오류: ' + (resp.error_description || resp.error)));
+        return;
+      }
+      driveToken = resp.access_token;
+      /* 토큰 만료 1시간 후 자동 초기화 */
+      setTimeout(()=>{ driveToken=null; }, 3500000);
+      resolve(driveToken);
     };
-    tokenClient.requestAccessToken({prompt:''});
+
+    try{
+      /* consent: 항상 계정 선택 팝업 표시 */
+      tokenClient.requestAccessToken({ prompt: 'consent' });
+    }catch(e){
+      clearTimeout(timer);
+      reject(e);
+    }
   });
 }
 
