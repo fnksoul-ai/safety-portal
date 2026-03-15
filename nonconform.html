@@ -1580,31 +1580,49 @@ async function saveRecord(){
   const dd=document.getElementById('fDue').value;
   const de=document.getElementById('fDesc').value.trim();
   const an=document.getElementById('fAction').value.trim();
-  if(!co||!lo||!wr||!rd||!de){toast('❌ 필수 항목을 입력해주세요 (협력업체, 위치, 작성자, 지적일, 내용)');return;}
+  if(!co||!lo||!wr||!rd||!de){toast('❌ 필수 항목을 입력해주세요');return;}
+
+  /* 업로드 진행 중인 사진 있으면 대기 */
+  const uploading=[...tmpB,...tmpA].filter(p=>p.status==='uploading');
+  if(uploading.length){toast('⏳ 사진 업로드 중... 잠시 후 저장해주세요');return;}
+
   const id=editId||genId();
 
-  /* 기존 Drive URL 유지 (삭제 표시된 것 제외) */
+  /* 기존 Drive URL 유지 */
   const keptBefore=exB.filter(p=>!p._del).map(p=>p.url);
   const keptAfter=exA.filter(p=>!p._del).map(p=>p.url);
 
-  /* 새 사진 Drive 업로드 */
+  /* tmpB/tmpA 중 이미 업로드 완료된 것 URL 수집
+     실패한 항목은 재시도 */
   toast('💾 저장 중...');
   const newBeforeUrls=[];
   for(let i=0;i<tmpB.length;i++){
-    const url=await uploadPhotoToDrive(id,'before',keptBefore.length+i,tmpB[i].dataURL);
-    if(url)newBeforeUrls.push(url);
+    const p=tmpB[i];
+    if(p.status==='done'&&p.url){
+      /* 임시 ID로 올라간 파일을 실제 ID로 이름 변경은 GAS에서 처리 불가,
+         대신 URL 그대로 사용 (파일은 이미 Drive에 있음) */
+      newBeforeUrls.push(p.url);
+    }else if(p.status==='error'||!p.url){
+      /* 실패했으면 재시도 */
+      const url=await uploadPhotoToDrive(id,'before',keptBefore.length+newBeforeUrls.length,p.dataURL);
+      if(url)newBeforeUrls.push(url);
+    }
   }
   const newAfterUrls=[];
   for(let i=0;i<tmpA.length;i++){
-    const url=await uploadPhotoToDrive(id,'after',keptAfter.length+i,tmpA[i].dataURL);
-    if(url)newAfterUrls.push(url);
+    const p=tmpA[i];
+    if(p.status==='done'&&p.url){
+      newAfterUrls.push(p.url);
+    }else if(p.status==='error'||!p.url){
+      const url=await uploadPhotoToDrive(id,'after',keptAfter.length+newAfterUrls.length,p.dataURL);
+      if(url)newAfterUrls.push(url);
+    }
   }
 
   const beforeUrls=[...keptBefore,...newBeforeUrls];
   const afterUrls=[...keptAfter,...newAfterUrls];
   const rec={id,company:co,location:lo,writer:wr,category:ca,status:st,reportDate:rd,dueDate:dd,
-    description:de,actionNote:an,
-    beforeUrls,afterUrls,
+    description:de,actionNote:an,beforeUrls,afterUrls,
     beforeCount:beforeUrls.length,afterCount:afterUrls.length};
 
   await dbPut(SM,rec);
@@ -1663,16 +1681,69 @@ function onDragLeave(id){document.getElementById(id).classList.remove('dragover'
 function onDrop(e,side){e.preventDefault();onDragLeave(side==='before'?'dzBefore':'dzAfter');processFiles(e.dataTransfer.files,side);}
 function onFileInput(e,side){processFiles(e.target.files,side);e.target.value='';}
 function processFiles(files,side){
-  const arr=side==='before'?tmpB:tmpA;
   [...files].forEach(f=>{
     if(!f.type.startsWith('image/'))return;
     const rd=new FileReader();
-    rd.onload=e=>{arr.push({dataURL:e.target.result,name:f.name});renderGrids();};
+    rd.onload=async e=>{
+      const dataURL=e.target.result;
+      const arr=side==='before'?tmpB:tmpA;
+      /* 상태: pending → uploading → done(url) / error */
+      const item={dataURL,name:f.name,status:'uploading',url:null,progress:0};
+      arr.push(item);
+      renderGrids();
+      /* 즉시 Drive 업로드 시작 */
+      const gasUrl=getGasUrl();
+      if(!gasUrl){item.status='error';item.error='GAS URL 없음';renderGrids();return;}
+      /* 임시 ID (저장 전이면 _temp_ 접두사) */
+      const tmpId=(editId||'_temp_'+Date.now());
+      const idx=(side==='before'?tmpB:tmpA).filter(p=>p.status==='done').length;
+      const url=await uploadPhotoToDriveWithProgress(gasUrl,tmpId,side,idx,dataURL,(pct)=>{
+        item.progress=pct;renderGrids();
+      });
+      if(url){item.status='done';item.url=url;}
+      else{item.status='error';item.error='업로드 실패';}
+      renderGrids();
+    };
     rd.readAsDataURL(f);
   });
 }
+
+/* 업로드 진행률 포함 버전 */
+async function uploadPhotoToDriveWithProgress(gasUrl, recordId, side, index, dataURL, onProgress){
+  const compressed=await compressImage(dataURL);
+  const sep=compressed.indexOf(',');
+  const header=sep>-1?compressed.substring(0,sep):'';
+  const b64raw=sep>-1?compressed.substring(sep+1):compressed;
+  const b64safe=b64raw.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  const CHUNK=4000;
+  const totalChunks=Math.ceil(b64safe.length/CHUNK);
+
+  /* 중간 청크 병렬 */
+  const reqs=[];
+  for(let i=0;i<totalChunks-1;i++){
+    const chunk=b64safe.substring(i*CHUNK,(i+1)*CHUNK);
+    const qs=`action=uploadChunk&recordId=${encodeURIComponent(recordId)}&side=${side}&index=${index}&chunkIdx=${i}&totalChunks=${totalChunks}&header=${encodeURIComponent(i===0?header:'')}&chunk=${chunk}`;
+    reqs.push(fetch(gasUrl+'?'+qs,{method:'GET'}).then(()=>{
+      onProgress(Math.round((i+1)/totalChunks*90));
+    }).catch(()=>null));
+  }
+  await Promise.all(reqs);
+  onProgress(90);
+
+  /* 마지막 청크 */
+  const lastIdx=totalChunks-1;
+  const lastChunk=b64safe.substring(lastIdx*CHUNK);
+  const lastQs=`action=uploadChunk&recordId=${encodeURIComponent(recordId)}&side=${side}&index=${index}&chunkIdx=${lastIdx}&totalChunks=${totalChunks}&header=&chunk=${lastChunk}`;
+  try{
+    const res=await fetch(gasUrl+'?'+lastQs,{method:'GET'});
+    const json=await res.json().catch(()=>({}));
+    if(json.ok&&json.url){onProgress(100);return json.url;}
+    return null;
+  }catch(e){return null;}
+}
+
 function renderGrids(){
-  /* exB/exA: Drive URL 객체 {url, _del} */
+  /* exB/exA: 기존 Drive URL */
   const rg=(gid,arr,side)=>{
     document.getElementById(gid).innerHTML=arr.filter(p=>!p._del).map((p,i)=>
       `<div class="photo-thumb" onclick="openLB('${p.url}')">
@@ -1681,15 +1752,24 @@ function renderGrids(){
       </div>`
     ).join('');
   };
-  /* tmpB/tmpA: 로컬 미리보기 (아직 업로드 전) */
+  /* tmpB/tmpA: 업로드 진행 중 / 완료 */
   const rt=(gid,arr,side)=>{
-    document.getElementById(gid).innerHTML+=arr.map((p,i)=>
-      `<div class="photo-thumb" onclick="openLB('${p.dataURL}')">
-        <img src="${p.dataURL}" alt="">
-        <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.5);color:#fff;font-size:9px;text-align:center;padding:2px;">업로드 대기</div>
-        <button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button>
-      </div>`
-    ).join('');
+    document.getElementById(gid).innerHTML+=arr.map((p,i)=>{
+      const thumb=p.status==='done'
+        ?`<div class="photo-thumb" onclick="openLB('${p.url}')"><img src="${p.url}" alt=""><button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button></div>`
+        :`<div class="photo-thumb" style="cursor:default;">
+            <img src="${p.dataURL}" alt="" style="opacity:${p.status==='error'?0.4:0.7};">
+            ${p.status==='uploading'?`
+              <div style="position:absolute;bottom:0;left:0;right:0;padding:3px 5px;background:rgba(0,0,0,.6);">
+                <div style="height:4px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden;">
+                  <div style="height:100%;width:${p.progress||0}%;background:#22c55e;transition:width .2s;border-radius:2px;"></div>
+                </div>
+                <div style="color:#fff;font-size:9px;text-align:center;margin-top:2px;">${p.progress||0}%</div>
+              </div>`
+            :`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,.6);color:#fff;font-size:11px;font-weight:700;">❌ 실패</div>`}
+          </div>`;
+      return thumb;
+    }).join('');
   };
   rg('gridBefore',exB,'before');rg('gridAfter',exA,'after');
   rt('gridBefore',tmpB,'before');rt('gridAfter',tmpA,'after');
