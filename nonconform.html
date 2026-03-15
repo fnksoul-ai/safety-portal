@@ -1394,10 +1394,18 @@ window.addEventListener('DOMContentLoaded',async()=>{
   document.getElementById('fDate').value=today();
   updateSyncUI();
   startAutoSync();
-  /* GAS URL 있으면 시트에서 데이터 로드 (비로그인 포함 항상 실행) */
   const gasUrl=getGasUrl();
   if(gasUrl){
-    loadFromSheet().catch(()=>{});
+    toast('🔗 구글 시트 연결 중...');
+    try{
+      const ok=await loadFromSheet();
+      if(ok) toast(`✅ 시트 로드 완료 (${records.length}건)`);
+      else toast('❌ 시트 로드 실패');
+    }catch(e){
+      toast('❌ 오류: '+e.message);
+    }
+  }else{
+    toast('⚠️ GAS URL 없음');
   }
   setTimeout(updateSyncUI, 100);
   setTimeout(updateSyncUI, 500);
@@ -2078,10 +2086,10 @@ nav {
 
 function openLB(src){document.getElementById('lbImg').src=src;document.getElementById('lightbox').classList.add('open');}
 function closeLB(){document.getElementById('lightbox').classList.remove('open');}
-function toast(msg){
+function toast(msg,duration=5000){
   const t=document.getElementById('toast');t.textContent=msg;
   t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
-  clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},2500);
+  clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},duration);
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLB();closeDetail();closeEdit();}});
 document.getElementById('editOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('editOverlay'))closeEdit();});
