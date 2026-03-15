@@ -943,7 +943,7 @@ nav {
         <thead><tr>
           <th>관리번호</th><th>협력업체</th><th>위치</th><th>작성자</th>
           <th style="min-width:220px;">내용</th><th>카테고리</th>
-          <th>지적일</th><th>조치기한</th><th>상태</th><th>사진</th><th></th>
+          <th>지적일</th><th>조치완료일</th><th>상태</th><th>사진</th><th></th>
         </tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
@@ -972,7 +972,7 @@ nav {
         <div class="form-group"><label class="form-label">상태</label>
           <select id="fStat"><option>미조치</option><option>조치중</option><option>조치완료</option></select></div>
         <div class="form-group"><label class="form-label">지적일 <span class="req">*</span></label><input type="date" id="fDate"></div>
-        <div class="form-group"><label class="form-label">조치기한</label><input type="date" id="fDue"></div>
+        <div class="form-group"><label class="form-label">조치완료일</label><input type="date" id="fDue"></div>
         <div class="form-group span2"><label class="form-label">부적합 내용 <span class="req">*</span></label><textarea id="fDesc" placeholder="부적합 내용을 상세히 기재하세요..."></textarea></div>
         <div class="form-group span2"><label class="form-label">조치 내용</label><textarea id="fAction" placeholder="조치 완료 후 내용을 기재하세요..."></textarea></div>
       </div>
@@ -1342,7 +1342,7 @@ function recToRow(r){
   return {
     '관리번호':r.id,'협력업체':r.company,'위치':r.location,'작성자':r.writer||'',
     '카테고리':r.category,'부적합내용':r.description,
-    '지적일':r.reportDate,'조치기한':r.dueDate||'',
+    '지적일':r.reportDate,'조치완료일':r.dueDate||'',
     '상태':r.status,'조치내용':r.actionNote||'',
     '조치전사진':(r.beforeUrls||[]).length,
     '조치후사진':(r.afterUrls||[]).length,
@@ -1376,7 +1376,7 @@ function rowToRec(row){
     category:row['카테고리']||'',
     description:row['부적합내용']||'',
     reportDate:normalizeDate(row['지적일']),
-    dueDate:normalizeDate(row['조치기한']),
+    dueDate:normalizeDate(row['조치완료일']),
     status:row['상태']||'미조치',
     actionNote:row['조치내용']||'',
     beforeUrls:beforeUrl?[beforeUrl]:[],
@@ -1850,7 +1850,7 @@ async function openDetail(id){
       <div class="detail-item"><div class="detail-key">카테고리</div><div class="detail-val">${r.category}</div></div>
       <div class="detail-item"><div class="detail-key">상태</div><div class="detail-val">${sb}</div></div>
       <div class="detail-item"><div class="detail-key">지적일</div><div class="detail-val">${r.reportDate}</div></div>
-      <div class="detail-item"><div class="detail-key">조치기한</div><div class="detail-val ${od?'overdue':''}">${r.dueDate||'—'}${od?' ⚠ 기한초과':''}</div></div>
+      <div class="detail-item"><div class="detail-key">조치완료일</div><div class="detail-val ${od?'overdue':''}">${r.dueDate||'—'}${od?' ⚠ 기한초과':''}</div></div>
       <div class="detail-item span2"><div class="detail-key">부적합 내용</div><div class="detail-val" style="white-space:pre-wrap;">${r.description}</div></div>
       ${r.actionNote?`<div class="detail-item span2"><div class="detail-key">조치 내용</div><div class="detail-val" style="white-space:pre-wrap;">${r.actionNote}</div></div>`:''}
     </div>
@@ -1945,7 +1945,7 @@ function delEx(side,i){const arr=side==='before'?exB:exA;const ac=arr.filter(p=>
 
 function exportExcel(){
   const f=getFiltered();if(!f.length){toast('내보낼 데이터가 없습니다');return;}
-  const rows=f.map(r=>({'관리번호':r.id,'협력업체':r.company,'위치':r.location,'카테고리':r.category,'부적합내용':r.description,'지적일':r.reportDate,'조치기한':r.dueDate||'','상태':r.status,'조치내용':r.actionNote||'','조치전사진':r.beforeCount||0,'조치후사진':r.afterCount||0}));
+  const rows=f.map(r=>({'관리번호':r.id,'협력업체':r.company,'위치':r.location,'카테고리':r.category,'부적합내용':r.description,'지적일':r.reportDate,'조치완료일':r.dueDate||'','상태':r.status,'조치내용':r.actionNote||'','조치전사진':r.beforeCount||0,'조치후사진':r.afterCount||0}));
   const ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=[{wch:14},{wch:16},{wch:14},{wch:12},{wch:40},{wch:12},{wch:12},{wch:10},{wch:40},{wch:8},{wch:8}];
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'부적합사항');
   XLSX.writeFile(wb,`부적합관리대장_${today().replace(/-/g,'')}.xlsx`);toast('✅ 엑셀 내보내기 완료');
@@ -2414,7 +2414,7 @@ nav {
     <div class="item"><div class="key">위치</div><div class="val">${r.location}</div></div>
     <div class="item"><div class="key">카테고리</div><div class="val">${r.category}</div></div>
     <div class="item"><div class="key">지적일</div><div class="val">${r.reportDate}</div></div>
-    <div class="item"><div class="key">조치기한</div><div class="val">${r.dueDate||'—'}</div></div>
+    <div class="item"><div class="key">조치완료일</div><div class="val">${r.dueDate||'—'}</div></div>
     <div class="item"><div class="key">상태</div><div class="val">${r.status}</div></div>
   </div>
   <div class="sec">부적합 내용</div><div class="box">${r.description}</div>
