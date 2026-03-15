@@ -1185,31 +1185,31 @@ function compressImage(dataURL, maxW=500, quality=0.6){
 /* 사진 1장을 청크(1500자)로 나눠 GET 요청으로 전송 */
 async function uploadPhotoChunked(gasUrl, recordId, side, index, dataURL){
   const compressed = await compressImage(dataURL);
-  /* base64 헤더(data:image/jpeg;base64,) 제거 후 전송, 서버에서 재조합 */
   const sep    = compressed.indexOf(',');
   const header = sep > -1 ? compressed.substring(0, sep) : '';
-  const b64    = sep > -1 ? compressed.substring(sep+1) : compressed;
+  const b64raw = sep > -1 ? compressed.substring(sep+1) : compressed;
+
+  /* base64의 +→-, /→_, =제거 → URL-safe 변환 (서버에서 복원) */
+  const b64safe = b64raw.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 
   const CHUNK       = 1500;
-  const totalChunks = Math.ceil(b64.length / CHUNK);
+  const totalChunks = Math.ceil(b64safe.length / CHUNK);
 
   for(let i=0; i<totalChunks; i++){
-    const chunk = b64.substring(i*CHUNK, (i+1)*CHUNK);
-    const params = new URLSearchParams({
-      action:'uploadChunk',
-      recordId, side,
-      index: String(index),
-      chunkIdx: String(i),
-      totalChunks: String(totalChunks),
-      header: i===0 ? header : '',   /* 첫 청크에만 헤더 포함 */
-      chunk
-    });
+    const chunk = b64safe.substring(i*CHUNK, (i+1)*CHUNK);
+    /* URLSearchParams 대신 직접 문자열 조합 — chunk는 이미 URL-safe */
+    const qs = `action=uploadChunk`
+      +`&recordId=${encodeURIComponent(recordId)}`
+      +`&side=${side}&index=${index}`
+      +`&chunkIdx=${i}&totalChunks=${totalChunks}`
+      +`&header=${encodeURIComponent(i===0?header:'')}`
+      +`&chunk=${chunk}`;   /* URL-safe b64이므로 추가 인코딩 불필요 */
     try{
-      const res  = await fetch(gasUrl+'?'+params.toString(), {method:'GET'});
+      const res  = await fetch(gasUrl+'?'+qs, {method:'GET'});
       const json = await res.json().catch(()=>({}));
       if(json.ok === false){
         console.error(`청크 ${i}/${totalChunks} 오류:`, json.error);
-        toast(`❌ 사진 업로드 실패 (청크${i}): ${json.error||'오류'}`);
+        toast(`❌ 사진 업로드 실패: ${json.error||'오류'}`);
         return false;
       }
     }catch(e){
