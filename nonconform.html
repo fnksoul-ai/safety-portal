@@ -368,6 +368,10 @@ textarea:focus{border-color:var(--orange);}
   thead th{background:#f0f0f0!important;color:#333!important;}
   canvas{max-width:100%!important;}
   img{max-width:100%!important;}
+  /* 수정/삭제 버튼 열 숨김 */
+  thead th:last-child,
+  tbody td:last-child{display:none!important;}
+  .table-toolbar .btn{display:none!important;}
 }
 
 /* 반응형 */
@@ -1658,7 +1662,7 @@ function renderTable(){
       <td style="font-size:12px;">${r.reportDate}</td>
       <td class="${od?'overdue':''}" style="font-size:12px;">${r.dueDate||'—'}${od?' ⚠':''}</td>
       <td>${sb(r.status)}</td>
-      <td style="font-size:12px;color:var(--muted2);">${ph?`📷 ${ph}`:'—'}</td>
+      <td style="font-size:12px;color:var(--muted2);">${ph?`${ph}`:'—'}</td>
       <td onclick="event.stopPropagation()" style="white-space:nowrap;">
         ${AUTH.isAdmin()?`<button class="btn btn-ghost btn-sm" onclick="openEdit('${r.id}')">✏️</button>
         <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="delRecord('${r.id}')">🗑️</button>`:`<button class="btn btn-ghost btn-sm" onclick="openEdit('${r.id}')">✏️</button>`}
