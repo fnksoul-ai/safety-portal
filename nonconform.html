@@ -1095,12 +1095,30 @@ function recToRow(r){
   };
 }
 /* 시트 행 객체 → 레코드 */
+/* 날짜 문자열 → YYYY-MM-DD 정규화 (시트에서 받은 다양한 형식 처리) */
+function normalizeDate(val){
+  if(!val)return '';
+  const s=String(val).trim();
+  if(!s)return '';
+  /* 이미 YYYY-MM-DD 형식이면 그대로 */
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  /* Date 파싱 후 KST 기준으로 YYYY-MM-DD 추출 */
+  const d=new Date(s);
+  if(isNaN(d.getTime()))return s; /* 파싱 실패 시 원본 반환 */
+  const yyyy=d.getFullYear();
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  const dd=String(d.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 function rowToRec(row){
   return {
     id:row['관리번호']||'',company:row['협력업체']||'',
     location:row['위치']||'',category:row['카테고리']||'',
-    description:row['부적합내용']||'',reportDate:row['지적일']||'',
-    dueDate:row['조치기한']||'',status:row['상태']||'미조치',
+    description:row['부적합내용']||'',
+    reportDate:normalizeDate(row['지적일']),
+    dueDate:normalizeDate(row['조치기한']),
+    status:row['상태']||'미조치',
     actionNote:row['조치내용']||'',
     beforeCount:Number(row['조치전사진'])||0,
     afterCount:Number(row['조치후사진'])||0
