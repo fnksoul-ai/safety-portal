@@ -1212,7 +1212,7 @@ async function syncToSheet(rec){
 
 
 /* 이미지 압축 — 시트 표시용 (320px, 45%) → 약 4000~6000자 */
-function compressImage(dataURL, maxW=1920, quality=0.88){
+function compressImage(dataURL, maxW=800, quality=0.75){
   return new Promise(resolve=>{
     const img=new Image();
     img.onload=()=>{
