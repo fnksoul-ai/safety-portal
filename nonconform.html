@@ -1176,7 +1176,9 @@ function rowToRec(row){
     status:row['상태']||'미조치',
     actionNote:row['조치내용']||'',
     beforeCount:Number(row['조치전사진'])||0,
-    afterCount:Number(row['조치후사진'])||0
+    afterCount:Number(row['조치후사진'])||0,
+    beforeUrl:row['_beforeUrl']||'',
+    afterUrl:row['_afterUrl']||''
   };
 }
 
@@ -1511,7 +1513,7 @@ function renderTable(){
   const sb=s=>({'미조치':'<span class="badge badge-red">미조치</span>','조치중':'<span class="badge badge-yellow">조치중</span>','조치완료':'<span class="badge badge-green">완료</span>'}[s]||s);
   tb.innerHTML=[...f].sort((a,b)=>b.reportDate.localeCompare(a.reportDate)).map(r=>{
     const od=r.dueDate&&r.dueDate<td&&r.status!=='조치완료';
-    const ph=(r.beforeCount||0)+(r.afterCount||0);
+    const ph=(r.beforeCount||0)+(r.afterCount||0)+(r.beforeUrl?1:0)+(r.afterUrl?1:0);
     return `<tr onclick="openDetail('${r.id}')">
       <td class="id-mono">${r.id}</td>
       <td style="font-weight:700;">${r.company}</td>
@@ -1671,8 +1673,16 @@ async function openDetail(id){
       ${r.actionNote?`<div class="detail-item span2"><div class="detail-key">조치 내용</div><div class="detail-val" style="white-space:pre-wrap;">${r.actionNote}</div></div>`:''}
     </div>
     <div class="photo-cols">
-      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-red"></div> 조치 전 (${be.length}장)</div>${be.length?pg(be):'<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">사진 없음</div>'}</div>
-      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-green"></div> 조치 후 (${af.length}장)</div>${af.length?pg(af):`<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">${r.status!=='조치완료'?'조치 완료 후 등록':'사진 없음'}</div>`}</div>
+      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-red"></div> 조치 전 (${be.length+(r.beforeUrl?1:0)}장)</div>
+        ${be.length?pg(be):''}
+        ${r.beforeUrl?`<div class="photo-thumb" onclick="openLB('${r.beforeUrl}')"><img src="${r.beforeUrl}" alt="조치전" style="width:100%;height:100%;object-fit:cover;"></div>`:''}
+        ${!be.length&&!r.beforeUrl?'<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">사진 없음</div>':''}
+      </div>
+      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-green"></div> 조치 후 (${af.length+(r.afterUrl?1:0)}장)</div>
+        ${af.length?pg(af):''}
+        ${r.afterUrl?`<div class="photo-thumb" onclick="openLB('${r.afterUrl}')"><img src="${r.afterUrl}" alt="조치후" style="width:100%;height:100%;object-fit:cover;"></div>`:''}
+        ${!af.length&&!r.afterUrl?`<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">${r.status!=='조치완료'?'조치 완료 후 등록':'사진 없음'}</div>`:''}
+      </div>
     </div>`;
   document.getElementById('detailFoot').innerHTML=`
     <button class="btn btn-ghost" onclick="closeDetail();openEdit('${r.id}')">✏️ 수정</button>
