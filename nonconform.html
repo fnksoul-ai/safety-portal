@@ -869,10 +869,6 @@ nav {
     <div class="header-actions">
       <button class="btn btn-ghost" onclick="exportExcel()">📊 엑셀</button>
       <button class="btn btn-ghost" onclick="window.print()">🖨️ 인쇄</button>
-      <button class="btn btn-ghost" id="sheetSyncBtn" onclick="manualSync()" title="구글 시트 동기화" style="display:none">
-        <span id="syncIcon">🔄</span> 시트 동기화
-      </button>
-      <button class="btn btn-ghost" id="sheetSettingBtn" onclick="openSheetSetting()" title="구글 시트 연동 설정" style="display:none">⚙️ 시트 설정</button>
       <button class="btn btn-primary" id="addBtn" onclick="openAdd()" style="display:none">＋ 등록</button>
     </div>
   </div>
@@ -994,37 +990,6 @@ nav {
   <button class="lb-close">×</button>
   <img id="lbImg" src="" alt="">
 </div>
-<!-- 구글 시트 연동 설정 모달 -->
-<div id="sheetSettingOverlay" onclick="if(event.target===this)closeSheetSetting()" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
-  <div class="modal" style="max-width:540px;width:100%">
-    <div class="modal-header">
-      <div class="modal-title">📋 구글 스프레드시트 연동 설정</div>
-      <button class="modal-close" onclick="closeSheetSetting()">×</button>
-    </div>
-    <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
-      <div style="font-size:13px;color:var(--muted2);line-height:1.7;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);">
-        📌 아래에 <b>Google Apps Script 웹 앱 URL</b>을 입력하면<br>
-        페이지 ↔ 구글 시트가 양방향으로 자동 동기화됩니다.
-      </div>
-      <div class="form-group">
-        <label class="form-label">Apps Script 웹 앱 URL</label>
-        <input type="text" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%">
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <label style="font-size:13px;color:var(--muted2);display:flex;align-items:center;gap:6px;">
-          <input type="checkbox" id="autoSyncChk"> 자동 동기화 (30초마다)
-        </label>
-      </div>
-      <div id="sheetConnStatus" style="font-size:12px;display:none;padding:8px 12px;border-radius:6px;"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeSheetSetting()">취소</button>
-      <button class="btn btn-ghost" onclick="testSheetConnection()" style="color:var(--blue)">🔍 연결 테스트</button>
-      <button class="btn btn-primary" onclick="saveSheetSetting()">💾 저장</button>
-    </div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
 <script src="auth.js"></script>
@@ -1064,161 +1029,14 @@ let records=[],editId=null,curCo='전체';
 let tmpB=[],tmpA=[],exB=[],exA=[];
 let chartCo,chartCa;
 
-/* ══════════════════════════════════════
-   구글 시트 연동 (Google Apps Script)
-══════════════════════════════════════ */
-const GAS_KEY='nc_gas_url';
-const GAS_AUTO_KEY='nc_gas_auto';
-let gasAutoTimer=null;
-
-function getGasUrl(){return localStorage.getItem(GAS_KEY)||'';}
-function isGasConnected(){return !!getGasUrl();}
-
-/* 레코드 → 시트 행 객체 */
-function recToRow(r){
-  return {
-    '관리번호':r.id,'협력업체':r.company,'위치':r.location,
-    '카테고리':r.category,'부적합내용':r.description,
-    '지적일':r.reportDate,'조치기한':r.dueDate||'',
-    '상태':r.status,'조치내용':r.actionNote||'',
-    '조치전사진':r.beforeCount||0,'조치후사진':r.afterCount||0
-  };
-}
-/* 시트 행 객체 → 레코드 */
-function rowToRec(row){
-  return {
-    id:row['관리번호']||'',company:row['협력업체']||'',
-    location:row['위치']||'',category:row['카테고리']||'',
-    description:row['부적합내용']||'',reportDate:row['지적일']||'',
-    dueDate:row['조치기한']||'',status:row['상태']||'미조치',
-    actionNote:row['조치내용']||'',
-    beforeCount:Number(row['조치전사진'])||0,
-    afterCount:Number(row['조치후사진'])||0
-  };
-}
-
-/* 시트에서 전체 데이터 로드 → IndexedDB와 병합 */
-async function loadFromSheet(){
-  const url=getGasUrl();if(!url)return false;
-  setSyncIcon(true);
-  try{
-    const res=await fetch(url+'?action=getAll',{method:'GET'});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const data=await res.json();
-    if(!data.ok)throw new Error(data.error||'오류');
-    const sheetRecs=data.records.filter(r=>r['관리번호']).map(rowToRec);
-    /* IndexedDB 전체 교체 */
-    await Promise.all(sheetRecs.map(r=>dbPut(SM,r)));
-    /* 시트에 없는 로컬 레코드 삭제 */
-    const sheetIds=new Set(sheetRecs.map(r=>r.id));
-    const localRecs=await dbGetAll(SM);
-    await Promise.all(localRecs.filter(r=>!sheetIds.has(r.id)).map(r=>dbDel(SM,r.id)));
-    records=await dbGetAll(SM);
-    renderTabs();renderTable();renderCharts();
-    setSyncIcon(false);
-    return true;
-  }catch(e){
-    console.error('시트 로드 오류:',e);
-    setSyncIcon(false);
-    return false;
-  }
-}
-
-/* 레코드 1건 시트에 upsert */
-async function syncToSheet(rec){
-  const url=getGasUrl();if(!url)return;
-  try{
-    await fetch(url,{method:'POST',body:JSON.stringify({action:'upsert',record:recToRow(rec)})});
-  }catch(e){console.error('시트 upsert 오류:',e);}
-}
-
-/* 레코드 1건 시트에서 삭제 */
-async function deleteFromSheet(id){
-  const url=getGasUrl();if(!url)return;
-  try{
-    await fetch(url,{method:'POST',body:JSON.stringify({action:'delete',id:id})});
-  }catch(e){console.error('시트 delete 오류:',e);}
-}
-
-/* 수동 동기화 버튼 */
-async function manualSync(){
-  const ok=await loadFromSheet();
-  toast(ok?'✅ 구글 시트 동기화 완료':'❌ 시트 연결 실패. URL을 확인하세요.');
-}
-
-/* 아이콘 스피너 */
-function setSyncIcon(loading){
-  const el=document.getElementById('syncIcon');
-  if(el)el.textContent=loading?'⏳':'🔄';
-}
-
-/* 자동 동기화 타이머 */
-function startAutoSync(){
-  if(gasAutoTimer)clearInterval(gasAutoTimer);
-  if(localStorage.getItem(GAS_AUTO_KEY)==='1'&&getGasUrl()){
-    gasAutoTimer=setInterval(loadFromSheet,30000);
-  }
-}
-
-/* 설정 모달 열기/닫기 */
-function openSheetSetting(){
-  document.getElementById('gasUrlInput').value=getGasUrl();
-  document.getElementById('autoSyncChk').checked=localStorage.getItem(GAS_AUTO_KEY)==='1';
-  document.getElementById('sheetConnStatus').style.display='none';
-  document.getElementById('sheetSettingOverlay').style.display='flex';}
-function closeSheetSetting(){
-  document.getElementById('sheetSettingOverlay').style.display='none';
-}
-function saveSheetSetting(){
-  const url=document.getElementById('gasUrlInput').value.trim();
-  const auto=document.getElementById('autoSyncChk').checked;
-  localStorage.setItem(GAS_KEY,url);
-  localStorage.setItem(GAS_AUTO_KEY,auto?'1':'0');
-  startAutoSync();
-  updateSyncUI();
-  closeSheetSetting();
-  if(url){toast('✅ 연동 설정 저장됨 — 시트에서 데이터를 불러옵니다...');loadFromSheet();}
-  else toast('⚠ URL이 비어있어 연동이 해제됩니다.');
-}
-async function testSheetConnection(){
-  const url=document.getElementById('gasUrlInput').value.trim();
-  const el=document.getElementById('sheetConnStatus');
-  if(!url){el.style.display='block';el.style.background='rgba(239,68,68,.1)';el.style.color='#f87171';el.style.border='1px solid rgba(239,68,68,.3)';el.textContent='❌ URL을 입력해주세요';return;}
-  el.style.display='block';el.style.background='var(--bg3)';el.style.color='var(--muted2)';el.style.border='1px solid var(--border2)';el.textContent='⏳ 연결 테스트 중...';
-  try{
-    const res=await fetch(url+'?action=getAll');
-    const data=await res.json();
-    if(data.ok){
-      el.style.background='rgba(34,197,94,.1)';el.style.color='#4ade80';el.style.border='1px solid rgba(34,197,94,.3)';
-      el.textContent=`✅ 연결 성공! 시트 데이터 ${data.records.length}건 확인됨`;
-    }else throw new Error(data.error);
-  }catch(e){
-    el.style.background='rgba(239,68,68,.1)';el.style.color='#f87171';el.style.border='1px solid rgba(239,68,68,.3)';
-    el.textContent='❌ 연결 실패: '+e.message;
-  }
-}
-function updateSyncUI(){
-  const admin=AUTH.isAdmin();
-  const connected=isGasConnected();
-  document.getElementById('sheetSettingBtn').style.display=admin?'inline-flex':'none';
-  document.getElementById('sheetSyncBtn').style.display=(admin&&connected)?'inline-flex':'none';
-}
-
 window.addEventListener('DOMContentLoaded',async()=>{
   await initDB();
   records=await dbGetAll(SM);
   updateAuth();renderTabs();renderTable();renderCharts();
   document.getElementById('fDate').value=today();
-  /* 구글 시트 연동 초기화 */
-  updateSyncUI();
-  startAutoSync();
-  if(getGasUrl())loadFromSheet();
 });
 window.onAuthStateChange=()=>updateAuth();
-function updateAuth(){
-  document.getElementById('addBtn').style.display=AUTH.isAdmin()?'inline-flex':'none';
-  updateSyncUI();
-}
+function updateAuth(){document.getElementById('addBtn').style.display=AUTH.isAdmin()?'inline-flex':'none';}
 function today(){return new Date().toISOString().split('T')[0];}
 function genId(){return `NC-${new Date().getFullYear()}-${(records.length+1).toString().padStart(3,'0')}`;}
 
@@ -1337,14 +1155,12 @@ async function saveRecord(){
   for(const p of tmpA){await dbPut(SP,{recordId:id,side:'after',dataURL:p.dataURL,name:p.name});ac++;}
   const rec={id,company:co,location:lo,category:ca,status:st,reportDate:rd,dueDate:dd,description:de,actionNote:an,beforeCount:bc,afterCount:ac};
   await dbPut(SM,rec);
-  syncToSheet(rec); /* 구글 시트 동기화 */
   if(editId){const i=records.findIndex(r=>r.id===editId);if(i>=0)records[i]=rec;else records.push(rec);}else records.push(rec);
   closeEdit();renderTabs();renderTable();renderCharts();toast(editId?'✅ 수정 완료':'✅ 등록 완료');
 }
 async function delRecord(id){
   if(!confirm('삭제하시겠습니까?'))return;
   await dbDel(SM,id);await dbDelByIdx(SP,'rid',id);
-  deleteFromSheet(id); /* 구글 시트 삭제 */
   records=records.filter(r=>r.id!==id);renderTabs();renderTable();renderCharts();toast('🗑️ 삭제됨');
 }
 
