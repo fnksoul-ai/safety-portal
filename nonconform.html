@@ -1380,7 +1380,7 @@ function updateAuth(){
 }
 function today(){return new Date().toISOString().split('T')[0];}
 function genId(){return `NC-${new Date().getFullYear()}-${(records.length+1).toString().padStart(3,'0')}`;}
-
+let pendingId=null; /* 등록 모달 열릴 때 미리 확정된 ID */
 /* ── 카테고리 관리 ── */
 const CAT_KEY='nc_categories';
 const CAT_DEFAULT=['개인보호구','추락방지','정리정돈','화재예방','장비/기계','안전표지','기타'];
@@ -1544,6 +1544,7 @@ function renderCharts(){
 
 function openAdd(){
   editId=null;tmpB=[];tmpA=[];exB=[];exA=[];
+  pendingId=genId(); /* ID 미리 확정 */
   document.getElementById('editModalTitle').textContent='부적합사항 등록';
   ['fCompany','fLocation','fWriter','fDesc','fAction','fDue'].forEach(id=>document.getElementById(id).value='');
   renderCatSelect();
@@ -1586,7 +1587,7 @@ async function saveRecord(){
   const uploading=[...tmpB,...tmpA].filter(p=>p.status==='uploading');
   if(uploading.length){toast('⏳ 사진 업로드 중... 잠시 후 저장해주세요');return;}
 
-  const id=editId||genId();
+  const id=editId||pendingId||genId();
 
   /* 기존 Drive URL 유지 */
   const keptBefore=exB.filter(p=>!p._del).map(p=>p.url);
@@ -1687,59 +1688,61 @@ function processFiles(files,side){
     rd.onload=async e=>{
       const dataURL=e.target.result;
       const arr=side==='before'?tmpB:tmpA;
-      /* 상태: pending → uploading → done(url) / error */
       const item={dataURL,name:f.name,status:'uploading',url:null,progress:0};
       arr.push(item);
       renderGrids();
-      /* 즉시 Drive 업로드 시작 */
       const gasUrl=getGasUrl();
-      if(!gasUrl){item.status='error';item.error='GAS URL 없음';renderGrids();return;}
-      /* 임시 ID (저장 전이면 _temp_ 접두사) */
-      const tmpId=(editId||'_temp_'+Date.now());
-      const idx=(side==='before'?tmpB:tmpA).filter(p=>p.status==='done').length;
-      const url=await uploadPhotoToDriveWithProgress(gasUrl,tmpId,side,idx,dataURL,(pct)=>{
+      if(!gasUrl){item.status='error';renderGrids();return;}
+      /* 실제 ID 사용 (등록: pendingId, 수정: editId) */
+      const useId=editId||pendingId||'_tmp_';
+      const idx=arr.filter(p=>p!==item&&p.status==='done').length;
+      const url=await uploadPhotoToDriveWithProgress(gasUrl,useId,side,idx,dataURL,(pct)=>{
         item.progress=pct;renderGrids();
       });
       if(url){item.status='done';item.url=url;}
-      else{item.status='error';item.error='업로드 실패';}
+      else{item.status='error';}
       renderGrids();
     };
     rd.readAsDataURL(f);
   });
 }
 
-/* 업로드 진행률 포함 버전 */
+/* 업로드 진행률 포함 버전 — 순차 전송으로 진행률 안정화 */
 async function uploadPhotoToDriveWithProgress(gasUrl, recordId, side, index, dataURL, onProgress){
-  const compressed=await compressImage(dataURL);
-  const sep=compressed.indexOf(',');
-  const header=sep>-1?compressed.substring(0,sep):'';
-  const b64raw=sep>-1?compressed.substring(sep+1):compressed;
-  const b64safe=b64raw.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-  const CHUNK=4000;
-  const totalChunks=Math.ceil(b64safe.length/CHUNK);
-
-  /* 중간 청크 병렬 */
-  const reqs=[];
-  for(let i=0;i<totalChunks-1;i++){
-    const chunk=b64safe.substring(i*CHUNK,(i+1)*CHUNK);
-    const qs=`action=uploadChunk&recordId=${encodeURIComponent(recordId)}&side=${side}&index=${index}&chunkIdx=${i}&totalChunks=${totalChunks}&header=${encodeURIComponent(i===0?header:'')}&chunk=${chunk}`;
-    reqs.push(fetch(gasUrl+'?'+qs,{method:'GET'}).then(()=>{
-      onProgress(Math.round((i+1)/totalChunks*90));
-    }).catch(()=>null));
-  }
-  await Promise.all(reqs);
-  onProgress(90);
-
-  /* 마지막 청크 */
-  const lastIdx=totalChunks-1;
-  const lastChunk=b64safe.substring(lastIdx*CHUNK);
-  const lastQs=`action=uploadChunk&recordId=${encodeURIComponent(recordId)}&side=${side}&index=${index}&chunkIdx=${lastIdx}&totalChunks=${totalChunks}&header=&chunk=${lastChunk}`;
   try{
-    const res=await fetch(gasUrl+'?'+lastQs,{method:'GET'});
-    const json=await res.json().catch(()=>({}));
-    if(json.ok&&json.url){onProgress(100);return json.url;}
+    const compressed=await compressImage(dataURL);
+    const sep=compressed.indexOf(',');
+    const header=sep>-1?compressed.substring(0,sep):'';
+    const b64raw=sep>-1?compressed.substring(sep+1):compressed;
+    const b64safe=b64raw.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+    const CHUNK=4000;
+    const totalChunks=Math.ceil(b64safe.length/CHUNK);
+
+    /* 순차 전송 — 진행률이 안정적으로 올라감 */
+    for(let i=0;i<totalChunks;i++){
+      const chunk=b64safe.substring(i*CHUNK,(i+1)*CHUNK);
+      const qs=`action=uploadChunk`
+        +`&recordId=${encodeURIComponent(recordId)}`
+        +`&side=${side}&index=${index}`
+        +`&chunkIdx=${i}&totalChunks=${totalChunks}`
+        +`&header=${encodeURIComponent(i===0?header:'')}`
+        +`&chunk=${chunk}`;
+      const res=await fetch(gasUrl+'?'+qs,{method:'GET'});
+      const json=await res.json().catch(()=>({}));
+      /* 진행률: 각 청크 완료마다 업데이트 */
+      onProgress(Math.round((i+1)/totalChunks*100));
+      /* 마지막 청크에서 URL 반환 */
+      if(i===totalChunks-1){
+        if(json.ok&&json.url) return json.url;
+        console.error('마지막 청크 오류:', json.error);
+        return null;
+      }
+    }
     return null;
-  }catch(e){return null;}
+  }catch(e){
+    console.error('업로드 오류:', e.message);
+    return null;
+  }
 }
 
 function renderGrids(){
