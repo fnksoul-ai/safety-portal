@@ -1197,7 +1197,7 @@ async function uploadToDrive(filename, dataURL, onProgress){
           body:JSON.stringify({role:'reader',type:'anyone'})
         });
         onProgress(100);
-        resolve(`https://drive.google.com/uc?export=view&id=${fileId}`);
+        resolve(`https://lh3.googleusercontent.com/d/${fileId}`);
       }else if(xhr.status===401){
         driveToken=null;
         try{const url=await uploadToDrive(filename,dataURL,onProgress);resolve(url);}
