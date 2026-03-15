@@ -882,7 +882,7 @@ nav {
       <div class="page-sub">조치 전·후 사진 등록 · 통계 · 엑셀 내보내기 · 보고서 출력</div>
     </div>
     <div class="header-actions">
-      <button class="btn btn-ghost" onclick="exportExcel()">📊 엑셀</button>
+      <button class="btn btn-ghost" onclick="openGoogleSheet()">📊 엑셀</button>
       <button class="btn btn-ghost" onclick="window.print()">🖨️ 인쇄</button>
       <button class="btn btn-ghost" id="sheetSyncBtn" onclick="manualSync()" title="구글 시트 동기화" style="display:none">
         <span id="syncIcon">🔄</span> 시트 동기화
@@ -1082,6 +1082,10 @@ nav {
       <div class="form-group">
         <label class="form-label">Apps Script 웹 앱 URL</label>
         <input type="text" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%">
+      </div>
+      <div class="form-group">
+        <label class="form-label">구글 스프레드시트 URL</label>
+        <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." style="width:100%">
       </div>
       <div id="gasUrlCopyBox" style="display:none;margin-top:4px;padding:10px 12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:8px;font-size:12px;color:var(--muted2);line-height:1.7;">
         💡 <b>다른 기기에서도 유지하려면</b><br>
@@ -1465,9 +1469,20 @@ function startAutoSync(){
 }
 
 /* 설정 모달 열기/닫기 */
+const SHEET_URL_KEY = 'nc_sheet_url';
+function getSheetUrl(){ return localStorage.getItem(SHEET_URL_KEY)||''; }
+
+/* 엑셀 버튼 — 시트 URL 있으면 시트 열기, 없으면 로컬 엑셀 내보내기 */
+function openGoogleSheet(){
+  const url=getSheetUrl();
+  if(url){ window.open(url,'_blank'); }
+  else{ exportExcel(); }
+}
+
 function openSheetSetting(){
   const cur=getGasUrl();
   document.getElementById('gasUrlInput').value=cur;
+  document.getElementById('sheetUrlInput').value=getSheetUrl();
   document.getElementById('autoSyncChk').checked=localStorage.getItem(GAS_AUTO_KEY)==='1';
   document.getElementById('sheetConnStatus').style.display='none';
   const copyBox=document.getElementById('gasUrlCopyBox');
@@ -1484,10 +1499,11 @@ function closeSheetSetting(){
 }
 function saveSheetSetting(){
   const url=document.getElementById('gasUrlInput').value.trim();
+  const sheetUrl=document.getElementById('sheetUrlInput').value.trim();
   const auto=document.getElementById('autoSyncChk').checked;
   localStorage.setItem(GAS_KEY,url);
   localStorage.setItem(GAS_AUTO_KEY,auto?'1':'0');
-  /* 기본 URL로도 저장 → 같은 브라우저의 비로그인 접속 시 유지 */
+  if(sheetUrl) localStorage.setItem(SHEET_URL_KEY,sheetUrl);
   if(url){
     GAS_DEFAULT_URL=url;
     localStorage.setItem('nc_gas_url_default',url);
