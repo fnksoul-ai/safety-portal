@@ -995,7 +995,7 @@ nav {
   <img id="lbImg" src="" alt="">
 </div>
 <!-- 구글 시트 연동 설정 모달 -->
-<div class="modal-bg" id="sheetSettingOverlay" style="display:none" onclick="if(event.target===this)closeSheetSetting()">
+<div id="sheetSettingOverlay" onclick="if(event.target===this)closeSheetSetting()" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
   <div class="modal" style="max-width:540px;width:100%">
     <div class="modal-header">
       <div class="modal-title">📋 구글 스프레드시트 연동 설정</div>
@@ -1165,8 +1165,7 @@ function openSheetSetting(){
   document.getElementById('gasUrlInput').value=getGasUrl();
   document.getElementById('autoSyncChk').checked=localStorage.getItem(GAS_AUTO_KEY)==='1';
   document.getElementById('sheetConnStatus').style.display='none';
-  document.getElementById('sheetSettingOverlay').style.display='flex';
-}
+  document.getElementById('sheetSettingOverlay').style.display='flex';}
 function closeSheetSetting(){
   document.getElementById('sheetSettingOverlay').style.display='none';
 }
