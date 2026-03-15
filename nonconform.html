@@ -1416,6 +1416,48 @@ function updateAuth(){
 function today(){return new Date().toISOString().split('T')[0];}
 function genId(){return `NC-${new Date().getFullYear()}-${(records.length+1).toString().padStart(3,'0')}`;}
 
+/* ── 카테고리 관리 ── */
+const CAT_KEY='nc_categories';
+const CAT_DEFAULT=['개인보호구','추락방지','정리정돈','화재예방','장비/기계','안전표지','기타'];
+function getCategories(){try{return JSON.parse(localStorage.getItem(CAT_KEY))||CAT_DEFAULT;}catch{return CAT_DEFAULT;}}
+function saveCategories(arr){localStorage.setItem(CAT_KEY,JSON.stringify(arr));}
+function renderCatSelect(){
+  const cats=getCategories();
+  const sel=document.getElementById('fCat');
+  if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML=cats.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('');
+}
+function openCatMgr(){renderCatList();document.getElementById('catMgrOverlay').style.display='flex';}
+function closeCatMgr(){document.getElementById('catMgrOverlay').style.display='none';renderCatSelect();}
+function renderCatList(){
+  const cats=getCategories();
+  const admin=AUTH.isAdmin();
+  document.getElementById('catList').innerHTML=cats.map((c,i)=>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);">
+      <span style="flex:1;font-size:13px;">${c}</span>
+      ${admin?`<button class="btn btn-ghost btn-sm" style="padding:2px 8px;color:var(--red);" onclick="deleteCategory(${i})">삭제</button>`:''}
+    </div>`
+  ).join('');
+  const inp=document.getElementById('catNewInput');
+  const addbtn=document.querySelector('#catMgrOverlay .btn-primary');
+  if(inp)inp.style.display=admin?'':'none';
+  if(addbtn)addbtn.style.display=admin?'':'none';
+}
+function addCategory(){
+  const val=document.getElementById('catNewInput').value.trim();
+  if(!val){toast('카테고리 이름을 입력하세요',2500);return;}
+  const cats=getCategories();
+  if(cats.includes(val)){toast('이미 존재하는 카테고리입니다',2500);return;}
+  cats.push(val);saveCategories(cats);
+  document.getElementById('catNewInput').value='';
+  renderCatList();toast(`✅ "${val}" 추가됨`,2500);
+}
+function deleteCategory(idx){
+  const cats=getCategories();
+  if(cats.length<=1){toast('최소 1개는 유지해야 합니다',2500);return;}
+  cats.splice(idx,1);saveCategories(cats);renderCatList();
+}
 function renderTabs(){
   const cos=[...new Set(records.map(r=>r.company))].sort();
   const ct=document.getElementById('companyTabs');
