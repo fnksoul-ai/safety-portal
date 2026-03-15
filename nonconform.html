@@ -1061,11 +1061,15 @@ nav {
 <script>
 /* auth.js 로드 직후 즉시 콜백 등록 — 타이밍 문제 방지 */
 window.onAuthStateChange=function(){
+  /* updateSyncUI는 DOMContentLoaded 후에 정의되므로 직접 처리 */
+  const admin=typeof AUTH!=='undefined'&&AUTH.isAdmin();
+  const gasUrl=localStorage.getItem('nc_gas_url')
+    || 'https://script.google.com/macros/s/AKfycbwL7NUDBMbykfx4IQLS9Ofn4E0jiTnvQz9_CKi6Vjnt9MSOkR-zN-H7PVTruI0aB2Q0dA/exec';
+  const connected=!!gasUrl.trim();
   const settingBtn=document.getElementById('sheetSettingBtn');
   const syncBtn=document.getElementById('sheetSyncBtn');
-  if(settingBtn) settingBtn.style.display=AUTH.isAdmin()?'inline-flex':'none';
-  const connected=!!(localStorage.getItem('nc_gas_url')||'').trim();
-  if(syncBtn) syncBtn.style.display=(AUTH.isAdmin()&&connected)?'inline-flex':'none';
+  if(settingBtn) settingBtn.style.display=admin?'inline-flex':'none';
+  if(syncBtn) syncBtn.style.display=(admin&&connected)?'inline-flex':'none';
 };
 const DB='ncDB2',VER=1,SM='records',SP='photos';
 let db;
@@ -1398,7 +1402,6 @@ window.addEventListener('DOMContentLoaded',async()=>{
   setTimeout(updateSyncUI, 100);
   setTimeout(updateSyncUI, 500);
 });
-window.onAuthStateChange=()=>updateAuth();
 function updateAuth(){
   updateSyncUI();
 }
