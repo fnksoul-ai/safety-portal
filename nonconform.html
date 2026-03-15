@@ -972,7 +972,7 @@ nav {
         <div class="form-group"><label class="form-label">상태</label>
           <select id="fStat"><option>미조치</option><option>조치중</option><option>조치완료</option></select></div>
         <div class="form-group"><label class="form-label">지적일 <span class="req">*</span></label><input type="date" id="fDate"></div>
-        <div class="form-group"><label class="form-label">조치완료일</label><input type="date" id="fDue"></div>
+        <div class="form-group"><label class="form-label">조치완료일</label><input type="date" id="fDue" onchange="if(this.value){document.getElementById('fStat').value='조치완료';}"></div>
         <div class="form-group span2"><label class="form-label">부적합 내용 <span class="req">*</span></label><textarea id="fDesc" placeholder="부적합 내용을 상세히 기재하세요..."></textarea></div>
         <div class="form-group span2"><label class="form-label">조치 내용</label><textarea id="fAction" placeholder="조치 완료 후 내용을 기재하세요..."></textarea></div>
       </div>
