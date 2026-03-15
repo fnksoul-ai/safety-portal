@@ -353,12 +353,18 @@ textarea:focus{border-color:var(--orange);}
 
 /* 인쇄 */
 @media print{
-  body::after,nav,.mobile-drawer,.filter-bar,.chart-row,
+  body::after,nav,.mobile-drawer,.filter-bar,
   .header-actions,.overlay,.lightbox,.toast{display:none!important;}
   .page{padding:0;max-width:100%;}
+  .chart-row{display:grid!important;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+  .chart-card{border:1px solid #ccc!important;break-inside:avoid;}
+  .chart-wrap{height:180px!important;}
+  .stat-row{display:grid!important;grid-template-columns:repeat(5,1fr);}
   .table-card{border:1px solid #ccc!important;}
   table{font-size:10pt;}
   thead th{background:#f0f0f0!important;color:#333!important;}
+  canvas{max-width:100%!important;}
+  img{max-width:100%!important;}
 }
 
 /* 반응형 */
@@ -1515,7 +1521,7 @@ function renderTable(){
       <td style="font-size:12px;color:var(--muted2);">${ph?`📷 ${ph}`:'—'}</td>
       <td onclick="event.stopPropagation()" style="white-space:nowrap;">
         ${AUTH.isAdmin()?`<button class="btn btn-ghost btn-sm" onclick="openEdit('${r.id}')">✏️</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="delRecord('${r.id}')">🗑️</button>`:''}
+        <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="delRecord('${r.id}')">🗑️</button>`:`<button class="btn btn-ghost btn-sm" onclick="openEdit('${r.id}')">✏️</button>`}
       </td></tr>`;
   }).join('');
 }
@@ -1526,13 +1532,28 @@ function renderCharts(){
   if(chartCo)chartCo.destroy();
   chartCo=new Chart(document.getElementById('companyChart').getContext('2d'),{type:'bar',
     data:{labels:cl.length?cl:['없음'],datasets:[{label:'미조치',data:cl.map(k=>cm[k].p),backgroundColor:'rgba(239,68,68,.7)'},{label:'조치중',data:cl.map(k=>cm[k].pr),backgroundColor:'rgba(234,179,8,.7)'},{label:'완료',data:cl.map(k=>cm[k].d),backgroundColor:'rgba(34,197,94,.7)'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8888a0',font:{size:11}}}},scales:{x:{stacked:true,ticks:{color:'#8888a0',font:{size:11}},grid:{color:'#252530'}},y:{stacked:true,ticks:{color:'#8888a0',font:{size:11},stepSize:1},grid:{color:'#252530'}}}}});
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{labels:{color:'#8888a0',font:{size:11}}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y}건`}}
+      },
+      scales:{
+        x:{stacked:true,ticks:{color:'#8888a0',font:{size:11}},grid:{color:'#252530'}},
+        y:{stacked:true,ticks:{color:'#8888a0',font:{size:11},stepSize:1},grid:{color:'#252530'},
+          afterDataLimits:axis=>{axis.max=Math.max(axis.max,1);}}
+      }
+    }});
   const kam={};records.forEach(r=>{kam[r.category]=(kam[r.category]||0)+1;});
   const kl=Object.keys(kam);
   if(chartCa)chartCa.destroy();
   chartCa=new Chart(document.getElementById('categoryChart').getContext('2d'),{type:'doughnut',
     data:{labels:kl.length?kl:['없음'],datasets:[{data:kl.length?kl.map(k=>kam[k]):[1],backgroundColor:['#3b82f6','#ef4444','#eab308','#22c55e','#f97316','#a855f7','#2dd4bf'],borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#8888a0',font:{size:11},padding:10}}}}});
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{position:'right',labels:{color:'#8888a0',font:{size:11},padding:10}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}건 (${Math.round(ctx.parsed/ctx.dataset.data.reduce((a,b)=>a+b,0)*100)}%)`}}
+      }
+    }});
 }
 
 function openAdd(){
@@ -1545,7 +1566,6 @@ function openAdd(){
   renderGrids();document.getElementById('editOverlay').classList.add('open');
 }
 async function openEdit(id){
-  if(!AUTH.isAdmin()){toast('❌ 관리자만 수정합니다');return;}
   const r=records.find(x=>x.id===id);if(!r)return;
   editId=id;tmpB=[];tmpA=[];
   const ph=await dbByIdx(SP,'rid',id);exB=ph.filter(p=>p.side==='before');exA=ph.filter(p=>p.side==='after');
@@ -1618,8 +1638,8 @@ async function openDetail(id){
       <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-green"></div> 조치 후 (${af.length}장)</div>${af.length?pg(af):`<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">${r.status!=='조치완료'?'조치 완료 후 등록':'사진 없음'}</div>`}</div>
     </div>`;
   document.getElementById('detailFoot').innerHTML=`
-    ${AUTH.isAdmin()?`<button class="btn btn-ghost" onclick="closeDetail();openEdit('${r.id}')">✏️ 수정</button>
-    <button class="btn btn-ghost" style="color:var(--red);" onclick="closeDetail();delRecord('${r.id}')">🗑️ 삭제</button>`:''}
+    <button class="btn btn-ghost" onclick="closeDetail();openEdit('${r.id}')">✏️ 수정</button>
+    ${AUTH.isAdmin()?`<button class="btn btn-ghost" style="color:var(--red);" onclick="closeDetail();delRecord('${r.id}')">🗑️ 삭제</button>`:''}
     <button class="btn btn-primary" onclick="printReport('${r.id}')">🖨️ 보고서</button>
     <button class="btn btn-ghost" onclick="closeDetail()">닫기</button>`;
   document.getElementById('detailOverlay').classList.add('open');
