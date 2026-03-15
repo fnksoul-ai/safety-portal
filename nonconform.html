@@ -1536,25 +1536,25 @@ function renderCharts(){
   if(chartCo)chartCo.destroy();
   chartCo=new Chart(document.getElementById('companyChart').getContext('2d'),{type:'bar',
     data:{labels:cl.length?cl:['없음'],datasets:[
-      {label:'미조치',data:cl.map(k=>cm[k].p),backgroundColor:'rgba(239,68,68,.7)'},
-      {label:'조치중',data:cl.map(k=>cm[k].pr),backgroundColor:'rgba(234,179,8,.7)'},
-      {label:'완료',data:cl.map(k=>cm[k].d),backgroundColor:'rgba(34,197,94,.7)'}
+      {label:'미조치',data:cl.map(k=>cm[k].p),backgroundColor:'rgba(239,68,68,.75)',borderRadius:3},
+      {label:'조치중',data:cl.map(k=>cm[k].pr),backgroundColor:'rgba(234,179,8,.75)',borderRadius:3},
+      {label:'완료',data:cl.map(k=>cm[k].d),backgroundColor:'rgba(34,197,94,.75)',borderRadius:3}
     ]},
     options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:24}},
       plugins:{
-        legend:{position:'top',labels:{color:'#8888a0',font:{size:11},padding:12}},
+        legend:{position:'top',align:'end',labels:{color:'#8888a0',font:{size:11},padding:12,boxWidth:12}},
         tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y}건`}},
         datalabels:{
-          anchor:'end',align:'top',
-          color:'#555',font:{size:10,weight:'bold'},
-          formatter:(v)=>v>0?v:'',
-          clamp:true
+          anchor:'end',align:'top',offset:2,
+          color:'#444',font:{size:11,weight:'600'},
+          formatter:(v)=>v>0?v:''
         }
       },
       scales:{
-        x:{stacked:true,ticks:{color:'#8888a0',font:{size:11}},grid:{color:'#252530'}},
-        y:{stacked:true,ticks:{color:'#8888a0',font:{size:11},stepSize:1},grid:{color:'#252530'},
-          afterDataLimits:axis=>{axis.max=Math.max(axis.max*1.15,2);}}
+        x:{stacked:true,ticks:{color:'#8888a0',font:{size:11}},grid:{display:false},border:{display:false}},
+        y:{stacked:true,ticks:{color:'#8888a0',font:{size:11},stepSize:1},grid:{color:'rgba(136,136,160,.15)'},border:{display:false},
+          afterDataLimits:axis=>{axis.max=Math.max(axis.max*1.2,2);}}
       }
     },
     plugins:[ChartDataLabels]
@@ -1568,18 +1568,24 @@ function renderCharts(){
     data:{labels:kl.length?kl:['없음'],datasets:[{
       data:kl.length?kl.map(k=>kam[k]):[1],
       backgroundColor:['#3b82f6','#ef4444','#eab308','#22c55e','#f97316','#a855f7','#2dd4bf'],
-      borderWidth:2,borderColor:'#fff'
+      borderWidth:2,borderColor:'#fff',
+      hoverOffset:6
     }]},
     options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:32},
       plugins:{
-        legend:{position:'right',labels:{color:'#8888a0',font:{size:11},padding:10}},
+        legend:{display:false},
         tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}건 (${Math.round(ctx.parsed/total*100)}%)`}},
         datalabels:{
-          color:'#fff',font:{size:11,weight:'bold'},
+          anchor:'end',align:'end',offset:8,
+          color:'#222',font:{size:11,weight:'600'},
           formatter:(v,ctx)=>{
             const pct=Math.round(v/total*100);
-            return pct>=5?`${ctx.chart.data.labels[ctx.dataIndex]}\n${v}건`:'';
-          }
+            return pct>=4?`${ctx.chart.data.labels[ctx.dataIndex]} (${pct}%)`:'';
+          },
+          /* 연결선 효과 — 텍스트에 배경 추가 */
+          backgroundColor:null,
+          padding:2
         }
       }
     },
