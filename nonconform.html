@@ -1165,13 +1165,8 @@ async function syncToSheet(rec){
 }
 
 
-/* ── 구글 시트 사진 업로드 설정 ──
-   Cloudflare Worker를 CORS 프록시로 활용
-   Worker URL은 시트 설정과 동일한 localStorage 키로 관리 */
-const CF_WORKER_URL = 'https://safenode-proxy.fnksoul-ab5.workers.dev';
-
-/* 이미지 압축 — 시트 표시용 (800px, 70%) */
-function compressImage(dataURL, maxW=800, quality=0.7){
+/* 이미지 압축 — 시트 표시용 (600px, 65%) */
+function compressImage(dataURL, maxW=600, quality=0.65){
   return new Promise(resolve=>{
     const img=new Image();
     img.onload=()=>{
@@ -1187,26 +1182,25 @@ function compressImage(dataURL, maxW=800, quality=0.7){
   });
 }
 
-/* 사진 1장 → Cloudflare Worker → Apps Script → Drive → Sheet */
-async function uploadOnePhoto(gasUrl, recordId, side, index, dataURL){
+/* 사진 1장을 청크(5000자)로 나눠 GET 요청으로 전송
+   GET 방식은 CORS/redirect body 소실 문제 없음 */
+async function uploadPhotoChunked(gasUrl, recordId, side, index, dataURL){
   const compressed = await compressImage(dataURL);
-  const payload = JSON.stringify({
-    target: gasUrl,          // Worker가 전달할 Apps Script URL
-    action: 'uploadPhoto',
-    recordId, side,
-    index: String(index),
-    data: compressed
-  });
-  try{
-    const res = await fetch(CF_WORKER_URL+'/proxy', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: payload
+  const CHUNK = 5000;
+  const totalChunks = Math.ceil(compressed.length / CHUNK);
+
+  for(let i=0; i<totalChunks; i++){
+    const chunk = compressed.substring(i*CHUNK, (i+1)*CHUNK);
+    const params = new URLSearchParams({
+      action:'uploadChunk',
+      recordId, side,
+      index: String(index),
+      chunkIdx: String(i),
+      totalChunks: String(totalChunks),
+      chunk
     });
-    const json = await res.json().catch(()=>({}));
-    if(!json.ok) console.warn('사진 업로드 응답 오류:', json.error);
-  }catch(e){
-    console.error('사진 업로드 오류:',e);
+    const res = await fetch(gasUrl+'?'+params.toString(), {method:'GET'});
+    if(!res.ok){ console.error(`청크 ${i} 전송 실패`); return; }
   }
 }
 
@@ -1221,7 +1215,7 @@ async function syncPhotosToSheet(recordId){
     for(const p of photos){
       const i=idx[p.side]++;
       if(i>=2)continue;
-      await uploadOnePhoto(url,recordId,p.side,i,p.dataURL);
+      await uploadPhotoChunked(url,recordId,p.side,i,p.dataURL);
     }
     toast('📸 사진 시트 업로드 완료');
   }catch(e){console.error('사진 업로드 오류:',e);}
