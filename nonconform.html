@@ -883,7 +883,7 @@ nav {
     <div>
       <div class="page-eyebrow">부적합사항 관리대장</div>
       <div class="page-title">협력업체 <span>부적합</span> 관리</div>
-      <div class="page-sub">조치 전·후 사진 등록 · 통계 · 엑셀 내보내기 · 보고서 출력</div>
+      <div class="page-sub">조치 전·후 사진 등록 · 통계 · 구글시트 연동 · 보고서 출력</div>
     </div>
     <div class="header-actions">
       <button class="btn btn-ghost" onclick="openGoogleSheet()">📊 엑셀</button>
@@ -1476,11 +1476,11 @@ function startAutoSync(){
 const SHEET_URL_KEY = 'nc_sheet_url';
 function getSheetUrl(){ return localStorage.getItem(SHEET_URL_KEY)||''; }
 
-/* 엑셀 버튼 — 시트 URL 있으면 시트 열기, 없으면 로컬 엑셀 내보내기 */
+/* 엑셀 버튼 — 구글시트로 바로 이동 */
 function openGoogleSheet(){
   const url=getSheetUrl();
   if(url){ window.open(url,'_blank'); }
-  else{ exportExcel(); }
+  else{ toast('⚙️ 시트 설정에서 구글 스프레드시트 URL을 먼저 입력해주세요.'); openSheetSetting(); }
 }
 
 function openSheetSetting(){
