@@ -1444,7 +1444,24 @@ function compressImage(dataURL, maxW=800, quality=0.75){
 /* 사진 1장 → Drive 업로드 → URL 반환 */
 
 /* 레코드 1건 시트에서 삭제 */
-async function deleteFromSheet(id){
+/* Drive 파일 URL로 fileId 추출 후 삭제 */
+async function deleteDriveFile(url){
+  if(!url) return;
+  const m = url.match(/[?&]id=([^&]+)/);
+  if(!m) return;
+  const fileId = m[1];
+  try{
+    const token = await requestDriveToken();
+    await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`,{
+      method:'DELETE',
+      headers:{'Authorization':'Bearer '+token}
+    });
+  }catch(e){ console.warn('Drive 파일 삭제 실패:', e.message); }
+}
+
+async function deleteDriveFiles(urls){
+  for(const url of (urls||[])) await deleteDriveFile(url);
+}
   const url=getGasUrl();if(!url)return;
   try{
     const params=new URLSearchParams({action:'delete',id:id});
@@ -1786,6 +1803,11 @@ async function saveRecord(){
   const id=editId||pendingId||genId();
 
   /* 기존 Drive URL 유지 */
+  /* 삭제 표시된 기존 사진 Drive에서도 삭제 */
+  const delBefore=exB.filter(p=>p._del).map(p=>p.url);
+  const delAfter=exA.filter(p=>p._del).map(p=>p.url);
+  if(delBefore.length||delAfter.length) deleteDriveFiles([...delBefore,...delAfter]);
+
   const keptBefore=exB.filter(p=>!p._del).map(p=>p.url);
   const keptAfter=exA.filter(p=>!p._del).map(p=>p.url);
 
@@ -1833,8 +1855,11 @@ async function saveRecord(){
 }
 async function delRecord(id){
   if(!confirm('삭제하시겠습니까?'))return;
+  const rec=records.find(r=>r.id===id);
   await dbDel(SM,id);
   deleteFromSheet(id);
+  /* Drive 사진 파일 삭제 */
+  if(rec) deleteDriveFiles([...(rec.beforeUrls||[]),...(rec.afterUrls||[])]);
   records=records.filter(r=>r.id!==id);renderTabs();renderTable();renderCharts();toast('🗑️ 삭제됨');
 }
 
