@@ -1339,15 +1339,16 @@ async function uploadToDrive(filename, dataURL, onProgress){
 
 /* 레코드 → 시트 행 객체 */
 function recToRow(r){
+  const bUrls=r.beforeUrls||[];
+  const aUrls=r.afterUrls||[];
   return {
     '관리번호':r.id,'협력업체':r.company,'위치':r.location,'작성자':r.writer||'',
     '카테고리':r.category,'부적합내용':r.description,
     '지적일':r.reportDate,'조치완료일':r.dueDate||'',
     '상태':r.status,'조치내용':r.actionNote||'',
-    '조치전사진':(r.beforeUrls||[]).length,
-    '조치후사진':(r.afterUrls||[]).length,
-    '_beforeUrl':(r.beforeUrls||[])[0]||'',
-    '_afterUrl':(r.afterUrls||[])[0]||''
+    '조치전사진':bUrls.length,'조치후사진':aUrls.length,
+    '_beforeUrls':bUrls,'_afterUrls':aUrls,
+    '_beforeUrl':bUrls[0]||'','_afterUrl':aUrls[0]||''
   };
 }
 /* 시트 행 객체 → 레코드 */
@@ -1356,11 +1357,9 @@ function normalizeDate(val){
   if(!val)return '';
   const s=String(val).trim();
   if(!s)return '';
-  /* 이미 YYYY-MM-DD 형식이면 그대로 */
   if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
-  /* Date 파싱 후 KST 기준으로 YYYY-MM-DD 추출 */
   const d=new Date(s);
-  if(isNaN(d.getTime()))return s; /* 파싱 실패 시 원본 반환 */
+  if(isNaN(d.getTime()))return s;
   const yyyy=d.getFullYear();
   const mm=String(d.getMonth()+1).padStart(2,'0');
   const dd=String(d.getDate()).padStart(2,'0');
@@ -1368,8 +1367,11 @@ function normalizeDate(val){
 }
 
 function rowToRec(row){
-  const beforeUrl=row['_beforeUrl']||'';
-  const afterUrl=row['_afterUrl']||'';
+  /* 다중 URL 수신 */
+  const bUrls=(row['_beforeUrls']&&row['_beforeUrls'].length)?row['_beforeUrls']:
+              (row['_beforeUrl']?[row['_beforeUrl']]:[]);
+  const aUrls=(row['_afterUrls']&&row['_afterUrls'].length)?row['_afterUrls']:
+              (row['_afterUrl']?[row['_afterUrl']]:[]);
   return {
     id:row['관리번호']||'',company:row['협력업체']||'',
     location:row['위치']||'',writer:row['작성자']||'',
@@ -1379,10 +1381,8 @@ function rowToRec(row){
     dueDate:normalizeDate(row['조치완료일']),
     status:row['상태']||'미조치',
     actionNote:row['조치내용']||'',
-    beforeUrls:beforeUrl?[beforeUrl]:[],
-    afterUrls:afterUrl?[afterUrl]:[],
-    beforeCount:beforeUrl?1:0,
-    afterCount:afterUrl?1:0
+    beforeUrls:bUrls,afterUrls:aUrls,
+    beforeCount:bUrls.length,afterCount:aUrls.length
   };
 }
 
@@ -1815,8 +1815,8 @@ async function saveRecord(){
     }
   }
 
-  const beforeUrls=[...keptBefore,...newBeforeUrls];
-  const afterUrls=[...keptAfter,...newAfterUrls];
+  const beforeUrls=[...keptBefore,...newBeforeUrls].slice(0,2);
+  const afterUrls=[...keptAfter,...newAfterUrls].slice(0,2);
   const rec={id,company:co,location:lo,writer:wr,category:ca,status:st,reportDate:rd,dueDate:dd,
     description:de,actionNote:an,beforeUrls,afterUrls,
     beforeCount:beforeUrls.length,afterCount:afterUrls.length};
