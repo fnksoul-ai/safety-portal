@@ -1565,6 +1565,11 @@ window.addEventListener('DOMContentLoaded',async()=>{
   setTimeout(updateSyncUI, 100);
   setTimeout(updateSyncUI, 500);
   setTimeout(()=>{if(typeof google!=='undefined'&&google.accounts)initDriveAuth();},1200);
+  /* URL 해시로 직접 링크 접근 시 자동 상세보기 */
+  if(location.hash){
+    const id=decodeURIComponent(location.hash.slice(1));
+    if(id) setTimeout(()=>openDetail(id), 800);
+  }
 });
 function updateAuth(){
   updateSyncUI();
@@ -1863,14 +1868,26 @@ async function openDetail(id){
       </div>
     </div>`;
   document.getElementById('detailFoot').innerHTML=`
+    <button class="btn btn-ghost" onclick="copyDetailLink('${r.id}')" title="링크 복사">🔗 링크</button>
     <button class="btn btn-ghost" onclick="closeDetail();openEdit('${r.id}')">✏️ 수정</button>
     ${AUTH.isAdmin()?`<button class="btn btn-ghost" style="color:var(--red);" onclick="closeDetail();delRecord('${r.id}')">🗑️ 삭제</button>`:''}
     <button class="btn btn-primary" onclick="printReport('${r.id}')">🖨️ 보고서</button>
     <button class="btn btn-ghost" onclick="closeDetail()">닫기</button>`;
   document.getElementById('detailOverlay').classList.add('open');
+  /* URL 해시 업데이트 — 직접 링크 공유용 */
+  history.replaceState(null,'',`#${id}`);
 }
 
-function closeDetail(){document.getElementById('detailOverlay').classList.remove('open');}
+function copyDetailLink(id){
+  const url=`${location.origin}${location.pathname}#${id}`;
+  navigator.clipboard.writeText(url).then(()=>toast('🔗 링크가 복사됐습니다')).catch(()=>{
+    prompt('아래 링크를 복사하세요:', url);
+  });
+}
+function closeDetail(){
+  document.getElementById('detailOverlay').classList.remove('open');
+  history.replaceState(null,'',location.pathname+location.search);
+}
 
 function onDragOver(e,id){e.preventDefault();document.getElementById(id).classList.add('dragover');}
 function onDragLeave(id){document.getElementById(id).classList.remove('dragover');}
