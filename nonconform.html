@@ -306,9 +306,9 @@ textarea:focus{border-color:var(--orange);}
   background:rgba(249,115,22,.05);
 }
 .dz-icon{font-size:22px;margin-bottom:6px;}
-.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px;}
+.photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px;}
 .photo-thumb{
-  position:relative;aspect-ratio:1;border-radius:7px;
+  position:relative;aspect-ratio:4/3;border-radius:7px;
   overflow:hidden;background:var(--bg);cursor:pointer;
   border:1px solid var(--border2);
 }
@@ -982,14 +982,14 @@ nav {
           <div class="photo-panel">
             <div class="photo-panel-head"><div class="pdot pdot-red"></div> 조치 전</div>
             <div class="drop-zone" id="dzBefore" onclick="document.getElementById('fiBefore').click()" ondragover="onDragOver(event,'dzBefore')" ondragleave="onDragLeave('dzBefore')" ondrop="onDrop(event,'before')">
-              <div class="dz-icon">📸</div>클릭 또는 드래그 업로드</div>
+              <div class="dz-icon">📸</div>클릭 또는 드래그 업로드<div style="font-size:10px;color:var(--muted2);margin-top:3px;">최대 2장</div></div>
             <input type="file" id="fiBefore" multiple accept="image/*" style="display:none" onchange="onFileInput(event,'before')">
             <div class="photo-grid" id="gridBefore"></div>
           </div>
           <div class="photo-panel">
             <div class="photo-panel-head"><div class="pdot pdot-green"></div> 조치 후</div>
             <div class="drop-zone" id="dzAfter" onclick="document.getElementById('fiAfter').click()" ondragover="onDragOver(event,'dzAfter')" ondragleave="onDragLeave('dzAfter')" ondrop="onDrop(event,'after')">
-              <div class="dz-icon">✅</div>클릭 또는 드래그 업로드</div>
+              <div class="dz-icon">✅</div>클릭 또는 드래그 업로드<div style="font-size:10px;color:var(--muted2);margin-top:3px;">최대 2장</div></div>
             <input type="file" id="fiAfter" multiple accept="image/*" style="display:none" onchange="onFileInput(event,'after')">
             <div class="photo-grid" id="gridAfter"></div>
           </div>
@@ -1982,9 +1982,9 @@ async function printReport(id){
   .key{font-size:10px;color:#888;margin-bottom:3px;}.val{font-size:13px;font-weight:600;}
   .sec{font-size:12px;font-weight:700;color:#555;border-bottom:1px solid #ddd;padding-bottom:5px;margin:14px 0 8px;}
   .box{background:#f8f8f8;border:1px solid #e0e0e0;border-radius:6px;padding:10px 12px;line-height:1.7;white-space:pre-wrap;}
-  .pcols{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .pcols{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .plab{font-size:11px;font-weight:700;margin-bottom:6px;}.plab.b{color:#ef4444;}.plab.a{color:#22c55e;}
-  .pgrid{display:flex;flex-wrap:wrap;gap:6px;}.pgrid img{width:100%;max-width:200px;border-radius:5px;border:1px solid #ddd;}
+  .pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;}.pgrid img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block;}
   .nophoto{color:#aaa;font-size:12px;padding:12px;background:#f8f8f8;border:1px solid #eee;border-radius:5px;text-align:center;}
   .foot{margin-top:24px;color:#aaa;font-size:10px;text-align:right;border-top:1px solid #eee;padding-top:8px;}
   @media print{body{padding:10mm 15mm;}}</style>
