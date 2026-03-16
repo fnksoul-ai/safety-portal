@@ -1415,11 +1415,15 @@ async function loadFromSheet(){
 async function syncToSheet(rec){
   const url=getGasUrl();if(!url)return;
   try{
+    const rowData=recToRow(rec);
+    console.log('[syncToSheet] 전송 데이터:', JSON.stringify(rowData));
     const params=new URLSearchParams({
       action:'upsert',
-      data:JSON.stringify(recToRow(rec))
+      data:JSON.stringify(rowData)
     });
-    await fetch(url+'?'+params.toString(),{method:'GET',mode:'cors'});
+    const res=await fetch(url+'?'+params.toString(),{method:'GET',mode:'cors'});
+    const json=await res.json().catch(()=>({}));
+    console.log('[syncToSheet] GAS 응답:', json);
   }catch(e){console.error('시트 upsert 오류:',e);}
 }
 
