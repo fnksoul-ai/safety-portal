@@ -1850,8 +1850,10 @@ async function saveRecord(){
     description:de,actionNote:an,beforeUrls,afterUrls,
     beforeCount:beforeUrls.length,afterCount:afterUrls.length};
 
+  /* Drive 삭제 먼저, 시트 업데이트는 await로 완료 보장 */
   await dbPut(SM,rec);
-  syncToSheet(rec);
+  toast('💾 저장 중...');
+  await syncToSheet(rec);
   if(editId){const i=records.findIndex(r=>r.id===editId);if(i>=0)records[i]=rec;else records.push(rec);}else records.push(rec);
   closeEdit();renderTabs();renderTable();renderCharts();toast(editId?'✅ 수정 완료':'✅ 등록 완료');
 }
