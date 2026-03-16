@@ -1462,6 +1462,8 @@ async function deleteDriveFile(url){
 async function deleteDriveFiles(urls){
   for(const url of (urls||[])) await deleteDriveFile(url);
 }
+
+async function deleteFromSheet(id){
   const url=getGasUrl();if(!url)return;
   try{
     const params=new URLSearchParams({action:'delete',id:id});
