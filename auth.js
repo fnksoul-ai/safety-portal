@@ -3,7 +3,7 @@
 
 const AUTH = (() => {
   const CLIENT_ID    = '167323077293-8gsd86rn7fjvo7dvo4994fhm6opr19cd.apps.googleusercontent.com';
-  const SCOPE        = 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
+  const SCOPE        = 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email';
   const ADMIN_EMAILS = ['fnksoul@gmail.com', 'grvflow@gmail.com'];
 
   // ── Admin ──
