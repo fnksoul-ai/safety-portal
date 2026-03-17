@@ -1307,8 +1307,8 @@ async function uploadToDrive(filename, dataURL, onProgress, recordId, side, inde
   const PROXY = 'https://safenode-proxy.fnksoul-ab5.workers.dev';
 
   onProgress(5);
-  /* 전송 전 압축 (1600px/90%) — GAS 30초 타임아웃 방지 */
-  const compressed = await compressImage(dataURL, 1600, 0.9);
+  /* 원본 그대로 업로드 — 압축 없음 */
+  const compressed = dataURL;
   onProgress(15);
 
   const res = await fetch(PROXY, {
@@ -1798,13 +1798,8 @@ async function saveRecord(){
   const an=document.getElementById('fAction').value.trim();
   if(!co||!lo||!wr||!rd||!de){toast('❌ 필수 항목을 입력해주세요');return;}
 
-  /* 업로드 진행 중인 사진 있으면 대기 */
-  const uploading=[...tmpB,...tmpA].filter(p=>p.status==='uploading');
-  if(uploading.length){toast('⏳ 사진 업로드 중... 잠시 후 저장해주세요');return;}
-
   const id=editId||pendingId||genId();
 
-  /* 기존 Drive URL 유지 */
   /* 삭제 표시된 기존 사진 Drive에서도 삭제 */
   const delBefore=exB.filter(p=>p._del).map(p=>p.url);
   const delAfter=exA.filter(p=>p._del).map(p=>p.url);
@@ -1813,36 +1808,55 @@ async function saveRecord(){
   const keptBefore=exB.filter(p=>!p._del).map(p=>p.url);
   const keptAfter=exA.filter(p=>!p._del).map(p=>p.url);
 
-  /* tmpB/tmpA 중 이미 업로드 완료된 것 URL 수집
-     실패한 항목은 재시도 */
-  toast('💾 저장 중...');
+  /* 새 사진 업로드 (저장 시점에 실행) */
+  const pendingB=tmpB.filter(p=>p.status==='pending'||p.status==='error');
+  const pendingA=tmpA.filter(p=>p.status==='pending'||p.status==='error');
+  const totalUpload=pendingB.length+pendingA.length;
+  let uploaded=0;
+
+  if(totalUpload>0) toast(`📸 사진 업로드 중... (0/${totalUpload})`);
+
   const newBeforeUrls=[];
   for(let i=0;i<tmpB.length;i++){
     const p=tmpB[i];
-    if(p.status==='done'&&p.url){
-      newBeforeUrls.push(p.url);
-    }else{
-      try{
-        const idx=keptBefore.length+newBeforeUrls.length;
-        const ext=p.dataURL.startsWith('data:image/png')?'png':'jpg';
-        const url=await uploadToDrive(`${id}_before_${idx}.${ext}`,p.dataURL,()=>{},id,'before',idx);
-        if(url)newBeforeUrls.push(url);
-      }catch(e){console.error('before 재업로드 실패:',e);}
+    if(p.status==='done'&&p.url){ newBeforeUrls.push(p.url); continue; }
+    try{
+      p.status='uploading';p.progress=0;renderGrids();
+      const idx=keptBefore.length+newBeforeUrls.length;
+      const ext=p.dataURL.startsWith('data:image/png')?'png':'jpg';
+      const url=await uploadToDrive(`${id}_before_${idx}.${ext}`,p.dataURL,(pct)=>{
+        p.progress=pct;renderGrids();
+      },id,'before',idx);
+      if(url){ p.status='done';p.url=url;newBeforeUrls.push(url); }
+      uploaded++;
+      if(totalUpload>0) toast(`📸 사진 업로드 중... (${uploaded}/${totalUpload})`);
+    }catch(e){
+      console.error('before 업로드 실패:',e);
+      p.status='error';p.error=e.message;
+      toast('❌ 업로드 실패: '+e.message);
     }
+    renderGrids();
   }
   const newAfterUrls=[];
   for(let i=0;i<tmpA.length;i++){
     const p=tmpA[i];
-    if(p.status==='done'&&p.url){
-      newAfterUrls.push(p.url);
-    }else{
-      try{
-        const idx=keptAfter.length+newAfterUrls.length;
-        const ext=p.dataURL.startsWith('data:image/png')?'png':'jpg';
-        const url=await uploadToDrive(`${id}_after_${idx}.${ext}`,p.dataURL,()=>{},id,'after',idx);
-        if(url)newAfterUrls.push(url);
-      }catch(e){console.error('after 재업로드 실패:',e);}
+    if(p.status==='done'&&p.url){ newAfterUrls.push(p.url); continue; }
+    try{
+      p.status='uploading';p.progress=0;renderGrids();
+      const idx=keptAfter.length+newAfterUrls.length;
+      const ext=p.dataURL.startsWith('data:image/png')?'png':'jpg';
+      const url=await uploadToDrive(`${id}_after_${idx}.${ext}`,p.dataURL,(pct)=>{
+        p.progress=pct;renderGrids();
+      },id,'after',idx);
+      if(url){ p.status='done';p.url=url;newAfterUrls.push(url); }
+      uploaded++;
+      if(totalUpload>0) toast(`📸 사진 업로드 중... (${uploaded}/${totalUpload})`);
+    }catch(e){
+      console.error('after 업로드 실패:',e);
+      p.status='error';p.error=e.message;
+      toast('❌ 업로드 실패: '+e.message);
     }
+    renderGrids();
   }
 
   const beforeUrls=[...keptBefore,...newBeforeUrls].slice(0,2);
@@ -1851,9 +1865,8 @@ async function saveRecord(){
     description:de,actionNote:an,beforeUrls,afterUrls,
     beforeCount:beforeUrls.length,afterCount:afterUrls.length};
 
-  /* Drive 삭제 먼저, 시트 업데이트는 await로 완료 보장 */
   await dbPut(SM,rec);
-  toast('💾 저장 중...');
+  toast('💾 시트 동기화 중...');
   await syncToSheet(rec);
   if(editId){const i=records.findIndex(r=>r.id===editId);if(i>=0)records[i]=rec;else records.push(rec);}else records.push(rec);
   closeEdit();renderTabs();renderTable();renderCharts();toast(editId?'✅ 수정 완료':'✅ 등록 완료');
@@ -1927,26 +1940,11 @@ function processFiles(files,side){
   [...files].forEach(f=>{
     if(!f.type.startsWith('image/'))return;
     const rd=new FileReader();
-    rd.onload=async e=>{
+    rd.onload=e=>{
       const dataURL=e.target.result;
       const arr=side==='before'?tmpB:tmpA;
-      const item={dataURL,name:f.name,status:'uploading',url:null,progress:0};
+      const item={dataURL,name:f.name,status:'pending',url:null,progress:0};
       arr.push(item);
-      renderGrids();
-      try{
-        const useId=editId||pendingId||('_tmp_'+Date.now());
-        const idx=arr.filter(p=>p!==item&&p.status==='done').length;
-        const ext=dataURL.startsWith('data:image/png')?'png':(dataURL.startsWith('data:image/gif')?'gif':'jpg');
-        const filename=`${useId}_${side}_${idx}.${ext}`;
-        const url=await uploadToDrive(filename,dataURL,(pct)=>{
-          item.progress=pct;renderGrids();
-        }, useId, side, idx);
-        item.status='done';item.url=url;
-      }catch(err){
-        console.error('Drive 업로드 오류:',err.message);
-        item.status='error';item.error=err.message;
-        toast('❌ 업로드 실패: '+err.message);
-      }
       renderGrids();
     };
     rd.readAsDataURL(f);
@@ -1965,23 +1963,35 @@ function renderGrids(){
       </div>`
     ).join('');
   };
-  /* tmpB/tmpA: 업로드 진행 중 / 완료 */
+  /* tmpB/tmpA: 대기/업로드중/완료/실패 */
   const rt=(gid,arr,side)=>{
     document.getElementById(gid).innerHTML+=arr.map((p,i)=>{
-      const thumb=p.status==='done'
-        ?`<div class="photo-thumb" onclick="openLB('${p.url}')"><img src="${p.url}" alt=""><button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button></div>`
-        :`<div class="photo-thumb" style="cursor:default;">
-            <img src="${p.dataURL}" alt="" style="opacity:${p.status==='error'?0.4:0.7};">
-            ${p.status==='uploading'?`
-              <div style="position:absolute;bottom:0;left:0;right:0;padding:3px 5px;background:rgba(0,0,0,.6);">
-                <div style="height:4px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden;">
-                  <div style="height:100%;width:${p.progress||0}%;background:#22c55e;transition:width .2s;border-radius:2px;"></div>
-                </div>
-                <div style="color:#fff;font-size:9px;text-align:center;margin-top:2px;">${p.progress||0}%</div>
-              </div>`
-            :`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,.6);color:#fff;font-size:11px;font-weight:700;">❌ 실패</div>`}
+      if(p.status==='done')
+        return `<div class="photo-thumb" onclick="openLB('${p.url}')"><img src="${p.url}" alt=""><button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button></div>`;
+      if(p.status==='uploading')
+        return `<div class="photo-thumb" style="cursor:default;">
+            <img src="${p.dataURL}" alt="" style="opacity:0.7;">
+            <div style="position:absolute;bottom:0;left:0;right:0;padding:3px 5px;background:rgba(0,0,0,.6);">
+              <div style="height:4px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden;">
+                <div style="height:100%;width:${p.progress||0}%;background:#22c55e;transition:width .2s;border-radius:2px;"></div>
+              </div>
+              <div style="color:#fff;font-size:9px;text-align:center;margin-top:2px;">${p.progress||0}%</div>
+            </div>
           </div>`;
-      return thumb;
+      if(p.status==='error')
+        return `<div class="photo-thumb" style="cursor:default;">
+            <img src="${p.dataURL}" alt="" style="opacity:0.4;">
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,.6);color:#fff;font-size:11px;font-weight:700;">❌ 실패</div>
+            <button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button>
+          </div>`;
+      /* pending — 저장 대기 */
+      return `<div class="photo-thumb" style="cursor:default;">
+          <img src="${p.dataURL}" alt="" style="opacity:0.85;">
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:4px;background:rgba(0,0,0,.5);text-align:center;">
+            <span style="color:#93c5fd;font-size:10px;font-weight:600;">📎 저장 시 업로드</span>
+          </div>
+          <button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button>
+        </div>`;
     }).join('');
   };
   rg('gridBefore',exB,'before');rg('gridAfter',exA,'after');
