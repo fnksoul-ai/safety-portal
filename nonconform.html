@@ -1120,7 +1120,7 @@ window.onAuthStateChange=function(){
   /* updateSyncUI는 DOMContentLoaded 후에 정의되므로 직접 처리 */
   const admin=typeof AUTH!=='undefined'&&AUTH.isAdmin();
   const gasUrl=localStorage.getItem('nc_gas_url')
-    || 'https://script.google.com/macros/s/AKfycbzmq-PKLNWSlU8xprfachDGcz85w0sqNT6z5BZcm4a8fPe3DBG_gnuJ1--OvVrPI6FGng/exec';
+    || 'https://script.google.com/macros/s/AKfycbwAE-7h5VkA_oVFYUQEaIEpZMqid4BFsGRKlI-Q_QEdY1xQZOAiUVDFgcfwkiAjvmsSNw/exec';
   const connected=!!gasUrl.trim();
   const settingBtn=document.getElementById('sheetSettingBtn');
   const syncBtn=document.getElementById('sheetSyncBtn');
@@ -1159,7 +1159,7 @@ let gasAutoTimer=null;
 
 /* ★ 관리자가 설정한 GAS URL — 어떤 기기에서도 공통 적용
    시트 설정 저장 시 이 값이 자동으로 업데이트됩니다 */
-let GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzmq-PKLNWSlU8xprfachDGcz85w0sqNT6z5BZcm4a8fPe3DBG_gnuJ1--OvVrPI6FGng/exec';
+let GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwAE-7h5VkA_oVFYUQEaIEpZMqid4BFsGRKlI-Q_QEdY1xQZOAiUVDFgcfwkiAjvmsSNw/exec';
 
 function getGasUrl(){
   const saved = localStorage.getItem(GAS_KEY);
