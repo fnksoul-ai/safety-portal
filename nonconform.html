@@ -1163,7 +1163,10 @@ let GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwAE-7h5VkA_oVFYU
 
 function getGasUrl(){
   const saved = localStorage.getItem(GAS_KEY);
-  return (saved && saved.trim()) ? saved.trim() : (GAS_DEFAULT_URL || '');
+  /* 저장된 URL이 현재 기본값과 다르면 무시 (옛날 배포 URL 자동 정리) */
+  if(saved && saved.trim() && saved.trim() === GAS_DEFAULT_URL) return saved.trim();
+  if(saved) localStorage.removeItem(GAS_KEY);
+  return GAS_DEFAULT_URL || '';
 }
 function isGasConnected(){return !!getGasUrl();}
 
