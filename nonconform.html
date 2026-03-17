@@ -1308,8 +1308,8 @@ async function uploadToDrive(filename, dataURL, onProgress, recordId, side, inde
   const PROXY = 'https://safenode-proxy.fnksoul-ab5.workers.dev';
 
   onProgress(3);
-  /* 고화질 유지 (1200px/90%) — 원본에 가까운 화질, 빠른 전송 */
-  const compressed = await compressImage(dataURL, 1200, 0.9);
+  /* 고화질 유지 (1000px/85%) — 현장 사진 충분, 빠른 전송 */
+  const compressed = await compressImage(dataURL, 1000, 0.85);
   onProgress(8);
 
   const postBody = JSON.stringify({
