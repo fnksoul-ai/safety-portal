@@ -1299,41 +1299,40 @@ function requestDriveToken(){
   });
 }
 
-/* 청크 GET 방식 업로드 — GAS 소유자 권한, 토큰 불필요 */
+/* 브라우저 → Drive API 직접 업로드 (원본 품질, 폴더 공유 편집자 설정 필요) */
 async function uploadToDrive(filename, dataURL, onProgress, recordId, side, index){
-  const gasUrl = getGasUrl();
-  if(!gasUrl) throw new Error('GAS URL이 설정되지 않았습니다');
+  const token = await requestDriveToken();
+  const sep      = dataURL.indexOf(',');
+  const mimeType = dataURL.substring(5, sep).replace(';base64','');
+  const b64      = dataURL.substring(sep+1);
+  const bytes    = Uint8Array.from(atob(b64), c=>c.charCodeAt(0));
+  const blob     = new Blob([bytes], {type: mimeType});
+  const meta     = JSON.stringify({name: filename, parents: [GDRIVE_FOLDER_ID]});
+  const body     = new FormData();
+  body.append('metadata', new Blob([meta], {type:'application/json'}));
+  body.append('file', blob);
 
-  const compressed = await compressImage(dataURL, 1200, 0.85);
-  const sep    = compressed.indexOf(',');
-  const header = sep > -1 ? compressed.substring(0, sep) : '';
-  const b64raw = sep > -1 ? compressed.substring(sep+1) : compressed;
-  const b64safe = b64raw.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-
-  const CHUNK = 4000;
-  const totalChunks = Math.ceil(b64safe.length / CHUNK);
-
-  for(let i = 0; i < totalChunks; i++){
-    const chunk = b64safe.substring(i*CHUNK, (i+1)*CHUNK);
-    const qs = new URLSearchParams({
-      action:'uploadChunk',
-      recordId: String(recordId),
-      side: String(side),
-      index: String(index),
-      chunkIdx: String(i),
-      totalChunks: String(totalChunks),
-      header: i===0 ? header : '',
-      chunk: chunk
-    });
-    const res = await fetch(gasUrl+'?'+qs.toString(), {method:'GET'});
-    const json = await res.json().catch(()=>({}));
-    onProgress(Math.round((i+1)/totalChunks*100));
-    if(i === totalChunks-1){
-      if(json.ok && json.url) return json.url;
-      throw new Error(json.error || '업로드 실패');
-    }
-  }
-  throw new Error('청크 전송 오류');
+  return new Promise((resolve, reject)=>{
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id');
+    xhr.setRequestHeader('Authorization', 'Bearer '+token);
+    xhr.upload.onprogress = e=>{ if(e.lengthComputable) onProgress(Math.round(e.loaded/e.total*90)); };
+    xhr.onload = async ()=>{
+      if(xhr.status===200||xhr.status===201){
+        const fileId = JSON.parse(xhr.responseText).id;
+        onProgress(100);
+        resolve(`https://lh3.googleusercontent.com/d/${fileId}`);
+      }else if(xhr.status===401){
+        driveToken=null;
+        try{ const url=await uploadToDrive(filename,dataURL,onProgress,recordId,side,index); resolve(url); }
+        catch(e){ reject(e); }
+      }else{
+        reject(new Error(`Drive 업로드 실패: ${xhr.status} — 폴더 공유 설정 확인 필요`));
+      }
+    };
+    xhr.onerror = ()=>reject(new Error('네트워크 오류'));
+    xhr.send(body);
+  });
 }
 
 
@@ -1940,11 +1939,9 @@ function processFiles(files,side){
       try{
         const useId=editId||pendingId||('_tmp_'+Date.now());
         const idx=arr.filter(p=>p!==item&&p.status==='done').length;
-        /* GAS 타임아웃 방지: 1200px 85%로 압축 후 전송 */
-        const compressed=await compressImage(dataURL,1200,0.85);
-        const ext=compressed.startsWith('data:image/png')?'png':'jpg';
+        const ext=dataURL.startsWith('data:image/png')?'png':(dataURL.startsWith('data:image/gif')?'gif':'jpg');
         const filename=`${useId}_${side}_${idx}.${ext}`;
-        const url=await uploadToDrive(filename,compressed,(pct)=>{
+        const url=await uploadToDrive(filename,dataURL,(pct)=>{
           item.progress=pct;renderGrids();
         }, useId, side, idx);
         item.status='done';item.url=url;
