@@ -1153,6 +1153,8 @@ const dbPut=(s,o)=>new Promise((r,j)=>{const q=txs(s,'readwrite').put(o);q.onsuc
 const dbDel=(s,k)=>new Promise((r,j)=>{const q=txs(s,'readwrite').delete(k);q.onsuccess=()=>r();q.onerror=()=>j(q.error);});
 
 let records=[],editId=null,curCo='전체';
+let sortField='reportDate'; // 정렬 기준: 'id', 'reportDate'
+let sortOrder='desc'; // 정렬 순서: 'asc', 'desc'
 /* tmpB/tmpA: 업로드 대기 파일, exB/exA: 기존 Drive URL 목록 */
 let tmpB=[],tmpA=[],exB=[],exA=[];
 let chartCo,chartCa;
@@ -1704,6 +1706,16 @@ function renderTabs(){
   if(dl)dl.innerHTML=cos.map(c=>`<option value="${c}">`).join('');
 }
 function setTab(b){curCo=b.dataset.company;document.querySelectorAll('#companyTabs .ftab').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderTable();}
+
+function sortRecords(field) {
+  if (sortField === field) {
+    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortField = field;
+    sortOrder = field === 'id' ? 'asc' : 'desc';
+  }
+  renderTable();
+}
 
 function getFiltered(){
   const st=document.getElementById('fStatus').value;
