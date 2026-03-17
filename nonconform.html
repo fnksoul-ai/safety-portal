@@ -1299,41 +1299,33 @@ function requestDriveToken(){
   });
 }
 
-async function uploadToDrive(filename, dataURL, onProgress){
-  const token=await requestDriveToken();
-  const sep=dataURL.indexOf(',');
-  const mimeType=dataURL.substring(5,sep).replace(';base64','');
-  const b64=dataURL.substring(sep+1);
-  const bytes=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
-  const blob=new Blob([bytes],{type:mimeType});
-  const meta=JSON.stringify({name:filename,parents:[GDRIVE_FOLDER_ID]});
-  const body=new FormData();
-  body.append('metadata',new Blob([meta],{type:'application/json'}));
-  body.append('file',blob);
-  return new Promise((resolve,reject)=>{
-    const xhr=new XMLHttpRequest();
-    xhr.open('POST','https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id');
-    xhr.setRequestHeader('Authorization','Bearer '+token);
-    xhr.upload.onprogress=e=>{if(e.lengthComputable)onProgress(Math.round(e.loaded/e.total*85));};
-    xhr.onload=async()=>{
-      if(xhr.status===200||xhr.status===201){
-        const fileId=JSON.parse(xhr.responseText).id;
-        await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,{
-          method:'POST',
-          headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
-          body:JSON.stringify({role:'reader',type:'anyone'})
-        });
-        onProgress(100);
-        resolve(`https://lh3.googleusercontent.com/d/${fileId}`);
-      }else if(xhr.status===401){
-        driveToken=null;
-        try{const url=await uploadToDrive(filename,dataURL,onProgress);resolve(url);}
-        catch(e){reject(e);}
-      }else{reject(new Error('Drive 업로드 실패: '+xhr.status));}
-    };
-    xhr.onerror=()=>reject(new Error('네트워크 오류'));
-    xhr.send(body);
+/* GAS POST 방식 업로드 — 로그인 계정 무관, 스크립트 소유자 권한으로 저장 */
+async function uploadToDrive(filename, dataURL, onProgress, recordId, side, index){
+  const gasUrl = getGasUrl();
+  if(!gasUrl){ throw new Error('GAS URL이 설정되지 않았습니다'); }
+
+  onProgress(10);
+
+  const res = await fetch(gasUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'uploadPhoto',
+      recordId: recordId,
+      side: side,
+      index: index,
+      dataURL: dataURL
+    })
   });
+
+  onProgress(90);
+
+  const json = await res.json().catch(()=>({}));
+  if(json.ok && json.url){
+    onProgress(100);
+    return json.url;
+  }
+  throw new Error(json.error || 'GAS 업로드 실패');
 }
 
 
@@ -1826,10 +1818,10 @@ async function saveRecord(){
     if(p.status==='done'&&p.url){
       newBeforeUrls.push(p.url);
     }else{
-      /* 실패했으면 Drive API로 재시도 */
       try{
+        const idx=keptBefore.length+newBeforeUrls.length;
         const ext=p.dataURL.startsWith('data:image/png')?'png':'jpg';
-        const url=await uploadToDrive(`${id}_before_${keptBefore.length+newBeforeUrls.length}.${ext}`,p.dataURL,()=>{});
+        const url=await uploadToDrive(`${id}_before_${idx}.${ext}`,p.dataURL,()=>{},id,'before',idx);
         if(url)newBeforeUrls.push(url);
       }catch(e){console.error('before 재업로드 실패:',e);}
     }
@@ -1841,8 +1833,9 @@ async function saveRecord(){
       newAfterUrls.push(p.url);
     }else{
       try{
+        const idx=keptAfter.length+newAfterUrls.length;
         const ext=p.dataURL.startsWith('data:image/png')?'png':'jpg';
-        const url=await uploadToDrive(`${id}_after_${keptAfter.length+newAfterUrls.length}.${ext}`,p.dataURL,()=>{});
+        const url=await uploadToDrive(`${id}_after_${idx}.${ext}`,p.dataURL,()=>{},id,'after',idx);
         if(url)newAfterUrls.push(url);
       }catch(e){console.error('after 재업로드 실패:',e);}
     }
@@ -1943,7 +1936,7 @@ function processFiles(files,side){
         const filename=`${useId}_${side}_${idx}.${ext}`;
         const url=await uploadToDrive(filename,dataURL,(pct)=>{
           item.progress=pct;renderGrids();
-        });
+        }, useId, side, idx);
         item.status='done';item.url=url;
       }catch(err){
         console.error('Drive 업로드 오류:',err.message);
