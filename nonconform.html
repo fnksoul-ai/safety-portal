@@ -1307,8 +1307,8 @@ async function uploadToDrive(filename, dataURL, onProgress, recordId, side, inde
   const PROXY = 'https://safenode-proxy.fnksoul-ab5.workers.dev';
 
   onProgress(5);
-  /* 원본 그대로 업로드 — 압축 없음 */
-  const compressed = dataURL;
+  /* 고화질 유지 (1920px/95%) — 원본에 가까운 화질 */
+  const compressed = await compressImage(dataURL, 1920, 0.95);
   onProgress(15);
 
   const res = await fetch(PROXY, {
