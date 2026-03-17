@@ -1300,35 +1300,78 @@ function requestDriveToken(){
   });
 }
 
-/* 브라우저 → Drive API 직접 업로드 — 공유 폴더에 저장 */
+/* 브라우저 → Worker → GAS 업로드 — XMLHttpRequest로 실시간 진행률 */
 async function uploadToDrive(filename, dataURL, onProgress, recordId, side, index){
   const gasUrl = getGasUrl();
   if(!gasUrl) throw new Error('GAS URL이 설정되지 않았습니다');
 
   const PROXY = 'https://safenode-proxy.fnksoul-ab5.workers.dev';
 
-  onProgress(5);
-  /* 고화질 유지 (1920px/95%) — 원본에 가까운 화질 */
-  const compressed = await compressImage(dataURL, 1920, 0.95);
-  onProgress(15);
+  onProgress(3);
+  /* 고화질 유지 (1200px/90%) — 원본에 가까운 화질, 빠른 전송 */
+  const compressed = await compressImage(dataURL, 1200, 0.9);
+  onProgress(8);
 
-  const res = await fetch(PROXY, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      target: gasUrl,
-      action: 'uploadPhoto',
-      recordId: String(recordId),
-      side: String(side),
-      index: String(index),
-      dataURL: compressed
-    })
+  const postBody = JSON.stringify({
+    target: gasUrl,
+    action: 'uploadPhoto',
+    recordId: String(recordId),
+    side: String(side),
+    index: String(index),
+    dataURL: compressed
   });
 
-  onProgress(95);
-  const json = await res.json().catch(()=>({}));
-  if(json.ok && json.url){ onProgress(100); return json.url; }
-  throw new Error(json.error || '업로드 실패');
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', PROXY);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+
+    /* 업로드 실시간 진행률 (8% ~ 90%) */
+    xhr.upload.onprogress = (e) => {
+      if(e.lengthComputable){
+        const pct = 8 + Math.round((e.loaded / e.total) * 52);
+        onProgress(pct);
+      }
+    };
+
+    /* 업로드 완료 → 서버 처리 대기 (60% ~ 90%) */
+    xhr.upload.onload = () => {
+      onProgress(60);
+      /* 서버 처리 시뮬레이션 진행률 */
+      let serverPct = 60;
+      const timer = setInterval(() => {
+        serverPct = Math.min(serverPct + 3, 90);
+        onProgress(serverPct);
+        if(serverPct >= 90) clearInterval(timer);
+      }, 500);
+      xhr._serverTimer = timer;
+    };
+
+    xhr.onload = () => {
+      if(xhr._serverTimer) clearInterval(xhr._serverTimer);
+      onProgress(95);
+      try {
+        const json = JSON.parse(xhr.responseText);
+        if(json.ok && json.url){ onProgress(100); resolve(json.url); }
+        else reject(new Error(json.error || '업로드 실패'));
+      } catch(e) {
+        reject(new Error('응답 파싱 실패'));
+      }
+    };
+
+    xhr.onerror = () => {
+      if(xhr._serverTimer) clearInterval(xhr._serverTimer);
+      reject(new Error('네트워크 오류'));
+    };
+
+    xhr.ontimeout = () => {
+      if(xhr._serverTimer) clearInterval(xhr._serverTimer);
+      reject(new Error('업로드 시간 초과'));
+    };
+
+    xhr.timeout = 120000; /* 2분 타임아웃 */
+    xhr.send(postBody);
+  });
 }
 
 
