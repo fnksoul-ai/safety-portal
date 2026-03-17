@@ -1299,37 +1299,41 @@ function requestDriveToken(){
   });
 }
 
-/* GAS POST 방식 업로드 — Cloudflare Worker CORS 프록시 경유 */
+/* 청크 GET 방식 업로드 — GAS 소유자 권한, 토큰 불필요 */
 async function uploadToDrive(filename, dataURL, onProgress, recordId, side, index){
   const gasUrl = getGasUrl();
-  if(!gasUrl){ throw new Error('GAS URL이 설정되지 않았습니다'); }
+  if(!gasUrl) throw new Error('GAS URL이 설정되지 않았습니다');
 
-  /* Cloudflare Worker가 CORS 헤더 추가 후 GAS로 POST 전달 */
-  const PROXY = 'https://safenode-proxy.fnksoul-ab5.workers.dev';
+  const compressed = await compressImage(dataURL, 1200, 0.85);
+  const sep    = compressed.indexOf(',');
+  const header = sep > -1 ? compressed.substring(0, sep) : '';
+  const b64raw = sep > -1 ? compressed.substring(sep+1) : compressed;
+  const b64safe = b64raw.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
 
-  onProgress(10);
+  const CHUNK = 4000;
+  const totalChunks = Math.ceil(b64safe.length / CHUNK);
 
-  const res = await fetch(PROXY, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      target: gasUrl,
-      action: 'uploadPhoto',
-      recordId: recordId,
-      side: side,
-      index: index,
-      dataURL: dataURL
-    })
-  });
-
-  onProgress(90);
-
-  const json = await res.json().catch(()=>({}));
-  if(json.ok && json.url){
-    onProgress(100);
-    return json.url;
+  for(let i = 0; i < totalChunks; i++){
+    const chunk = b64safe.substring(i*CHUNK, (i+1)*CHUNK);
+    const qs = new URLSearchParams({
+      action:'uploadChunk',
+      recordId: String(recordId),
+      side: String(side),
+      index: String(index),
+      chunkIdx: String(i),
+      totalChunks: String(totalChunks),
+      header: i===0 ? header : '',
+      chunk: chunk
+    });
+    const res = await fetch(gasUrl+'?'+qs.toString(), {method:'GET'});
+    const json = await res.json().catch(()=>({}));
+    onProgress(Math.round((i+1)/totalChunks*100));
+    if(i === totalChunks-1){
+      if(json.ok && json.url) return json.url;
+      throw new Error(json.error || '업로드 실패');
+    }
   }
-  throw new Error(json.error || 'GAS 업로드 실패');
+  throw new Error('청크 전송 오류');
 }
 
 
