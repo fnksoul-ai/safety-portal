@@ -1663,8 +1663,15 @@ function renderCatSelect(){
   const cur=sel.value;
   sel.innerHTML=cats.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('');
 }
+function renderFilterCategory(){
+  const cats=getCategories();
+  const sel=document.getElementById('fCategory');
+  if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">전체</option>`+cats.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('');
+}
 function openCatMgr(){renderCatList();document.getElementById('catMgrOverlay').style.display='flex';}
-function closeCatMgr(){document.getElementById('catMgrOverlay').style.display='none';renderCatSelect();}
+function closeCatMgr(){document.getElementById('catMgrOverlay').style.display='none';renderCatSelect();renderFilterCategory();}
 function renderCatList(){
   const cats=getCategories();
   document.getElementById('catList').innerHTML=cats.map((c,i)=>
@@ -1686,7 +1693,7 @@ function addCategory(){
 function deleteCategory(idx){
   const cats=getCategories();
   if(cats.length<=1){toast('최소 1개는 유지해야 합니다',2500);return;}
-  cats.splice(idx,1);saveCategories(cats);renderCatList();
+  cats.splice(idx,1);saveCategories(cats);renderCatList();renderFilterCategory();
 }
 function renderTabs(){
   const cos=[...new Set(records.map(r=>r.company))].sort();
