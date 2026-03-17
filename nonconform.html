@@ -1299,17 +1299,21 @@ function requestDriveToken(){
   });
 }
 
-/* GAS POST 방식 업로드 — 로그인 계정 무관, 스크립트 소유자 권한으로 저장 */
+/* GAS POST 방식 업로드 — Cloudflare Worker CORS 프록시 경유 */
 async function uploadToDrive(filename, dataURL, onProgress, recordId, side, index){
   const gasUrl = getGasUrl();
   if(!gasUrl){ throw new Error('GAS URL이 설정되지 않았습니다'); }
 
+  /* Cloudflare Worker가 CORS 헤더 추가 후 GAS로 POST 전달 */
+  const PROXY = 'https://safenode-proxy.fnksoul.workers.dev';
+
   onProgress(10);
 
-  const res = await fetch(gasUrl, {
+  const res = await fetch(PROXY, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      target: gasUrl,
       action: 'uploadPhoto',
       recordId: recordId,
       side: side,
