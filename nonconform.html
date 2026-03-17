@@ -1162,7 +1162,8 @@ let gasAutoTimer=null;
 let GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbzmq-PKLNWSlU8xprfachDGcz85w0sqNT6z5BZcm4a8fPe3DBG_gnuJ1--OvVrPI6FGng/exec';
 
 function getGasUrl(){
-  return localStorage.getItem(GAS_KEY) || GAS_DEFAULT_URL || '';
+  const saved = localStorage.getItem(GAS_KEY);
+  return (saved && saved.trim()) ? saved.trim() : (GAS_DEFAULT_URL || '');
 }
 function isGasConnected(){return !!getGasUrl();}
 
@@ -1493,7 +1494,8 @@ function startAutoSync(){
 
 /* 설정 모달 열기/닫기 */
 const SHEET_URL_KEY = 'nc_sheet_url';
-function getSheetUrl(){ return localStorage.getItem(SHEET_URL_KEY)||''; }
+const SHEET_DEFAULT_URL = 'https://docs.google.com/spreadsheets/d/17MutJeUvl_TreCi2f1B7b5pqeGgUHc87b2c9Xj0T7H4/edit';
+function getSheetUrl(){ return localStorage.getItem(SHEET_URL_KEY) || SHEET_DEFAULT_URL; }
 
 /* 엑셀 버튼 — 구글시트로 바로 이동 */
 function openGoogleSheet(){
