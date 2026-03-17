@@ -942,9 +942,15 @@ nav {
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th>관리번호</th><th>협력업체</th><th>위치</th><th>작성자</th>
+          <th style="cursor:pointer;user-select:none;" onclick="sortRecords('id')" title="클릭하여 정렬">
+            관리번호 <span id="sortIconId" style="font-size:10px;opacity:0.5;"></span>
+          </th>
+          <th>협력업체</th><th>위치</th><th>작성자</th>
           <th style="min-width:220px;">내용</th><th>카테고리</th>
-          <th>지적일</th><th>조치완료일</th><th>상태</th><th>사진</th><th></th>
+          <th style="cursor:pointer;user-select:none;" onclick="sortRecords('reportDate')" title="클릭하여 정렬">
+            지적일 <span id="sortIconDate" style="font-size:10px;opacity:0.5;"></span>
+          </th>
+          <th>조치완료일</th><th>상태</th><th>사진</th><th></th>
         </tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
@@ -1445,7 +1451,7 @@ async function loadFromSheet(){
     const sheetIds=new Set(sheetRecs.map(r=>r.id));
     await Promise.all(localRecs.filter(r=>!sheetIds.has(r.id)).map(r=>dbDel(SM,r.id)));
     records=await dbGetAll(SM);
-    renderTabs();renderTable();renderCharts();
+    renderTabs();renderFilterCategory();renderTable();renderCharts();
     setSyncIcon(false);
     return true;
   }catch(e){
@@ -1613,7 +1619,7 @@ window.addEventListener('DOMContentLoaded',async()=>{
   await initDB();
   records=await dbGetAll(SM);
   renderCatSelect();
-  updateAuth();renderTabs();renderTable();renderCharts();
+  updateAuth();renderTabs();renderFilterCategory();renderTable();renderCharts();
   document.getElementById('fDate').value=today();
   updateSyncUI();
   startAutoSync();
@@ -1675,7 +1681,7 @@ function addCategory(){
   if(cats.includes(val)){toast('이미 존재하는 카테고리입니다',2500);return;}
   cats.push(val);saveCategories(cats);
   document.getElementById('catNewInput').value='';
-  renderCatList();toast(`✅ "${val}" 추가됨`,2500);
+  renderCatList();renderFilterCategory();toast(`✅ "${val}" 추가됨`,2500);
 }
 function deleteCategory(idx){
   const cats=getCategories();
@@ -1722,7 +1728,25 @@ function renderTable(){
   if(!f.length){tb.innerHTML=`<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📋</div><p>등록된 부적합사항이 없습니다</p></div></td></tr>`;return;}
   const cc={'개인보호구':'badge-blue','추락방지':'badge-red','정리정돈':'badge-yellow','화재예방':'badge-red','장비/기계':'badge-yellow','안전표지':'badge-green','기타':'badge-teal'};
   const sb=s=>({'미조치':'<span class="badge badge-red">미조치</span>','조치중':'<span class="badge badge-yellow">조치중</span>','조치완료':'<span class="badge badge-green">완료</span>'}[s]||s);
-  tb.innerHTML=[...f].sort((a,b)=>b.reportDate.localeCompare(a.reportDate)).map(r=>{
+  // 정렬 아이콘 업데이트
+  document.getElementById('sortIconId').textContent = sortField === 'id' ? (sortOrder === 'asc' ? '▲' : '▼') : '';
+  document.getElementById('sortIconDate').textContent = sortField === 'reportDate' ? (sortOrder === 'asc' ? '▲' : '▼') : '';
+  
+  // 동적 정렬
+  const sorted = [...f].sort((a, b) => {
+    if (sortField === 'id') {
+      return sortOrder === 'asc' 
+        ? a.id.localeCompare(b.id) 
+        : b.id.localeCompare(a.id);
+    } else if (sortField === 'reportDate') {
+      return sortOrder === 'asc'
+        ? a.reportDate.localeCompare(b.reportDate)
+        : b.reportDate.localeCompare(a.reportDate);
+    }
+    return 0;
+  });
+  
+  tb.innerHTML=sorted.map(r=>{
     const od=r.dueDate&&r.dueDate<td&&r.status!=='조치완료';
     const ph=(r.beforeUrls||[]).length+(r.afterUrls||[]).length;
     return `<tr onclick="openDetail('${r.id}')">
@@ -2511,6 +2535,14 @@ nav {
 @media (max-width: 768px) {
   .nav-desktop-links { display: none; }
   .hamburger { display: flex; }
+}
+
+/* 정렬 가능한 헤더 스타일 */
+th[onclick] {
+  transition: background .15s;
+}
+th[onclick]:hover {
+  background: var(--bg3) !important;
 }
 </style>
 </head><body>
