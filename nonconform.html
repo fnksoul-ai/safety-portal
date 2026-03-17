@@ -1299,35 +1299,66 @@ function requestDriveToken(){
   });
 }
 
-/* 브라우저 → Drive API 직접 업로드 — 공유 폴더에 저장 */
+/* ══════════════════════════════════════
+   GAS GET 청크 업로드 — Worker 프록시 불필요
+   누구나 사진 업로드 가능 (GAS가 배포자 권한으로 Drive 저장)
+══════════════════════════════════════ */
+const CHUNK_SIZE = 4000; /* URL 파라미터 안전 크기 */
+
 async function uploadToDrive(filename, dataURL, onProgress, recordId, side, index){
   const gasUrl = getGasUrl();
   if(!gasUrl) throw new Error('GAS URL이 설정되지 않았습니다');
 
-  const PROXY = 'https://safenode-proxy.fnksoul-ab5.workers.dev';
-
   onProgress(5);
-  /* 전송 전 압축 (1600px/90%) — GAS 30초 타임아웃 방지 */
+  /* 전송 전 압축 (1600px/90%) */
   const compressed = await compressImage(dataURL, 1600, 0.9);
-  onProgress(15);
+  onProgress(10);
 
-  const res = await fetch(PROXY, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      target: gasUrl,
-      action: 'uploadPhoto',
+  /* data:image/jpeg;base64,/9j/4AAQ... → header / b64 분리 */
+  const sep    = compressed.indexOf(',');
+  const header = sep > -1 ? compressed.substring(0, sep) : '';
+  const b64raw = sep > -1 ? compressed.substring(sep + 1) : compressed;
+
+  /* URL-safe base64 변환 (GAS 측에서 역변환) */
+  const b64safe = b64raw.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+
+  /* 청크 분할 */
+  const chunks = [];
+  for(let i = 0; i < b64safe.length; i += CHUNK_SIZE){
+    chunks.push(b64safe.substring(i, i + CHUNK_SIZE));
+  }
+  const totalChunks = chunks.length;
+
+  /* 청크 순차 전송 (GET — CORS 문제 없음) */
+  let lastUrl = null;
+  for(let ci = 0; ci < totalChunks; ci++){
+    const params = new URLSearchParams({
+      action: 'uploadChunk',
       recordId: String(recordId),
       side: String(side),
       index: String(index),
-      dataURL: compressed
-    })
-  });
+      chunkIdx: String(ci),
+      totalChunks: String(totalChunks),
+      chunk: chunks[ci]
+    });
+    /* 첫 청크에 header 포함 */
+    if(ci === 0 && header) params.set('header', header);
 
-  onProgress(95);
-  const json = await res.json().catch(()=>({}));
-  if(json.ok && json.url){ onProgress(100); return json.url; }
-  throw new Error(json.error || '업로드 실패');
+    const pct = 10 + Math.round((ci + 1) / totalChunks * 85);
+    onProgress(pct);
+
+    const res = await fetch(gasUrl + '?' + params.toString(), { method: 'GET' });
+    const json = await res.json().catch(() => ({}));
+
+    if(!json.ok) throw new Error(json.error || `청크 ${ci} 업로드 실패`);
+
+    /* 마지막 청크 응답에 최종 URL 포함 */
+    if(json.url) lastUrl = json.url;
+  }
+
+  if(!lastUrl) throw new Error('업로드 완료되었으나 URL을 받지 못했습니다');
+  onProgress(100);
+  return lastUrl;
 }
 
 
@@ -1445,17 +1476,17 @@ function compressImage(dataURL, maxW=800, quality=0.75){
 
 /* 레코드 1건 시트에서 삭제 */
 /* Drive 파일 URL로 fileId 추출 후 삭제 */
+/* Drive 파일 삭제 — GAS deletePhoto 액션 사용 (사용자 OAuth 불필요) */
 async function deleteDriveFile(url){
   if(!url) return;
-  const m = url.match(/[?&]id=([^&]+)/);
+  /* lh3.googleusercontent.com/d/FILE_ID 형식에서 fileId 추출 */
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   if(!m) return;
-  const fileId = m[1];
+  const gasUrl = getGasUrl();
+  if(!gasUrl) return;
   try{
-    const token = await requestDriveToken();
-    await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`,{
-      method:'DELETE',
-      headers:{'Authorization':'Bearer '+token}
-    });
+    const params = new URLSearchParams({ action:'deletePhoto', fileId: m[1] });
+    await fetch(gasUrl + '?' + params.toString(), { method:'GET' });
   }catch(e){ console.warn('Drive 파일 삭제 실패:', e.message); }
 }
 
