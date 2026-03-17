@@ -1936,9 +1936,11 @@ function processFiles(files,side){
       try{
         const useId=editId||pendingId||('_tmp_'+Date.now());
         const idx=arr.filter(p=>p!==item&&p.status==='done').length;
-        const ext=dataURL.startsWith('data:image/png')?'png':(dataURL.startsWith('data:image/gif')?'gif':'jpg');
+        /* GAS 타임아웃 방지: 1200px 85%로 압축 후 전송 */
+        const compressed=await compressImage(dataURL,1200,0.85);
+        const ext=compressed.startsWith('data:image/png')?'png':'jpg';
         const filename=`${useId}_${side}_${idx}.${ext}`;
-        const url=await uploadToDrive(filename,dataURL,(pct)=>{
+        const url=await uploadToDrive(filename,compressed,(pct)=>{
           item.progress=pct;renderGrids();
         }, useId, side, idx);
         item.status='done';item.url=url;
