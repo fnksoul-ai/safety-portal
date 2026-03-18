@@ -1072,8 +1072,7 @@ function buildTabs() {
   
   select.innerHTML = companies.map(c => {
     const count = c === '전체' ? contacts.length : contacts.filter(ct => ct.company === c).length;
-    const icon = c === '전체' ? '🏢' : '🏭';
-    const label = c === '전체' ? `${icon} 전체 (${count}명)` : `${icon} ${c} (${count}명)`;
+    const label = c === '전체' ? `전체 (${count}명)` : `${c} (${count}명)`;
     return `<option value="${c}" ${c===activeFilter?'selected':''}>${label}</option>`;
   }).join('');
 }
