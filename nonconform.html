@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=Bebas+Neue&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
@@ -186,6 +187,12 @@ select,input[type=date],input[type=text]{
   font-size:12px;font-family:inherit;outline:none;
   transition:border-color .15s;
 }
+input[type=date]{cursor:pointer;width:100%;}
+input[type=date]::-webkit-calendar-picker-indicator{
+  position:absolute;left:0;top:0;width:100%;height:100%;
+  opacity:0;cursor:pointer;
+}
+input[type=date]{position:relative;}
 select:focus,input:focus{border-color:var(--orange);}
 input[type=text]{min-width:160px;}
 
@@ -299,9 +306,9 @@ textarea:focus{border-color:var(--orange);}
   background:rgba(249,115,22,.05);
 }
 .dz-icon{font-size:22px;margin-bottom:6px;}
-.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px;}
+.photo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px;}
 .photo-thumb{
-  position:relative;aspect-ratio:1;border-radius:7px;
+  position:relative;aspect-ratio:4/3;border-radius:7px;
   overflow:hidden;background:var(--bg);cursor:pointer;
   border:1px solid var(--border2);
 }
@@ -347,12 +354,24 @@ textarea:focus{border-color:var(--orange);}
 
 /* 인쇄 */
 @media print{
-  body::after,nav,.mobile-drawer,.filter-bar,.chart-row,
+  body::after,nav,.mobile-drawer,.filter-bar,
   .header-actions,.overlay,.lightbox,.toast{display:none!important;}
   .page{padding:0;max-width:100%;}
+  .chart-row{display:grid!important;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+  .chart-card{border:1px solid #ccc!important;break-inside:avoid;display:flex;flex-direction:column;}
+  .chart-title{padding:8px 12px!important;border-bottom:1px solid #eee;}
+  .chart-wrap{height:200px!important;flex:1;display:flex;align-items:flex-start;}
+  .chart-wrap canvas{width:100%!important;height:100%!important;object-position:top;}
+  .stat-row{display:grid!important;grid-template-columns:repeat(5,1fr);}
   .table-card{border:1px solid #ccc!important;}
   table{font-size:10pt;}
   thead th{background:#f0f0f0!important;color:#333!important;}
+  canvas{max-width:100%!important;}
+  img{max-width:100%!important;}
+  /* 수정/삭제 버튼 열 숨김 */
+  thead th:last-child,
+  tbody td:last-child{display:none!important;}
+  .table-toolbar .btn{display:none!important;}
 }
 
 /* 반응형 */
@@ -394,9 +413,9 @@ textarea:focus{border-color:var(--orange);}
   --orange2:   #0560BE !important;
   --orange-glow: rgba(4,107,210,.18) !important;
   --blue:      #046BD2 !important;
-  --green:     #046BD2 !important;
+  --green:     #16a34a !important;
   --red:       #DC2626 !important;
-  --yellow:    #D97706 !important;
+  --yellow:    #ca8a04 !important;
   --purple:    #0891B2 !important;
   --text:      #1E293B !important;
   --text2:     #0F172A !important;
@@ -864,12 +883,17 @@ nav {
     <div>
       <div class="page-eyebrow">부적합사항 관리대장</div>
       <div class="page-title">협력업체 <span>부적합</span> 관리</div>
-      <div class="page-sub">조치 전·후 사진 등록 · 통계 · 엑셀 내보내기 · 보고서 출력</div>
+      <div class="page-sub">조치 전·후 사진 등록 · 통계 · 구글시트 연동 · 보고서 출력</div>
     </div>
     <div class="header-actions">
-      <button class="btn btn-ghost" onclick="exportExcel()">📊 엑셀</button>
+      <button class="btn btn-ghost" onclick="openGoogleSheet()">📊 엑셀</button>
+      <button class="btn btn-ghost" onclick="window.open('https://drive.google.com/drive/folders/1-R4T33Pu4AxBvMpn2ZuCqt_Yo6_LjjCy','_blank')">📁 사진폴더</button>
       <button class="btn btn-ghost" onclick="window.print()">🖨️ 인쇄</button>
-      <button class="btn btn-primary" id="addBtn" onclick="openAdd()" style="display:none">＋ 등록</button>
+      <button class="btn btn-ghost" id="sheetSyncBtn" onclick="manualSync()" title="구글 시트 동기화" style="display:none">
+        <span id="syncIcon">🔄</span> 시트 동기화
+      </button>
+      <button class="btn btn-ghost" id="sheetSettingBtn" onclick="openSheetSetting()" title="구글 시트 연동 설정" style="display:none">⚙️ 시트 설정</button>
+      <button class="btn btn-primary" id="addBtn" onclick="openAdd()">＋ 등록</button>
     </div>
   </div>
 
@@ -913,13 +937,20 @@ nav {
   <div class="table-card">
     <div class="table-toolbar">
       <div class="table-count">조회 <strong id="filteredCount">0</strong>건</div>
+      <button class="btn btn-primary btn-sm" onclick="openAdd()">＋ 등록</button>
     </div>
     <div class="tbl-wrap">
       <table>
         <thead><tr>
-          <th>관리번호</th><th>협력업체</th><th>위치</th>
+          <th style="cursor:pointer;user-select:none;" onclick="sortRecords('id')" title="클릭하여 정렬">
+            관리번호 <span id="sortIconId" style="font-size:10px;opacity:0.5;"></span>
+          </th>
+          <th>협력업체</th><th>위치</th><th>작성자</th>
           <th style="min-width:220px;">내용</th><th>카테고리</th>
-          <th>지적일</th><th>조치기한</th><th>상태</th><th>사진</th><th></th>
+          <th style="cursor:pointer;user-select:none;" onclick="sortRecords('reportDate')" title="클릭하여 정렬">
+            지적일 <span id="sortIconDate" style="font-size:10px;opacity:0.5;"></span>
+          </th>
+          <th>조치완료일</th><th>상태</th><th>사진</th><th></th>
         </tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
@@ -938,12 +969,17 @@ nav {
       <div class="form-grid">
         <div class="form-group"><label class="form-label">협력업체 <span class="req">*</span></label><input type="text" id="fCompany" placeholder="OO건설" list="companyDL"><datalist id="companyDL"></datalist></div>
         <div class="form-group"><label class="form-label">위치 <span class="req">*</span></label><input type="text" id="fLocation" placeholder="3층 계단참"></div>
+        <div class="form-group"><label class="form-label">작성자 <span class="req">*</span></label><input type="text" id="fWriter" placeholder="홍길동"></div>
         <div class="form-group"><label class="form-label">카테고리 <span class="req">*</span></label>
-          <select id="fCat"><option>개인보호구</option><option>추락방지</option><option>정리정돈</option><option>화재예방</option><option>장비/기계</option><option>안전표지</option><option>기타</option></select></div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="fCat" style="flex:1"></select>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="openCatMgr()" title="카테고리 관리">⚙️</button>
+          </div>
+        </div>
         <div class="form-group"><label class="form-label">상태</label>
           <select id="fStat"><option>미조치</option><option>조치중</option><option>조치완료</option></select></div>
         <div class="form-group"><label class="form-label">지적일 <span class="req">*</span></label><input type="date" id="fDate"></div>
-        <div class="form-group"><label class="form-label">조치기한</label><input type="date" id="fDue"></div>
+        <div class="form-group"><label class="form-label">조치완료일</label><input type="date" id="fDue" onchange="if(this.value){document.getElementById('fStat').value='조치완료';}"></div>
         <div class="form-group span2"><label class="form-label">부적합 내용 <span class="req">*</span></label><textarea id="fDesc" placeholder="부적합 내용을 상세히 기재하세요..."></textarea></div>
         <div class="form-group span2"><label class="form-label">조치 내용</label><textarea id="fAction" placeholder="조치 완료 후 내용을 기재하세요..."></textarea></div>
       </div>
@@ -953,14 +989,14 @@ nav {
           <div class="photo-panel">
             <div class="photo-panel-head"><div class="pdot pdot-red"></div> 조치 전</div>
             <div class="drop-zone" id="dzBefore" onclick="document.getElementById('fiBefore').click()" ondragover="onDragOver(event,'dzBefore')" ondragleave="onDragLeave('dzBefore')" ondrop="onDrop(event,'before')">
-              <div class="dz-icon">📸</div>클릭 또는 드래그 업로드</div>
+              <div class="dz-icon">📸</div>클릭 또는 드래그 업로드<div style="font-size:10px;color:var(--muted2);margin-top:3px;">최대 2장</div></div>
             <input type="file" id="fiBefore" multiple accept="image/*" style="display:none" onchange="onFileInput(event,'before')">
             <div class="photo-grid" id="gridBefore"></div>
           </div>
           <div class="photo-panel">
             <div class="photo-panel-head"><div class="pdot pdot-green"></div> 조치 후</div>
             <div class="drop-zone" id="dzAfter" onclick="document.getElementById('fiAfter').click()" ondragover="onDragOver(event,'dzAfter')" ondragleave="onDragLeave('dzAfter')" ondrop="onDrop(event,'after')">
-              <div class="dz-icon">✅</div>클릭 또는 드래그 업로드</div>
+              <div class="dz-icon">✅</div>클릭 또는 드래그 업로드<div style="font-size:10px;color:var(--muted2);margin-top:3px;">최대 2장</div></div>
             <input type="file" id="fiAfter" multiple accept="image/*" style="display:none" onchange="onFileInput(event,'after')">
             <div class="photo-grid" id="gridAfter"></div>
           </div>
@@ -990,11 +1026,115 @@ nav {
   <button class="lb-close">×</button>
   <img id="lbImg" src="" alt="">
 </div>
+<!-- 카테고리 관리 모달 -->
+<div id="catMgrOverlay" onclick="if(event.target===this)closeCatMgr()" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
+  <div class="modal" style="max-width:400px;width:100%">
+    <div class="modal-header">
+      <div class="modal-title">🏷️ 카테고리 관리</div>
+      <button class="modal-close" onclick="closeCatMgr()">×</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
+      <div id="catList" style="display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;"></div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <input type="text" id="catNewInput" placeholder="새 카테고리 입력" style="flex:1" onkeydown="if(event.key==='Enter')addCategory()">
+        <button class="btn btn-primary btn-sm" onclick="addCategory()">추가</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeCatMgr()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 구글 로그인 안내 모달 -->
+<div id="driveAuthOverlay" onclick="if(event.target===this)closeDriveAuthModal()" style="display:none;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
+  <div class="modal" style="max-width:460px;width:100%">
+    <div class="modal-header">
+      <div class="modal-title">📸 사진 업로드를 위한 Google 로그인</div>
+      <button class="modal-close" onclick="closeDriveAuthModal()">×</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px;">
+      <div id="driveAuthMsg" style="font-size:13px;color:var(--muted2);line-height:1.8;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);">
+        📋 사진을 구글 드라이브에 저장하려면 <b>Google 계정 로그인</b>이 필요합니다.<br>
+        아래 버튼을 클릭하면 로그인 팝업이 열립니다.
+      </div>
+      <div id="popupBlockedMsg" style="display:none;font-size:13px;line-height:1.8;padding:12px 14px;background:rgba(239,68,68,.08);border-radius:8px;border:1px solid rgba(239,68,68,.25);color:#f87171;">
+        ⚠️ <b>팝업이 차단됐습니다.</b><br>
+        주소창 오른쪽의 <b>팝업 차단 아이콘</b>을 클릭하고<br>
+        <b>"항상 허용"</b> 선택 후 아래 버튼을 다시 눌러주세요.
+        <div style="margin-top:10px;padding:8px 12px;background:rgba(255,255,255,.05);border-radius:6px;font-size:12px;">
+          Chrome: 주소창 끝 🔒 또는 팝업차단 아이콘 클릭<br>
+          Safari: 환경설정 → 웹 사이트 → 팝업 창 → 허용
+        </div>
+      </div>
+      <div id="driveLoginStatus" style="font-size:12px;display:none;padding:8px 12px;border-radius:6px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeDriveAuthModal()">취소</button>
+      <button class="btn btn-primary" id="driveLoginBtn" onclick="doGoogleLogin()">
+        <img src="https://www.google.com/favicon.ico" style="width:14px;height:14px;margin-right:4px;"> Google로 로그인
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 구글 시트 연동 설정 모달 -->
+<div id="sheetSettingOverlay" onclick="if(event.target===this)closeSheetSetting()" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:24px;">
+  <div class="modal" style="max-width:540px;width:100%">
+    <div class="modal-header">
+      <div class="modal-title">📋 구글 스프레드시트 연동 설정</div>
+      <button class="modal-close" onclick="closeSheetSetting()">×</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+      <div style="font-size:13px;color:var(--muted2);line-height:1.7;padding:12px 14px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);">
+        📌 아래에 <b>Google Apps Script 웹 앱 URL</b>을 입력하면<br>
+        페이지 ↔ 구글 시트가 양방향으로 자동 동기화됩니다.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Apps Script 웹 앱 URL</label>
+        <input type="text" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" style="width:100%">
+      </div>
+      <div class="form-group">
+        <label class="form-label">구글 스프레드시트 URL</label>
+        <input type="text" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." style="width:100%">
+      </div>
+      <div id="gasUrlCopyBox" style="display:none;margin-top:4px;padding:10px 12px;background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.25);border-radius:8px;font-size:12px;color:var(--muted2);line-height:1.7;">
+        💡 <b>다른 기기에서도 유지하려면</b><br>
+        <code id="gasDefaultLine" style="display:block;margin-top:4px;padding:4px 8px;background:var(--bg3);border-radius:4px;font-size:11px;word-break:break-all;color:var(--text)"></code>
+        위 코드를 <code>nonconform.html</code> 파일의 <code>GAS_DEFAULT_URL = ''</code> 부분에 붙여넣고 GitHub에 재배포하세요.
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <label style="font-size:13px;color:var(--muted2);display:flex;align-items:center;gap:6px;">
+          <input type="checkbox" id="autoSyncChk"> 자동 동기화 (30초마다)
+        </label>
+      </div>
+      <div id="sheetConnStatus" style="font-size:12px;display:none;padding:8px 12px;border-radius:6px;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeSheetSetting()">취소</button>
+      <button class="btn btn-ghost" onclick="testSheetConnection()" style="color:var(--blue)">🔍 연결 테스트</button>
+      <button class="btn btn-primary" onclick="saveSheetSetting()">💾 저장</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="auth.js"></script>
 <script>
-const DB='ncDB2',VER=1,SM='records',SP='photos';
+/* auth.js 로드 직후 즉시 콜백 등록 — 타이밍 문제 방지 */
+window.onAuthStateChange=function(){
+  /* updateSyncUI는 DOMContentLoaded 후에 정의되므로 직접 처리 */
+  const admin=typeof AUTH!=='undefined'&&AUTH.isAdmin();
+  const gasUrl=localStorage.getItem('nc_gas_url')
+    || 'https://script.google.com/macros/s/AKfycbwAE-7h5VkA_oVFYUQEaIEpZMqid4BFsGRKlI-Q_QEdY1xQZOAiUVDFgcfwkiAjvmsSNw/exec';
+  const connected=!!gasUrl.trim();
+  const settingBtn=document.getElementById('sheetSettingBtn');
+  const syncBtn=document.getElementById('sheetSyncBtn');
+  if(settingBtn) settingBtn.style.display=admin?'inline-flex':'none';
+  if(syncBtn) syncBtn.style.display=(admin&&connected)?'inline-flex':'none';
+};
+const DB='ncDB3',VER=1,SM='records';
 let db;
 function initDB(){
   return new Promise((res,rej)=>{
@@ -1002,10 +1142,6 @@ function initDB(){
     r.onupgradeneeded=e=>{
       const d=e.target.result;
       if(!d.objectStoreNames.contains(SM))d.createObjectStore(SM,{keyPath:'id'});
-      if(!d.objectStoreNames.contains(SP)){
-        const ps=d.createObjectStore(SP,{autoIncrement:true,keyPath:'pk'});
-        ps.createIndex('rid','recordId',{unique:false});
-      }
     };
     r.onsuccess=e=>{db=e.target.result;res(db);};
     r.onerror=e=>rej(e.target.error);
@@ -1015,31 +1151,552 @@ const txs=(store,mode='readonly')=>db.transaction(store,mode).objectStore(store)
 const dbGetAll=s=>new Promise((r,j)=>{const q=txs(s).getAll();q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});
 const dbPut=(s,o)=>new Promise((r,j)=>{const q=txs(s,'readwrite').put(o);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});
 const dbDel=(s,k)=>new Promise((r,j)=>{const q=txs(s,'readwrite').delete(k);q.onsuccess=()=>r();q.onerror=()=>j(q.error);});
-function dbByIdx(s,idx,val){return new Promise((r,j)=>{const q=txs(s).index(idx).getAll(val);q.onsuccess=()=>r(q.result);q.onerror=()=>j(q.error);});}
-function dbDelByIdx(s,idx,val){
-  return new Promise((r,j)=>{
-    const t=db.transaction(s,'readwrite');
-    const c=t.objectStore(s).index(idx).openCursor(val);
-    c.onsuccess=e=>{const cur=e.target.result;if(cur){cur.delete();cur.continue();}};
-    t.oncomplete=()=>r();t.onerror=()=>j(t.error);
-  });
-}
 
 let records=[],editId=null,curCo='전체';
+let sortField='reportDate'; // 정렬 기준: 'id', 'reportDate'
+let sortOrder='desc'; // 정렬 순서: 'asc', 'desc'
+/* tmpB/tmpA: 업로드 대기 파일, exB/exA: 기존 Drive URL 목록 */
 let tmpB=[],tmpA=[],exB=[],exA=[];
 let chartCo,chartCa;
 
+/* ══════════════════════════════════════
+   구글 시트 연동 (Google Apps Script)
+══════════════════════════════════════ */
+const GAS_KEY='nc_gas_url';
+const GAS_AUTO_KEY='nc_gas_auto';
+let gasAutoTimer=null;
+
+/* ★ 관리자가 설정한 GAS URL — 어떤 기기에서도 공통 적용
+   시트 설정 저장 시 이 값이 자동으로 업데이트됩니다 */
+let GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwAE-7h5VkA_oVFYUQEaIEpZMqid4BFsGRKlI-Q_QEdY1xQZOAiUVDFgcfwkiAjvmsSNw/exec';
+
+function getGasUrl(){
+  const saved = localStorage.getItem(GAS_KEY);
+  /* 저장된 URL이 현재 기본값과 다르면 무시 (옛날 배포 URL 자동 정리) */
+  if(saved && saved.trim() && saved.trim() === GAS_DEFAULT_URL) return saved.trim();
+  if(saved) localStorage.removeItem(GAS_KEY);
+  return GAS_DEFAULT_URL || '';
+}
+function isGasConnected(){return !!getGasUrl();}
+
+/* ══════════════════════════════════════
+   Google Drive 직접 업로드 (OAuth 2.0)
+   - localStorage로 토큰 캐시 (로그인 유지)
+   - 팝업 차단 시 안내 모달 표시
+══════════════════════════════════════ */
+const GDRIVE_CLIENT_ID = '167323077293-8gsd86rn7fjvo7dvo4994fhm6opr19cd.apps.googleusercontent.com';
+const GDRIVE_FOLDER_ID = '1-R4T33Pu4AxBvMpn2ZuCqt_Yo6_LjjCy';
+const GDRIVE_SCOPE     = 'https://www.googleapis.com/auth/drive.file';
+const GDRIVE_TOKEN_KEY = 'nc_gdrive_token';
+const GDRIVE_EXPIRY_KEY= 'nc_gdrive_expiry';
+let   driveToken       = null;
+let   tokenClient      = null;
+let   driveAuthResolve = null;
+let   driveAuthReject  = null;
+
+/* 저장된 토큰 복원 — auth.js 토큰 우선 사용 */
+function loadCachedToken(){
+  /* 1. auth.js admin/user 토큰 확인 (drive scope 포함) */
+  const adminToken  = localStorage.getItem('admin_token');
+  const adminExpiry = parseInt(localStorage.getItem('admin_expiry')||'0');
+  if(adminToken && adminExpiry > Date.now()){
+    driveToken = adminToken;
+    return true;
+  }
+  const userToken  = localStorage.getItem('user_token');
+  const userExpiry = parseInt(localStorage.getItem('user_expiry')||'0');
+  if(userToken && userExpiry > Date.now()){
+    driveToken = userToken;
+    return true;
+  }
+  /* 2. Drive 전용 캐시 토큰 확인 */
+  const token  = localStorage.getItem(GDRIVE_TOKEN_KEY);
+  const expiry = parseInt(localStorage.getItem(GDRIVE_EXPIRY_KEY)||'0');
+  if(token && expiry > Date.now()){
+    driveToken = token;
+    return true;
+  }
+  driveToken = null;
+  return false;
+}
+
+/* 토큰 저장 (55분 유효) */
+function saveToken(token){
+  driveToken = token;
+  const expiry = Date.now() + 55 * 60 * 1000;
+  localStorage.setItem(GDRIVE_TOKEN_KEY, token);
+  localStorage.setItem(GDRIVE_EXPIRY_KEY, String(expiry));
+  /* 50분 후 조용히 자동 갱신 */
+  setTimeout(()=>silentRefresh(), 50*60*1000);
+}
+
+/* 백그라운드 조용한 토큰 갱신 — 사용자 개입 없음 */
+function silentRefresh(){
+  if(!tokenClient) return;
+  tokenClient.callback = (resp)=>{
+    if(resp.error){ console.warn('토큰 갱신 실패, 다음 업로드 시 재로그인 필요'); return; }
+    saveToken(resp.access_token);
+    console.log('Google 토큰 자동 갱신 완료');
+  };
+  /* prompt:'' → 팝업 없이 조용히 토큰 갱신 (이미 동의한 계정) */
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
+function initDriveAuth(){
+  if(typeof google==='undefined'||!google.accounts) return;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GDRIVE_CLIENT_ID,
+    scope:     GDRIVE_SCOPE,
+    callback:  (resp)=>{
+      if(resp.error){
+        console.error('Drive OAuth:', resp.error);
+        showPopupBlocked();
+        if(driveAuthReject) driveAuthReject(new Error(resp.error_description||resp.error));
+        driveAuthResolve=driveAuthReject=null;
+        return;
+      }
+      saveToken(resp.access_token);
+      closeDriveAuthModal();
+      if(driveAuthResolve) driveAuthResolve(resp.access_token);
+      driveAuthResolve=driveAuthReject=null;
+    }
+  });
+  /* 저장된 토큰 자동 복원 */
+  if(loadCachedToken()){
+    /* 남은 유효시간 계산 후 갱신 타이머 설정 */
+    const expiry = parseInt(localStorage.getItem(GDRIVE_EXPIRY_KEY)||'0');
+    const remaining = expiry - Date.now() - 5*60*1000; /* 만료 5분 전 */
+    if(remaining > 0){
+      setTimeout(()=>silentRefresh(), remaining);
+    } else {
+      /* 이미 만료됐거나 곧 만료 → 즉시 갱신 */
+      setTimeout(()=>silentRefresh(), 1000);
+    }
+  }
+}
+
+/* 팝업 안내 모달 */
+function openDriveAuthModal(){
+  document.getElementById('popupBlockedMsg').style.display='none';
+  document.getElementById('driveLoginStatus').style.display='none';
+  document.getElementById('driveAuthMsg').style.display='block';
+  document.getElementById('driveAuthOverlay').style.display='flex';
+}
+function closeDriveAuthModal(){
+  document.getElementById('driveAuthOverlay').style.display='none';
+}
+function showPopupBlocked(){
+  document.getElementById('popupBlockedMsg').style.display='block';
+  document.getElementById('driveAuthMsg').style.display='none';
+}
+
+/* 모달에서 로그인 버튼 클릭 */
+function doGoogleLogin(){
+  if(!tokenClient){ initDriveAuth(); }
+  if(!tokenClient){ toast('❌ Google 로그인 초기화 실패. 페이지를 새로고침해주세요.'); return; }
+  const btn=document.getElementById('driveLoginBtn');
+  btn.textContent='⏳ 로그인 중...'; btn.disabled=true;
+  setTimeout(()=>{ btn.innerHTML='<img src="https://www.google.com/favicon.ico" style="width:14px;height:14px;margin-right:4px;"> Google로 로그인'; btn.disabled=false; }, 5000);
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
+/* 토큰 요청 — 있으면 즉시, 없으면 모달 표시 */
+function requestDriveToken(){
+  return new Promise((resolve, reject)=>{
+    if(driveToken){ resolve(driveToken); return; }
+    if(loadCachedToken()){ resolve(driveToken); return; }
+    /* 토큰 없음 → 로그인 모달 표시 */
+    driveAuthResolve = resolve;
+    driveAuthReject  = reject;
+    openDriveAuthModal();
+  });
+}
+
+/* 브라우저 → Worker → GAS 업로드 — XMLHttpRequest로 실시간 진행률 */
+async function uploadToDrive(filename, dataURL, onProgress, recordId, side, index){
+  const gasUrl = getGasUrl();
+  if(!gasUrl) throw new Error('GAS URL이 설정되지 않았습니다');
+
+  const PROXY = 'https://safenode-proxy.fnksoul-ab5.workers.dev';
+
+  onProgress(3);
+  /* 고화질 유지 (1000px/85%) — 현장 사진 충분, 빠른 전송 */
+  const compressed = await compressImage(dataURL, 1000, 0.85);
+  onProgress(8);
+
+  const postBody = JSON.stringify({
+    target: gasUrl,
+    action: 'uploadPhoto',
+    recordId: String(recordId),
+    side: String(side),
+    index: String(index),
+    dataURL: compressed
+  });
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', PROXY);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+
+    /* 업로드 실시간 진행률 (8% ~ 90%) */
+    xhr.upload.onprogress = (e) => {
+      if(e.lengthComputable){
+        const pct = 8 + Math.round((e.loaded / e.total) * 52);
+        onProgress(pct);
+      }
+    };
+
+    /* 업로드 완료 → 서버 처리 대기 (60% ~ 90%) */
+    xhr.upload.onload = () => {
+      onProgress(60);
+      /* 서버 처리 시뮬레이션 진행률 */
+      let serverPct = 60;
+      const timer = setInterval(() => {
+        serverPct = Math.min(serverPct + 3, 90);
+        onProgress(serverPct);
+        if(serverPct >= 90) clearInterval(timer);
+      }, 500);
+      xhr._serverTimer = timer;
+    };
+
+    xhr.onload = () => {
+      if(xhr._serverTimer) clearInterval(xhr._serverTimer);
+      onProgress(95);
+      try {
+        const json = JSON.parse(xhr.responseText);
+        if(json.ok && json.url){ onProgress(100); resolve(json.url); }
+        else reject(new Error(json.error || '업로드 실패'));
+      } catch(e) {
+        reject(new Error('응답 파싱 실패'));
+      }
+    };
+
+    xhr.onerror = () => {
+      if(xhr._serverTimer) clearInterval(xhr._serverTimer);
+      reject(new Error('네트워크 오류'));
+    };
+
+    xhr.ontimeout = () => {
+      if(xhr._serverTimer) clearInterval(xhr._serverTimer);
+      reject(new Error('업로드 시간 초과'));
+    };
+
+    xhr.timeout = 120000; /* 2분 타임아웃 */
+    xhr.send(postBody);
+  });
+}
+
+
+
+
+/* 레코드 → 시트 행 객체 */
+function recToRow(r){
+  const bUrls=r.beforeUrls||[];
+  const aUrls=r.afterUrls||[];
+  return {
+    '관리번호':r.id,'협력업체':r.company,'위치':r.location,'작성자':r.writer||'',
+    '카테고리':r.category,'부적합내용':r.description,
+    '지적일':r.reportDate,'조치완료일':r.dueDate||'',
+    '상태':r.status,'조치내용':r.actionNote||'',
+    '조치전사진':bUrls.length,'조치후사진':aUrls.length,
+    '_beforeUrls':bUrls,'_afterUrls':aUrls,
+    '_beforeUrl':bUrls[0]||'','_afterUrl':aUrls[0]||''
+  };
+}
+/* 시트 행 객체 → 레코드 */
+/* 날짜 문자열 → YYYY-MM-DD 정규화 (시트에서 받은 다양한 형식 처리) */
+function normalizeDate(val){
+  if(!val)return '';
+  const s=String(val).trim();
+  if(!s)return '';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  const d=new Date(s);
+  if(isNaN(d.getTime()))return s;
+  const yyyy=d.getFullYear();
+  const mm=String(d.getMonth()+1).padStart(2,'0');
+  const dd=String(d.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function rowToRec(row){
+  /* 다중 URL 수신 */
+  const bUrls=(row['_beforeUrls']&&row['_beforeUrls'].length)?row['_beforeUrls']:
+              (row['_beforeUrl']?[row['_beforeUrl']]:[]);
+  const aUrls=(row['_afterUrls']&&row['_afterUrls'].length)?row['_afterUrls']:
+              (row['_afterUrl']?[row['_afterUrl']]:[]);
+  return {
+    id:row['관리번호']||'',company:row['협력업체']||'',
+    location:row['위치']||'',writer:row['작성자']||'',
+    category:row['카테고리']||'',
+    description:row['부적합내용']||'',
+    reportDate:normalizeDate(row['지적일']),
+    dueDate:normalizeDate(row['조치완료일']),
+    status:row['상태']||'미조치',
+    actionNote:row['조치내용']||'',
+    beforeUrls:bUrls,afterUrls:aUrls,
+    beforeCount:bUrls.length,afterCount:aUrls.length
+  };
+}
+
+/* 시트에서 전체 데이터 로드 */
+async function loadFromSheet(){
+  const url=getGasUrl();if(!url)return false;
+  setSyncIcon(true);
+  try{
+    const res=await fetch(url+'?action=getAll',{method:'GET'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    if(!data.ok)throw new Error(data.error||'오류');
+    const sheetRecs=data.records.filter(r=>r['관리번호']).map(rowToRec);
+    await Promise.all(sheetRecs.map(r=>dbPut(SM,r)));
+    const localRecs=await dbGetAll(SM);
+    const sheetIds=new Set(sheetRecs.map(r=>r.id));
+    await Promise.all(localRecs.filter(r=>!sheetIds.has(r.id)).map(r=>dbDel(SM,r.id)));
+    records=await dbGetAll(SM);
+    renderTabs();renderFilterCategory();renderTable();renderCharts();
+    setSyncIcon(false);
+    return true;
+  }catch(e){
+    console.error('시트 로드 오류:',e);
+    setSyncIcon(false);
+    return false;
+  }
+}
+
+/* 레코드 1건 시트에 upsert — GET 방식으로 CORS 우회 */
+async function syncToSheet(rec){
+  const url=getGasUrl();if(!url)return;
+  try{
+    const rowData=recToRow(rec);
+    console.log('[syncToSheet] 전송 데이터:', JSON.stringify(rowData));
+    const params=new URLSearchParams({
+      action:'upsert',
+      data:JSON.stringify(rowData)
+    });
+    const res=await fetch(url+'?'+params.toString(),{method:'GET',mode:'cors'});
+    const json=await res.json().catch(()=>({}));
+    console.log('[syncToSheet] GAS 응답:', json);
+  }catch(e){console.error('시트 upsert 오류:',e);}
+}
+
+
+/* 이미지 압축 — 시트 표시용 (320px, 45%) → 약 4000~6000자 */
+function compressImage(dataURL, maxW=800, quality=0.75){
+  return new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      let w=img.width,h=img.height;
+      if(w>maxW){h=Math.round(h*maxW/w);w=maxW;}
+      const cv=document.createElement('canvas');
+      cv.width=w;cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      resolve(cv.toDataURL('image/jpeg',quality));
+    };
+    img.onerror=()=>resolve(dataURL);
+    img.src=dataURL;
+  });
+}
+
+/* 사진 1장 → Drive 업로드 → URL 반환 */
+
+/* 레코드 1건 시트에서 삭제 */
+/* Drive 파일 URL로 fileId 추출 후 삭제 */
+async function deleteDriveFile(url){
+  if(!url) return;
+  const m = url.match(/[?&]id=([^&]+)/);
+  if(!m) return;
+  const fileId = m[1];
+  try{
+    const token = await requestDriveToken();
+    await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`,{
+      method:'DELETE',
+      headers:{'Authorization':'Bearer '+token}
+    });
+  }catch(e){ console.warn('Drive 파일 삭제 실패:', e.message); }
+}
+
+async function deleteDriveFiles(urls){
+  for(const url of (urls||[])) await deleteDriveFile(url);
+}
+
+async function deleteFromSheet(id){
+  const url=getGasUrl();if(!url)return;
+  try{
+    const params=new URLSearchParams({action:'delete',id:id});
+    await fetch(url+'?'+params.toString(),{method:'GET',mode:'cors'});
+  }catch(e){console.error('시트 delete 오류:',e);}
+}
+
+/* 수동 동기화 버튼 */
+async function manualSync(){
+  const ok=await loadFromSheet();
+  toast(ok?'✅ 구글 시트 동기화 완료':'❌ 시트 연결 실패. URL을 확인하세요.');
+}
+
+/* 아이콘 스피너 */
+function setSyncIcon(loading){
+  const el=document.getElementById('syncIcon');
+  if(el)el.textContent=loading?'⏳':'🔄';
+}
+
+/* 자동 동기화 타이머 */
+function startAutoSync(){
+  if(gasAutoTimer)clearInterval(gasAutoTimer);
+  if(localStorage.getItem(GAS_AUTO_KEY)==='1'&&getGasUrl()){
+    gasAutoTimer=setInterval(loadFromSheet,30000);
+  }
+}
+
+/* 설정 모달 열기/닫기 */
+const SHEET_URL_KEY = 'nc_sheet_url';
+const SHEET_DEFAULT_URL = 'https://docs.google.com/spreadsheets/d/17MutJeUvl_TreCi2f1B7b5pqeGgUHc87b2c9Xj0T7H4/edit';
+function getSheetUrl(){ return localStorage.getItem(SHEET_URL_KEY) || SHEET_DEFAULT_URL; }
+
+/* 엑셀 버튼 — 구글시트로 바로 이동 */
+function openGoogleSheet(){
+  const url=getSheetUrl();
+  if(url){ window.open(url,'_blank'); }
+  else{ toast('⚙️ 시트 설정에서 구글 스프레드시트 URL을 먼저 입력해주세요.'); openSheetSetting(); }
+}
+
+function openSheetSetting(){
+  const cur=getGasUrl();
+  document.getElementById('gasUrlInput').value=cur;
+  document.getElementById('sheetUrlInput').value=getSheetUrl();
+  document.getElementById('autoSyncChk').checked=localStorage.getItem(GAS_AUTO_KEY)==='1';
+  document.getElementById('sheetConnStatus').style.display='none';
+  const copyBox=document.getElementById('gasUrlCopyBox');
+  if(cur){
+    document.getElementById('gasDefaultLine').textContent=`let GAS_DEFAULT_URL = '${cur}';`;
+    copyBox.style.display='block';
+  }else{
+    copyBox.style.display='none';
+  }
+  document.getElementById('sheetSettingOverlay').style.display='flex';
+}
+function closeSheetSetting(){
+  document.getElementById('sheetSettingOverlay').style.display='none';
+}
+function saveSheetSetting(){
+  const url=document.getElementById('gasUrlInput').value.trim();
+  const sheetUrl=document.getElementById('sheetUrlInput').value.trim();
+  const auto=document.getElementById('autoSyncChk').checked;
+  localStorage.setItem(GAS_KEY,url);
+  localStorage.setItem(GAS_AUTO_KEY,auto?'1':'0');
+  if(sheetUrl) localStorage.setItem(SHEET_URL_KEY,sheetUrl);
+  if(url){
+    GAS_DEFAULT_URL=url;
+    localStorage.setItem('nc_gas_url_default',url);
+  }
+  startAutoSync();
+  updateSyncUI();
+  closeSheetSetting();
+  if(url){toast('✅ 연동 설정 저장됨 — 시트에서 데이터를 불러옵니다...');loadFromSheet();}
+  else toast('⚠ URL이 비어있어 연동이 해제됩니다.');
+}
+async function testSheetConnection(){
+  const url=document.getElementById('gasUrlInput').value.trim();
+  const el=document.getElementById('sheetConnStatus');
+  if(!url){el.style.display='block';el.style.background='rgba(239,68,68,.1)';el.style.color='#f87171';el.style.border='1px solid rgba(239,68,68,.3)';el.textContent='❌ URL을 입력해주세요';return;}
+  el.style.display='block';el.style.background='var(--bg3)';el.style.color='var(--muted2)';el.style.border='1px solid var(--border2)';el.textContent='⏳ 연결 테스트 중...';
+  try{
+    const res=await fetch(url+'?action=getAll');
+    const data=await res.json();
+    if(data.ok){
+      el.style.background='rgba(34,197,94,.1)';el.style.color='#4ade80';el.style.border='1px solid rgba(34,197,94,.3)';
+      el.textContent=`✅ 연결 성공! 시트 데이터 ${data.records.length}건 확인됨`;
+    }else throw new Error(data.error);
+  }catch(e){
+    el.style.background='rgba(239,68,68,.1)';el.style.color='#f87171';el.style.border='1px solid rgba(239,68,68,.3)';
+    el.textContent='❌ 연결 실패: '+e.message;
+  }
+}
+function updateSyncUI(){
+  const admin=AUTH.isAdmin();
+  const connected=isGasConnected();
+  document.getElementById('sheetSettingBtn').style.display=admin?'inline-flex':'none';
+  document.getElementById('sheetSyncBtn').style.display=(admin&&connected)?'inline-flex':'none';
+}
 window.addEventListener('DOMContentLoaded',async()=>{
   await initDB();
   records=await dbGetAll(SM);
-  updateAuth();renderTabs();renderTable();renderCharts();
+  renderCatSelect();
+  updateAuth();renderTabs();renderFilterCategory();renderTable();renderCharts();
   document.getElementById('fDate').value=today();
+  updateSyncUI();
+  startAutoSync();
+  const gasUrl=getGasUrl();
+  if(gasUrl){
+    toast('🔗 구글 시트 연결 중...');
+    try{
+      const ok=await loadFromSheet();
+      if(ok) toast(`✅ 시트 로드 완료 (${records.length}건)`);
+      else toast('❌ 시트 로드 실패');
+    }catch(e){
+      toast('❌ 오류: '+e.message);
+    }
+  }else{
+    toast('⚠️ GAS URL 없음');
+  }
+  setTimeout(updateSyncUI, 100);
+  setTimeout(updateSyncUI, 500);
+  setTimeout(()=>{if(typeof google!=='undefined'&&google.accounts)initDriveAuth();},1200);
+  /* URL 해시로 직접 링크 접근 시 자동 상세보기 */
+  if(location.hash){
+    const id=decodeURIComponent(location.hash.slice(1));
+    if(id) setTimeout(()=>openDetail(id), 800);
+  }
 });
-window.onAuthStateChange=()=>updateAuth();
-function updateAuth(){document.getElementById('addBtn').style.display=AUTH.isAdmin()?'inline-flex':'none';}
+function updateAuth(){
+  updateSyncUI();
+}
 function today(){return new Date().toISOString().split('T')[0];}
 function genId(){return `NC-${new Date().getFullYear()}-${(records.length+1).toString().padStart(3,'0')}`;}
-
+let pendingId=null; /* 등록 모달 열릴 때 미리 확정된 ID */
+/* ── 카테고리 관리 ── */
+const CAT_KEY='nc_categories';
+const CAT_DEFAULT=['개인보호구','추락방지','정리정돈','화재예방','장비/기계','안전표지','기타'];
+function getCategories(){try{return JSON.parse(localStorage.getItem(CAT_KEY))||CAT_DEFAULT;}catch{return CAT_DEFAULT;}}
+function saveCategories(arr){localStorage.setItem(CAT_KEY,JSON.stringify(arr));}
+function renderCatSelect(){
+  const cats=getCategories();
+  const sel=document.getElementById('fCat');
+  if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML=cats.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('');
+}
+function renderFilterCategory(){
+  const cats=getCategories();
+  const sel=document.getElementById('fCategory');
+  if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">전체</option>`+cats.map(c=>`<option${c===cur?' selected':''}>${c}</option>`).join('');
+}
+function openCatMgr(){renderCatList();document.getElementById('catMgrOverlay').style.display='flex';}
+function closeCatMgr(){document.getElementById('catMgrOverlay').style.display='none';renderCatSelect();renderFilterCategory();}
+function renderCatList(){
+  const cats=getCategories();
+  document.getElementById('catList').innerHTML=cats.map((c,i)=>
+    `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);">
+      <span style="flex:1;font-size:13px;">${c}</span>
+      <button class="btn btn-ghost btn-sm" style="padding:2px 8px;color:var(--red);" onclick="deleteCategory(${i})">삭제</button>
+    </div>`
+  ).join('');
+}
+function addCategory(){
+  const val=document.getElementById('catNewInput').value.trim();
+  if(!val){toast('카테고리 이름을 입력하세요',2500);return;}
+  const cats=getCategories();
+  if(cats.includes(val)){toast('이미 존재하는 카테고리입니다',2500);return;}
+  cats.push(val);saveCategories(cats);
+  document.getElementById('catNewInput').value='';
+  renderCatList();renderFilterCategory();toast(`✅ "${val}" 추가됨`,2500);
+}
+function deleteCategory(idx){
+  const cats=getCategories();
+  if(cats.length<=1){toast('최소 1개는 유지해야 합니다',2500);return;}
+  cats.splice(idx,1);saveCategories(cats);renderCatList();renderFilterCategory();
+}
 function renderTabs(){
   const cos=[...new Set(records.map(r=>r.company))].sort();
   const ct=document.getElementById('companyTabs');
@@ -1049,6 +1706,16 @@ function renderTabs(){
   if(dl)dl.innerHTML=cos.map(c=>`<option value="${c}">`).join('');
 }
 function setTab(b){curCo=b.dataset.company;document.querySelectorAll('#companyTabs .ftab').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderTable();}
+
+function sortRecords(field) {
+  if (sortField === field) {
+    sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortField = field;
+    sortOrder = field === 'id' ? 'asc' : 'desc';
+  }
+  renderTable();
+}
 
 function getFiltered(){
   const st=document.getElementById('fStatus').value;
@@ -1080,22 +1747,41 @@ function renderTable(){
   if(!f.length){tb.innerHTML=`<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📋</div><p>등록된 부적합사항이 없습니다</p></div></td></tr>`;return;}
   const cc={'개인보호구':'badge-blue','추락방지':'badge-red','정리정돈':'badge-yellow','화재예방':'badge-red','장비/기계':'badge-yellow','안전표지':'badge-green','기타':'badge-teal'};
   const sb=s=>({'미조치':'<span class="badge badge-red">미조치</span>','조치중':'<span class="badge badge-yellow">조치중</span>','조치완료':'<span class="badge badge-green">완료</span>'}[s]||s);
-  tb.innerHTML=[...f].sort((a,b)=>b.reportDate.localeCompare(a.reportDate)).map(r=>{
+  // 정렬 아이콘 업데이트
+  document.getElementById('sortIconId').textContent = sortField === 'id' ? (sortOrder === 'asc' ? '▲' : '▼') : '';
+  document.getElementById('sortIconDate').textContent = sortField === 'reportDate' ? (sortOrder === 'asc' ? '▲' : '▼') : '';
+  
+  // 동적 정렬
+  const sorted = [...f].sort((a, b) => {
+    if (sortField === 'id') {
+      return sortOrder === 'asc' 
+        ? a.id.localeCompare(b.id) 
+        : b.id.localeCompare(a.id);
+    } else if (sortField === 'reportDate') {
+      return sortOrder === 'asc'
+        ? a.reportDate.localeCompare(b.reportDate)
+        : b.reportDate.localeCompare(a.reportDate);
+    }
+    return 0;
+  });
+  
+  tb.innerHTML=sorted.map(r=>{
     const od=r.dueDate&&r.dueDate<td&&r.status!=='조치완료';
-    const ph=(r.beforeCount||0)+(r.afterCount||0);
+    const ph=(r.beforeUrls||[]).length+(r.afterUrls||[]).length;
     return `<tr onclick="openDetail('${r.id}')">
       <td class="id-mono">${r.id}</td>
       <td style="font-weight:700;">${r.company}</td>
       <td>${r.location}</td>
+      <td style="font-size:12px;color:var(--muted2);">${r.writer||'—'}</td>
       <td><div style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${r.description}">${r.description}</div></td>
       <td><span class="badge ${cc[r.category]||'badge-blue'}">${r.category}</span></td>
       <td style="font-size:12px;">${r.reportDate}</td>
       <td class="${od?'overdue':''}" style="font-size:12px;">${r.dueDate||'—'}${od?' ⚠':''}</td>
       <td>${sb(r.status)}</td>
-      <td style="font-size:12px;color:var(--muted2);">${ph?`📷 ${ph}`:'—'}</td>
+      <td style="font-size:12px;color:var(--muted2);">${ph?`${ph}`:'—'}</td>
       <td onclick="event.stopPropagation()" style="white-space:nowrap;">
         ${AUTH.isAdmin()?`<button class="btn btn-ghost btn-sm" onclick="openEdit('${r.id}')">✏️</button>
-        <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="delRecord('${r.id}')">🗑️</button>`:''}
+        <button class="btn btn-ghost btn-sm" style="color:var(--red);" onclick="delRecord('${r.id}')">🗑️</button>`:`<button class="btn btn-ghost btn-sm" onclick="openEdit('${r.id}')">✏️</button>`}
       </td></tr>`;
   }).join('');
 }
@@ -1105,33 +1791,87 @@ function renderCharts(){
   const cl=Object.keys(cm);
   if(chartCo)chartCo.destroy();
   chartCo=new Chart(document.getElementById('companyChart').getContext('2d'),{type:'bar',
-    data:{labels:cl.length?cl:['없음'],datasets:[{label:'미조치',data:cl.map(k=>cm[k].p),backgroundColor:'rgba(239,68,68,.7)'},{label:'조치중',data:cl.map(k=>cm[k].pr),backgroundColor:'rgba(234,179,8,.7)'},{label:'완료',data:cl.map(k=>cm[k].d),backgroundColor:'rgba(34,197,94,.7)'}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#8888a0',font:{size:11}}}},scales:{x:{stacked:true,ticks:{color:'#8888a0',font:{size:11}},grid:{color:'#252530'}},y:{stacked:true,ticks:{color:'#8888a0',font:{size:11},stepSize:1},grid:{color:'#252530'}}}}});
+    data:{labels:cl.length?cl:['없음'],datasets:[
+      {label:'미조치',data:cl.map(k=>cm[k].p),backgroundColor:'rgba(239,68,68,.75)',borderRadius:3},
+      {label:'조치중',data:cl.map(k=>cm[k].pr),backgroundColor:'rgba(234,179,8,.75)',borderRadius:3},
+      {label:'완료',data:cl.map(k=>cm[k].d),backgroundColor:'rgba(34,197,94,.75)',borderRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:{top:24}},
+      plugins:{
+        legend:{position:'top',align:'end',labels:{color:'#8888a0',font:{size:11},padding:12,boxWidth:12}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y}건`}},
+        datalabels:{
+          anchor:'end',align:'top',offset:2,
+          color:'#444',font:{size:11,weight:'600'},
+          formatter:(v)=>v>0?v:''
+        }
+      },
+      scales:{
+        x:{stacked:true,ticks:{color:'#8888a0',font:{size:11}},grid:{display:false},border:{display:false}},
+        y:{stacked:true,ticks:{color:'#8888a0',font:{size:11},stepSize:1},grid:{color:'rgba(136,136,160,.15)'},border:{display:false},
+          afterDataLimits:axis=>{axis.max=Math.max(axis.max*1.2,2);}}
+      }
+    },
+    plugins:[ChartDataLabels]
+  });
+
   const kam={};records.forEach(r=>{kam[r.category]=(kam[r.category]||0)+1;});
   const kl=Object.keys(kam);
+  const total=kl.reduce((s,k)=>s+kam[k],0)||1;
   if(chartCa)chartCa.destroy();
   chartCa=new Chart(document.getElementById('categoryChart').getContext('2d'),{type:'doughnut',
-    data:{labels:kl.length?kl:['없음'],datasets:[{data:kl.length?kl.map(k=>kam[k]):[1],backgroundColor:['#3b82f6','#ef4444','#eab308','#22c55e','#f97316','#a855f7','#2dd4bf'],borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#8888a0',font:{size:11},padding:10}}}}});
+    data:{labels:kl.length?kl:['없음'],datasets:[{
+      data:kl.length?kl.map(k=>kam[k]):[1],
+      backgroundColor:['#3b82f6','#ef4444','#eab308','#22c55e','#f97316','#a855f7','#2dd4bf'],
+      borderWidth:2,borderColor:'#fff',
+      hoverOffset:6
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      layout:{padding:32},
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}건 (${Math.round(ctx.parsed/total*100)}%)`}},
+        datalabels:{
+          anchor:'end',align:'end',offset:8,
+          color:'#222',font:{size:11,weight:'600'},
+          formatter:(v,ctx)=>{
+            const pct=Math.round(v/total*100);
+            return pct>=4?`${ctx.chart.data.labels[ctx.dataIndex]} (${pct}%)`:'';
+          },
+          /* 연결선 효과 — 텍스트에 배경 추가 */
+          backgroundColor:null,
+          padding:2
+        }
+      }
+    },
+    plugins:[ChartDataLabels]
+  });
 }
 
 function openAdd(){
-  if(!AUTH.isAdmin()){toast('❌ 관리자만 등록할 수 있습니다');return;}
   editId=null;tmpB=[];tmpA=[];exB=[];exA=[];
+  pendingId=genId(); /* ID 미리 확정 */
   document.getElementById('editModalTitle').textContent='부적합사항 등록';
-  ['fCompany','fLocation','fDesc','fAction','fDue'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('fCat').value='개인보호구';document.getElementById('fStat').value='미조치';
+  ['fCompany','fLocation','fWriter','fDesc','fAction','fDue'].forEach(id=>document.getElementById(id).value='');
+  renderCatSelect();
+  document.getElementById('fStat').value='미조치';
   document.getElementById('fDate').value=today();
   renderGrids();document.getElementById('editOverlay').classList.add('open');
 }
 async function openEdit(id){
-  if(!AUTH.isAdmin()){toast('❌ 관리자만 수정합니다');return;}
   const r=records.find(x=>x.id===id);if(!r)return;
   editId=id;tmpB=[];tmpA=[];
-  const ph=await dbByIdx(SP,'rid',id);exB=ph.filter(p=>p.side==='before');exA=ph.filter(p=>p.side==='after');
+  /* exB/exA는 이제 Drive URL 객체 배열 */
+  exB=(r.beforeUrls||[]).map(u=>({url:u}));
+  exA=(r.afterUrls||[]).map(u=>({url:u}));
   document.getElementById('editModalTitle').textContent='부적합사항 수정';
-  document.getElementById('fCompany').value=r.company;document.getElementById('fLocation').value=r.location;
-  document.getElementById('fCat').value=r.category;document.getElementById('fStat').value=r.status;
+  document.getElementById('fCompany').value=r.company;
+  document.getElementById('fLocation').value=r.location;
+  document.getElementById('fWriter').value=r.writer||'';
+  renderCatSelect();
+  document.getElementById('fCat').value=r.category;
+  document.getElementById('fStat').value=r.status;
   document.getElementById('fDate').value=r.reportDate;document.getElementById('fDue').value=r.dueDate||'';
   document.getElementById('fDesc').value=r.description;document.getElementById('fAction').value=r.actionNote||'';
   renderGrids();document.getElementById('editOverlay').classList.add('open');
@@ -1141,73 +1881,211 @@ function closeEdit(){document.getElementById('editOverlay').classList.remove('op
 async function saveRecord(){
   const co=document.getElementById('fCompany').value.trim();
   const lo=document.getElementById('fLocation').value.trim();
+  const wr=document.getElementById('fWriter').value.trim();
   const ca=document.getElementById('fCat').value;
   const st=document.getElementById('fStat').value;
   const rd=document.getElementById('fDate').value;
   const dd=document.getElementById('fDue').value;
   const de=document.getElementById('fDesc').value.trim();
   const an=document.getElementById('fAction').value.trim();
-  if(!co||!lo||!rd||!de){toast('❌ 필수 항목을 입력해주세요');return;}
-  const id=editId||genId();
-  if(editId){for(const p of exB.filter(p=>p._del))await dbDel(SP,p.pk);for(const p of exA.filter(p=>p._del))await dbDel(SP,p.pk);}
-  let bc=exB.filter(p=>!p._del).length,ac=exA.filter(p=>!p._del).length;
-  for(const p of tmpB){await dbPut(SP,{recordId:id,side:'before',dataURL:p.dataURL,name:p.name});bc++;}
-  for(const p of tmpA){await dbPut(SP,{recordId:id,side:'after',dataURL:p.dataURL,name:p.name});ac++;}
-  const rec={id,company:co,location:lo,category:ca,status:st,reportDate:rd,dueDate:dd,description:de,actionNote:an,beforeCount:bc,afterCount:ac};
+  if(!co||!lo||!wr||!rd||!de){toast('❌ 필수 항목을 입력해주세요');return;}
+
+  const id=editId||pendingId||genId();
+
+  /* 삭제 표시된 기존 사진 Drive에서도 삭제 */
+  const delBefore=exB.filter(p=>p._del).map(p=>p.url);
+  const delAfter=exA.filter(p=>p._del).map(p=>p.url);
+  if(delBefore.length||delAfter.length) deleteDriveFiles([...delBefore,...delAfter]);
+
+  const keptBefore=exB.filter(p=>!p._del).map(p=>p.url);
+  const keptAfter=exA.filter(p=>!p._del).map(p=>p.url);
+
+  /* 새 사진 업로드 (저장 시점에 실행) */
+  const pendingB=tmpB.filter(p=>p.status==='pending'||p.status==='error');
+  const pendingA=tmpA.filter(p=>p.status==='pending'||p.status==='error');
+  const totalUpload=pendingB.length+pendingA.length;
+  let uploaded=0;
+
+  if(totalUpload>0) toast(`📸 사진 업로드 중... (0/${totalUpload})`);
+
+  const newBeforeUrls=[];
+  for(let i=0;i<tmpB.length;i++){
+    const p=tmpB[i];
+    if(p.status==='done'&&p.url){ newBeforeUrls.push(p.url); continue; }
+    try{
+      p.status='uploading';p.progress=0;renderGrids();
+      const idx=keptBefore.length+newBeforeUrls.length;
+      const ext=p.dataURL.startsWith('data:image/png')?'png':'jpg';
+      const url=await uploadToDrive(`${id}_before_${idx}.${ext}`,p.dataURL,(pct)=>{
+        p.progress=pct;renderGrids();
+      },id,'before',idx);
+      if(url){ p.status='done';p.url=url;newBeforeUrls.push(url); }
+      uploaded++;
+      if(totalUpload>0) toast(`📸 사진 업로드 중... (${uploaded}/${totalUpload})`);
+    }catch(e){
+      console.error('before 업로드 실패:',e);
+      p.status='error';p.error=e.message;
+      toast('❌ 업로드 실패: '+e.message);
+    }
+    renderGrids();
+  }
+  const newAfterUrls=[];
+  for(let i=0;i<tmpA.length;i++){
+    const p=tmpA[i];
+    if(p.status==='done'&&p.url){ newAfterUrls.push(p.url); continue; }
+    try{
+      p.status='uploading';p.progress=0;renderGrids();
+      const idx=keptAfter.length+newAfterUrls.length;
+      const ext=p.dataURL.startsWith('data:image/png')?'png':'jpg';
+      const url=await uploadToDrive(`${id}_after_${idx}.${ext}`,p.dataURL,(pct)=>{
+        p.progress=pct;renderGrids();
+      },id,'after',idx);
+      if(url){ p.status='done';p.url=url;newAfterUrls.push(url); }
+      uploaded++;
+      if(totalUpload>0) toast(`📸 사진 업로드 중... (${uploaded}/${totalUpload})`);
+    }catch(e){
+      console.error('after 업로드 실패:',e);
+      p.status='error';p.error=e.message;
+      toast('❌ 업로드 실패: '+e.message);
+    }
+    renderGrids();
+  }
+
+  const beforeUrls=[...keptBefore,...newBeforeUrls].slice(0,2);
+  const afterUrls=[...keptAfter,...newAfterUrls].slice(0,2);
+  const rec={id,company:co,location:lo,writer:wr,category:ca,status:st,reportDate:rd,dueDate:dd,
+    description:de,actionNote:an,beforeUrls,afterUrls,
+    beforeCount:beforeUrls.length,afterCount:afterUrls.length};
+
   await dbPut(SM,rec);
+  toast('💾 시트 동기화 중...');
+  await syncToSheet(rec);
   if(editId){const i=records.findIndex(r=>r.id===editId);if(i>=0)records[i]=rec;else records.push(rec);}else records.push(rec);
   closeEdit();renderTabs();renderTable();renderCharts();toast(editId?'✅ 수정 완료':'✅ 등록 완료');
 }
 async function delRecord(id){
   if(!confirm('삭제하시겠습니까?'))return;
-  await dbDel(SM,id);await dbDelByIdx(SP,'rid',id);
+  const rec=records.find(r=>r.id===id);
+  await dbDel(SM,id);
+  deleteFromSheet(id);
+  /* Drive 사진 파일 삭제 */
+  if(rec) deleteDriveFiles([...(rec.beforeUrls||[]),...(rec.afterUrls||[])]);
   records=records.filter(r=>r.id!==id);renderTabs();renderTable();renderCharts();toast('🗑️ 삭제됨');
 }
 
 async function openDetail(id){
   const r=records.find(x=>x.id===id);if(!r)return;
-  const ph=await dbByIdx(SP,'rid',id);
-  const be=ph.filter(p=>p.side==='before'),af=ph.filter(p=>p.side==='after');
   const td=today(),od=r.dueDate&&r.dueDate<td&&r.status!=='조치완료';
   const sb={'미조치':'<span class="badge badge-red">미조치</span>','조치중':'<span class="badge badge-yellow">조치중</span>','조치완료':'<span class="badge badge-green">조치완료</span>'}[r.status];
   document.getElementById('detailTitle').textContent=`${r.company} — ${r.category}`;
   document.getElementById('detailId').textContent=r.id;
-  const pg=arr=>`<div class="photo-grid">${arr.map(p=>`<div class="photo-thumb" onclick="openLB('${p.dataURL}')"><img src="${p.dataURL}" alt=""></div>`).join('')}</div>`;
+  const be=r.beforeUrls||[];
+  const af=r.afterUrls||[];
+  const pg=urls=>`<div class="photo-grid">${urls.map(u=>`<div class="photo-thumb" onclick="openLB('${u}')"><img src="${u}" alt=""></div>`).join('')}</div>`;
   document.getElementById('detailBody').innerHTML=`
     <div class="detail-grid" style="margin-bottom:16px;">
       <div class="detail-item"><div class="detail-key">협력업체</div><div class="detail-val" style="font-weight:700;">${r.company}</div></div>
       <div class="detail-item"><div class="detail-key">위치</div><div class="detail-val">${r.location}</div></div>
+      <div class="detail-item"><div class="detail-key">작성자</div><div class="detail-val">${r.writer||'—'}</div></div>
       <div class="detail-item"><div class="detail-key">카테고리</div><div class="detail-val">${r.category}</div></div>
       <div class="detail-item"><div class="detail-key">상태</div><div class="detail-val">${sb}</div></div>
       <div class="detail-item"><div class="detail-key">지적일</div><div class="detail-val">${r.reportDate}</div></div>
-      <div class="detail-item"><div class="detail-key">조치기한</div><div class="detail-val ${od?'overdue':''}">${r.dueDate||'—'}${od?' ⚠ 기한초과':''}</div></div>
+      <div class="detail-item"><div class="detail-key">조치완료일</div><div class="detail-val ${od?'overdue':''}">${r.dueDate||'—'}${od?' ⚠ 기한초과':''}</div></div>
       <div class="detail-item span2"><div class="detail-key">부적합 내용</div><div class="detail-val" style="white-space:pre-wrap;">${r.description}</div></div>
       ${r.actionNote?`<div class="detail-item span2"><div class="detail-key">조치 내용</div><div class="detail-val" style="white-space:pre-wrap;">${r.actionNote}</div></div>`:''}
     </div>
     <div class="photo-cols">
-      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-red"></div> 조치 전 (${be.length}장)</div>${be.length?pg(be):'<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">사진 없음</div>'}</div>
-      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-green"></div> 조치 후 (${af.length}장)</div>${af.length?pg(af):`<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">${r.status!=='조치완료'?'조치 완료 후 등록':'사진 없음'}</div>`}</div>
+      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-red"></div> 조치 전 (${be.length}장)</div>
+        ${be.length?pg(be):'<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">사진 없음</div>'}
+      </div>
+      <div class="photo-panel"><div class="photo-panel-head"><div class="pdot pdot-green"></div> 조치 후 (${af.length}장)</div>
+        ${af.length?pg(af):`<div style="color:var(--muted);font-size:12px;padding:14px;text-align:center;">${r.status!=='조치완료'?'조치 완료 후 등록':'사진 없음'}</div>`}
+      </div>
     </div>`;
   document.getElementById('detailFoot').innerHTML=`
-    ${AUTH.isAdmin()?`<button class="btn btn-ghost" onclick="closeDetail();openEdit('${r.id}')">✏️ 수정</button>
-    <button class="btn btn-ghost" style="color:var(--red);" onclick="closeDetail();delRecord('${r.id}')">🗑️ 삭제</button>`:''}
+    <button class="btn btn-ghost" onclick="copyDetailLink('${r.id}')" title="링크 복사">🔗 링크</button>
+    <button class="btn btn-ghost" onclick="closeDetail();openEdit('${r.id}')">✏️ 수정</button>
+    ${AUTH.isAdmin()?`<button class="btn btn-ghost" style="color:var(--red);" onclick="closeDetail();delRecord('${r.id}')">🗑️ 삭제</button>`:''}
     <button class="btn btn-primary" onclick="printReport('${r.id}')">🖨️ 보고서</button>
     <button class="btn btn-ghost" onclick="closeDetail()">닫기</button>`;
   document.getElementById('detailOverlay').classList.add('open');
+  /* URL 해시 업데이트 — 직접 링크 공유용 */
+  history.replaceState(null,'',`#${id}`);
 }
-function closeDetail(){document.getElementById('detailOverlay').classList.remove('open');}
+
+function copyDetailLink(id){
+  const url=`${location.origin}${location.pathname}#${id}`;
+  navigator.clipboard.writeText(url).then(()=>toast('🔗 링크가 복사됐습니다')).catch(()=>{
+    prompt('아래 링크를 복사하세요:', url);
+  });
+}
+function closeDetail(){
+  document.getElementById('detailOverlay').classList.remove('open');
+  history.replaceState(null,'',location.pathname+location.search);
+}
 
 function onDragOver(e,id){e.preventDefault();document.getElementById(id).classList.add('dragover');}
 function onDragLeave(id){document.getElementById(id).classList.remove('dragover');}
 function onDrop(e,side){e.preventDefault();onDragLeave(side==='before'?'dzBefore':'dzAfter');processFiles(e.dataTransfer.files,side);}
 function onFileInput(e,side){processFiles(e.target.files,side);e.target.value='';}
 function processFiles(files,side){
-  const arr=side==='before'?tmpB:tmpA;
-  [...files].forEach(f=>{if(!f.type.startsWith('image/'))return;const rd=new FileReader();rd.onload=e=>{arr.push({dataURL:e.target.result,name:f.name});renderGrids();};rd.readAsDataURL(f);});
+  [...files].forEach(f=>{
+    if(!f.type.startsWith('image/'))return;
+    const rd=new FileReader();
+    rd.onload=e=>{
+      const dataURL=e.target.result;
+      const arr=side==='before'?tmpB:tmpA;
+      const item={dataURL,name:f.name,status:'pending',url:null,progress:0};
+      arr.push(item);
+      renderGrids();
+    };
+    rd.readAsDataURL(f);
+  });
 }
+
+/* 업로드 진행률 포함 버전 — 순차 전송으로 진행률 안정화 */
+
 function renderGrids(){
-  const rg=(gid,arr,side)=>{document.getElementById(gid).innerHTML=arr.filter(p=>!p._del).map((p,i)=>`<div class="photo-thumb" onclick="openLB('${p.dataURL}')"><img src="${p.dataURL}" alt="">${AUTH.isAdmin()?`<button class="thumb-del" onclick="event.stopPropagation();delEx('${side}',${i})">×</button>`:''}</div>`).join('');};
-  const rt=(gid,arr,side)=>{document.getElementById(gid).innerHTML+=arr.map((p,i)=>`<div class="photo-thumb" onclick="openLB('${p.dataURL}')"><img src="${p.dataURL}" alt="">${AUTH.isAdmin()?`<button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button>`:''}</div>`).join('');};
+  /* exB/exA: 기존 Drive URL */
+  const rg=(gid,arr,side)=>{
+    document.getElementById(gid).innerHTML=arr.filter(p=>!p._del).map((p,i)=>
+      `<div class="photo-thumb" onclick="openLB('${p.url}')">
+        <img src="${p.url}" alt="">
+        <button class="thumb-del" onclick="event.stopPropagation();delEx('${side}',${i})">×</button>
+      </div>`
+    ).join('');
+  };
+  /* tmpB/tmpA: 대기/업로드중/완료/실패 */
+  const rt=(gid,arr,side)=>{
+    document.getElementById(gid).innerHTML+=arr.map((p,i)=>{
+      if(p.status==='done')
+        return `<div class="photo-thumb" onclick="openLB('${p.url}')"><img src="${p.url}" alt=""><button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button></div>`;
+      if(p.status==='uploading')
+        return `<div class="photo-thumb" style="cursor:default;">
+            <img src="${p.dataURL}" alt="" style="opacity:0.7;">
+            <div style="position:absolute;bottom:0;left:0;right:0;padding:3px 5px;background:rgba(0,0,0,.6);">
+              <div style="height:4px;background:rgba(255,255,255,.2);border-radius:2px;overflow:hidden;">
+                <div style="height:100%;width:${p.progress||0}%;background:#22c55e;transition:width .2s;border-radius:2px;"></div>
+              </div>
+              <div style="color:#fff;font-size:9px;text-align:center;margin-top:2px;">${p.progress||0}%</div>
+            </div>
+          </div>`;
+      if(p.status==='error')
+        return `<div class="photo-thumb" style="cursor:default;">
+            <img src="${p.dataURL}" alt="" style="opacity:0.4;">
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(239,68,68,.6);color:#fff;font-size:11px;font-weight:700;">❌ 실패</div>
+            <button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button>
+          </div>`;
+      /* pending — 저장 대기 */
+      return `<div class="photo-thumb" style="cursor:default;">
+          <img src="${p.dataURL}" alt="" style="opacity:0.85;">
+          <div style="position:absolute;bottom:0;left:0;right:0;padding:4px;background:rgba(0,0,0,.5);text-align:center;">
+            <span style="color:#93c5fd;font-size:10px;font-weight:600;">📎 저장 시 업로드</span>
+          </div>
+          <button class="thumb-del" onclick="event.stopPropagation();delTmp('${side}',${i})">×</button>
+        </div>`;
+    }).join('');
+  };
   rg('gridBefore',exB,'before');rg('gridAfter',exA,'after');
   rt('gridBefore',tmpB,'before');rt('gridAfter',tmpA,'after');
 }
@@ -1216,7 +2094,7 @@ function delEx(side,i){const arr=side==='before'?exB:exA;const ac=arr.filter(p=>
 
 function exportExcel(){
   const f=getFiltered();if(!f.length){toast('내보낼 데이터가 없습니다');return;}
-  const rows=f.map(r=>({'관리번호':r.id,'협력업체':r.company,'위치':r.location,'카테고리':r.category,'부적합내용':r.description,'지적일':r.reportDate,'조치기한':r.dueDate||'','상태':r.status,'조치내용':r.actionNote||'','조치전사진':r.beforeCount||0,'조치후사진':r.afterCount||0}));
+  const rows=f.map(r=>({'관리번호':r.id,'협력업체':r.company,'위치':r.location,'카테고리':r.category,'부적합내용':r.description,'지적일':r.reportDate,'조치완료일':r.dueDate||'','상태':r.status,'조치내용':r.actionNote||'','조치전사진':r.beforeCount||0,'조치후사진':r.afterCount||0}));
   const ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=[{wch:14},{wch:16},{wch:14},{wch:12},{wch:40},{wch:12},{wch:12},{wch:10},{wch:40},{wch:8},{wch:8}];
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'부적합사항');
   XLSX.writeFile(wb,`부적합관리대장_${today().replace(/-/g,'')}.xlsx`);toast('✅ 엑셀 내보내기 완료');
@@ -1224,8 +2102,8 @@ function exportExcel(){
 
 async function printReport(id){
   const r=records.find(x=>x.id===id);if(!r)return;
-  const ph=await dbByIdx(SP,'rid',id);
-  const be=ph.filter(p=>p.side==='before'),af=ph.filter(p=>p.side==='after');
+  const be=r.beforeUrls||[];
+  const af=r.afterUrls||[];
   const w=window.open('','_blank','width=900,height=700');
   w.document.write(`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>보고서 ${r.id}</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
@@ -1236,9 +2114,9 @@ async function printReport(id){
   .key{font-size:10px;color:#888;margin-bottom:3px;}.val{font-size:13px;font-weight:600;}
   .sec{font-size:12px;font-weight:700;color:#555;border-bottom:1px solid #ddd;padding-bottom:5px;margin:14px 0 8px;}
   .box{background:#f8f8f8;border:1px solid #e0e0e0;border-radius:6px;padding:10px 12px;line-height:1.7;white-space:pre-wrap;}
-  .pcols{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .pcols{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
   .plab{font-size:11px;font-weight:700;margin-bottom:6px;}.plab.b{color:#ef4444;}.plab.a{color:#22c55e;}
-  .pgrid{display:flex;flex-wrap:wrap;gap:6px;}.pgrid img{width:100%;max-width:200px;border-radius:5px;border:1px solid #ddd;}
+  .pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;}.pgrid img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block;}
   .nophoto{color:#aaa;font-size:12px;padding:12px;background:#f8f8f8;border:1px solid #eee;border-radius:5px;text-align:center;}
   .foot{margin-top:24px;color:#aaa;font-size:10px;text-align:right;border-top:1px solid #eee;padding-top:8px;}
   @media print{body{padding:10mm 15mm;}}</style>
@@ -1259,9 +2137,9 @@ async function printReport(id){
   --orange2:   #0560BE !important;
   --orange-glow: rgba(4,107,210,.18) !important;
   --blue:      #046BD2 !important;
-  --green:     #046BD2 !important;
+  --green:     #16a34a !important;
   --red:       #DC2626 !important;
-  --yellow:    #D97706 !important;
+  --yellow:    #ca8a04 !important;
   --purple:    #0891B2 !important;
   --text:      #1E293B !important;
   --text2:     #0F172A !important;
@@ -1677,6 +2555,14 @@ nav {
   .nav-desktop-links { display: none; }
   .hamburger { display: flex; }
 }
+
+/* 정렬 가능한 헤더 스타일 */
+th[onclick] {
+  transition: background .15s;
+}
+th[onclick]:hover {
+  background: var(--bg3) !important;
+}
 </style>
 </head><body>
   <h1>부적합사항 보고서</h1><div class="sub">${r.id} · ${new Date().toLocaleString('ko-KR')}</div>
@@ -1685,15 +2571,15 @@ nav {
     <div class="item"><div class="key">위치</div><div class="val">${r.location}</div></div>
     <div class="item"><div class="key">카테고리</div><div class="val">${r.category}</div></div>
     <div class="item"><div class="key">지적일</div><div class="val">${r.reportDate}</div></div>
-    <div class="item"><div class="key">조치기한</div><div class="val">${r.dueDate||'—'}</div></div>
+    <div class="item"><div class="key">조치완료일</div><div class="val">${r.dueDate||'—'}</div></div>
     <div class="item"><div class="key">상태</div><div class="val">${r.status}</div></div>
   </div>
   <div class="sec">부적합 내용</div><div class="box">${r.description}</div>
   ${r.actionNote?`<div class="sec">조치 내용</div><div class="box">${r.actionNote}</div>`:''}
   <div class="sec">사진 기록</div>
   <div class="pcols">
-    <div><div class="plab b">▶ 조치 전 (${be.length}장)</div>${be.length?`<div class="pgrid">${be.map(p=>`<img src="${p.dataURL}">`).join('')}</div>`:'<div class="nophoto">없음</div>'}</div>
-    <div><div class="plab a">▶ 조치 후 (${af.length}장)</div>${af.length?`<div class="pgrid">${af.map(p=>`<img src="${p.dataURL}">`).join('')}</div>`:'<div class="nophoto">없음</div>'}</div>
+    <div><div class="plab b">▶ 조치 전 (${be.length}장)</div>${be.length?`<div class="pgrid">${be.map(u=>`<img src="${u}">`).join('')}</div>`:'<div class="nophoto">없음</div>'}</div>
+    <div><div class="plab a">▶ 조치 후 (${af.length}장)</div>${af.length?`<div class="pgrid">${af.map(u=>`<img src="${u}">`).join('')}</div>`:'<div class="nophoto">없음</div>'}</div>
   </div>
   <div class="foot">SAFENODE 안전관리 포털</div>
   <script>window.onload=()=>setTimeout(()=>window.print(),400);<\/script>
@@ -1702,10 +2588,10 @@ nav {
 
 function openLB(src){document.getElementById('lbImg').src=src;document.getElementById('lightbox').classList.add('open');}
 function closeLB(){document.getElementById('lightbox').classList.remove('open');}
-function toast(msg){
+function toast(msg,duration=5000){
   const t=document.getElementById('toast');t.textContent=msg;
   t.style.opacity='1';t.style.transform='translateX(-50%) translateY(0)';
-  clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},2500);
+  clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(-50%) translateY(20px)';},duration);
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeLB();closeDetail();closeEdit();}});
 document.getElementById('editOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('editOverlay'))closeEdit();});
