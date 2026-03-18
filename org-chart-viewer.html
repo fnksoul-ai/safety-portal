@@ -1171,14 +1171,6 @@ function downloadTemplate() {
   XLSX.writeFile(wb, '비상연락망_양식.xlsx');
 }
 
-/* 드래그앤드롭 */
-const dz = $('dropZone');
-dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-dz.addEventListener('drop', e => {
-  e.preventDefault(); dz.classList.remove('drag-over');
-  const f = e.dataTransfer.files[0]; if (f) handleContactFile(f);
-});
 
 /* ══════════════════════════════════════════
    공통
@@ -1211,6 +1203,17 @@ setInterval(() => {
 }, 500);
 
 (function init() {
+  // 드롭존 이벤트 리스너 초기화
+  const dz = $('dropZone');
+  if (dz) {
+    dz.addEventListener('dragover',  e => { e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault(); dz.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0]; if (f) handleContactFile(f);
+    });
+  }
+
   const id = gt(), pages = parseInt(localStorage.getItem(SK_PAGES))||1;
   if (id) loadViewer(id, pages);
   updateAdminUI();
