@@ -1076,8 +1076,6 @@ function buildTabs() {
     const label = c === '전체' ? `${icon} 전체 (${count}명)` : `${icon} ${c} (${count}명)`;
     return `<option value="${c}" ${c===activeFilter?'selected':''}>${label}</option>`;
   }).join('');
-}" onclick="setFilter('${c}',this)">${c}</button>`
-  ).join('');
 }
 
 function setFilter(v, btn) {
