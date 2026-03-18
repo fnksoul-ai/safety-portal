@@ -855,6 +855,15 @@ nav {
     <button class="admin-btn blue" onclick="downloadTemplate()">📥 양식</button>
     <button class="admin-btn secondary" onclick="clearContacts()">🗑 초기화</button>
   </div>
+  <div class="admin-row">
+    <span class="admin-label"><span class="admin-badge">ADMIN</span> 구글 시트 연결</span>
+    <input class="admin-input" id="sheetUrlInput" type="text" placeholder="구글 시트 URL 전체 입력" style="flex:2;">
+    <button class="admin-btn blue" onclick="connectGoogleSheet()">🔗 연결</button>
+    <button class="admin-btn secondary" onclick="disconnectGoogleSheet()">❌ 해제</button>
+  </div>
+  <div class="admin-help">
+    📋 구글 시트 → 공유 → 링크가 있는 모든 사용자 → <b style="color:var(--green)">뷰어</b> 권한 설정 후 URL 복사
+  </div>
   <div class="admin-row" style="justify-content:flex-end;">
     <button class="admin-btn secondary" onclick="toggleAdminPanel()">닫기</button>
   </div>
@@ -1020,6 +1029,7 @@ function printSlides() {
    연락망
 ══════════════════════════════════════════ */
 const SK_CON = 'org_contacts';
+const SK_SHEET = 'org_sheet_url';
 let contacts = [], activeFilter = '전체';
 
 const COLORS = ['#046BD2','#3b82f6','#22c55e','#a855f7','#ef4444','#06b6d4','#eab308','#ec4899'];
@@ -1166,6 +1176,94 @@ function clearContacts() {
   contacts = []; activeFilter = '전체';
   saveContacts(); buildTabs(); renderContacts();
   showToast('🗑 연락망 초기화 완료');
+}
+
+/* 구글 시트 연결 */
+function connectGoogleSheet() {
+  const url = $('sheetUrlInput').value.trim();
+  if (!url) { showToast('⚠️ 구글 시트 URL을 입력해주세요'); return; }
+  
+  // Sheet ID 추출
+  const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+  if (!match) { showToast('⚠️ 올바른 구글 시트 URL이 아닙니다'); return; }
+  
+  const sheetId = match[1];
+  
+  // GID 추출 (없으면 0)
+  const gidMatch = url.match(/[#&]gid=([0-9]+)/);
+  const gid = gidMatch ? gidMatch[1] : '0';
+  
+  // CSV 내보내기 URL
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+  
+  showToast('🔄 구글 시트 연결 중...');
+  
+  fetch(csvUrl)
+    .then(response => {
+      if (!response.ok) throw new Error('시트에 접근할 수 없습니다. 공유 설정을 확인해주세요.');
+      return response.text();
+    })
+    .then(csvText => {
+      const rows = parseCSV(csvText);
+      const parsed = rows.map(mapRow).filter(c => c.name);
+      
+      if (!parsed.length) {
+        showToast('⚠️ 이름 열을 찾을 수 없습니다');
+        return;
+      }
+      
+      contacts = parsed;
+      activeFilter = '전체';
+      
+      // 구글 시트 URL 저장
+      localStorage.setItem(SK_SHEET, url);
+      
+      saveContacts();
+      buildTabs();
+      renderContacts();
+      
+      showToast(`✅ 구글 시트 연결 완료 (${contacts.length}명)`);
+      $('sheetUrlInput').value = url;
+    })
+    .catch(err => {
+      console.error('구글 시트 연결 오류:', err);
+      showToast('❌ 연결 실패: ' + err.message);
+    });
+}
+
+function disconnectGoogleSheet() {
+  if (!confirm('구글 시트 연결을 해제하시겠습니까?')) return;
+  localStorage.removeItem(SK_SHEET);
+  $('sheetUrlInput').value = '';
+  showToast('🔗 구글 시트 연결 해제됨');
+}
+
+function refreshGoogleSheet() {
+  const url = localStorage.getItem(SK_SHEET);
+  if (!url) return;
+  
+  const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
+  if (!match) return;
+  
+  const sheetId = match[1];
+  const gidMatch = url.match(/[#&]gid=([0-9]+)/);
+  const gid = gidMatch ? gidMatch[1] : '0';
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+  
+  fetch(csvUrl)
+    .then(response => response.text())
+    .then(csvText => {
+      const rows = parseCSV(csvText);
+      const parsed = rows.map(mapRow).filter(c => c.name);
+      if (parsed.length) {
+        contacts = parsed;
+        activeFilter = '전체';
+        saveContacts();
+        buildTabs();
+        renderContacts();
+      }
+    })
+    .catch(err => console.error('시트 새로고침 실패:', err));
 }
 
 function downloadTemplate() {
