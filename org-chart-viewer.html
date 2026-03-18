@@ -1087,6 +1087,8 @@ function setFilter(v, btn) {
   renderContacts();
 }
 
+
+
 function setFilterFromSelect(value) {
   activeFilter = value;
   renderContacts();
@@ -1332,8 +1334,22 @@ function showToast(msg) {
 
 function updateAdminUI() {
   const isAdmin = typeof AUTH !== 'undefined' && AUTH.isAdmin();
-  if (isAdmin) $('settingsBtn').classList.add('show');
-  else { $('settingsBtn').classList.remove('show'); $('adminPanel').classList.remove('show'); }
+  const btn = $('settingsBtn');
+  
+  // 디버깅
+  console.log('[DEBUG] updateAdminUI 실행');
+  console.log('  - AUTH 존재:', typeof AUTH !== 'undefined');
+  console.log('  - isAdmin:', isAdmin);
+  console.log('  - settingsBtn 존재:', !!btn);
+  
+  if (isAdmin) {
+    if (btn) btn.classList.add('show');
+    console.log('  - 관리자 권한: 톱니바퀴 표시');
+  } else {
+    if (btn) btn.classList.remove('show');
+    $('adminPanel').classList.remove('show');
+    console.log('  - 일반 사용자: 톱니바퀴 숨김');
+  }
 }
 
 window.onAdminLogin = window.onAdminLogout = window.onAuthStateChange = updateAdminUI;
