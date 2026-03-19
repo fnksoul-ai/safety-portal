@@ -361,75 +361,75 @@ textarea:focus{border-color:var(--orange);}
   body::after,nav,.mobile-drawer,.filter-bar,
   .header-actions,.overlay,.lightbox,.toast{display:none!important;}
   
-  /* 페이지 여백 최소화 */
-  .page{padding:6mm 8mm;max-width:100%;}
+  /* 페이지 여백 */
+  .page{padding:8mm;max-width:100%;}
   
-  /* 페이지 헤더 크기 확대 */
-  .page-header{margin-bottom:8mm!important;}
+  /* 페이지 헤더 */
+  .page-header{margin-bottom:6mm!important;}
   .page-eyebrow{
-    font-size:10pt!important;
-    padding:4px 14px!important;
-    margin-bottom:6mm!important;
+    font-size:9pt!important;
+    padding:3px 12px!important;
+    margin-bottom:4mm!important;
   }
   .page-title{
-    font-size:28pt!important;
-    margin-bottom:3mm!important;
+    font-size:20pt!important;
+    margin-bottom:2mm!important;
   }
   .page-sub{
-    font-size:11pt!important;
+    font-size:10pt!important;
   }
   
-  /* 통계 카드 - 대폭 확대 */
+  /* 통계 카드 - 적절한 크기 */
   .stat-row{
     display:grid!important;
     grid-template-columns:repeat(4,1fr)!important;
-    gap:8mm!important;
-    margin-bottom:10mm!important;
+    gap:5mm!important;
+    margin-bottom:6mm!important;
   }
   .stat-card{
-    padding:10mm 8mm!important;
-    min-height:45mm!important;
+    padding:6mm 5mm!important;
+    min-height:auto!important;
   }
   .stat-card::before{
-    height:3px!important;
+    height:2px!important;
   }
   .stat-label{
-    font-size:13pt!important;
-    margin-bottom:6mm!important;
+    font-size:10pt!important;
+    margin-bottom:3mm!important;
     font-weight:700!important;
   }
   .stat-value{
-    font-size:48pt!important;
+    font-size:28pt!important;
     line-height:1!important;
   }
   .stat-sub{
-    font-size:10pt!important;
-    margin-top:4mm!important;
+    font-size:8pt!important;
+    margin-top:2mm!important;
   }
   
-  /* 차트 영역 - 최대 확대 */
+  /* 차트 영역 - 1페이지에 맞게 조정 */
   .chart-row{
     display:grid!important;
     grid-template-columns:1fr 1fr!important;
-    gap:8mm!important;
+    gap:5mm!important;
     margin-bottom:0!important;
   }
   .chart-card{
-    border:1.5px solid #ccc!important;
+    border:1px solid #ccc!important;
     break-inside:avoid;
     display:flex;
     flex-direction:column;
-    height:110mm!important;
+    height:85mm!important;
   }
   .chart-title{
-    padding:6mm 7mm!important;
-    border-bottom:1.5px solid #ddd!important;
-    font-size:13pt!important;
+    padding:4mm 5mm!important;
+    border-bottom:1px solid #ddd!important;
+    font-size:11pt!important;
     font-weight:700!important;
   }
   .chart-title::before{
-    width:4px!important;
-    height:18px!important;
+    width:3px!important;
+    height:14px!important;
   }
   .chart-wrap{
     height:100%!important;
@@ -437,12 +437,12 @@ textarea:focus{border-color:var(--orange);}
     display:flex;
     align-items:center;
     justify-content:center;
-    padding:5mm!important;
+    padding:3mm!important;
   }
   .chart-wrap canvas{
     width:100%!important;
     height:100%!important;
-    max-height:95mm!important;
+    max-height:75mm!important;
   }
   .stat-row{display:grid!important;grid-template-columns:repeat(4,1fr);}
   .table-card{border:1px solid #ccc!important;}
