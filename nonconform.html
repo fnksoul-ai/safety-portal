@@ -354,6 +354,12 @@ textarea:focus{border-color:var(--orange);}
 
 /* 인쇄 */
 @media print{
+  /* 인쇄 시 배경색 및 색상 유지 */
+  *{
+    -webkit-print-color-adjust:exact!important;
+    print-color-adjust:exact!important;
+    color-adjust:exact!important;
+  }
   /* 부적합 리스트(테이블)를 2페이지부터 시작 */
   .table-card{
     page-break-before:always!important;
@@ -2247,6 +2253,12 @@ async function printReport(id){
   .nophoto{color:#aaa;font-size:12px;padding:12px;background:#f8f8f8;border:1px solid #eee;border-radius:5px;text-align:center;}
   .foot{margin-top:24px;color:#aaa;font-size:10px;text-align:right;border-top:1px solid #eee;padding-top:8px;}
   @media print{
+  /* 인쇄 시 배경색 및 색상 유지 */
+  *{
+    -webkit-print-color-adjust:exact!important;
+    print-color-adjust:exact!important;
+    color-adjust:exact!important;
+  }
   /* 부적합 리스트(테이블)를 2페이지부터 시작 */
   .table-card{
     page-break-before:always!important;
