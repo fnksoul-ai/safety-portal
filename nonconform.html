@@ -133,7 +133,7 @@ nav{
 
 /* 통계 */
 .stat-row{
-  display:grid;grid-template-columns:repeat(5,1fr);
+  display:grid;grid-template-columns:repeat(4,1fr);
   gap:12px;margin-bottom:24px;
 }
 .stat-card{
@@ -366,7 +366,7 @@ textarea:focus{border-color:var(--orange);}
   .chart-title{padding:8px 12px!important;border-bottom:1px solid #eee;}
   .chart-wrap{height:200px!important;flex:1;display:flex;align-items:flex-start;}
   .chart-wrap canvas{width:100%!important;height:100%!important;object-position:top;}
-  .stat-row{display:grid!important;grid-template-columns:repeat(5,1fr);}
+  .stat-row{display:grid!important;grid-template-columns:repeat(4,1fr);}
   .table-card{border:1px solid #ccc!important;}
   table{font-size:10pt;}
   thead th{background:#f0f0f0!important;color:#333!important;}
@@ -379,7 +379,7 @@ textarea:focus{border-color:var(--orange);}
 }
 
 /* 반응형 */
-@media(max-width:900px){.stat-row{grid-template-columns:repeat(3,1fr);}}
+@media(max-width:900px){.stat-row{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:600px){
   .stat-row{grid-template-columns:repeat(2,1fr);}
   .form-grid{grid-template-columns:1fr;}
@@ -901,7 +901,7 @@ nav {
     <div class="stat-card" style="--sc:var(--red)"><div class="stat-label">미조치</div><div class="stat-value" id="sPending">0</div><div class="stat-sub">즉시 처리 필요</div></div>
     <div class="stat-card" style="--sc:var(--yellow)"><div class="stat-label">조치중</div><div class="stat-value" id="sProgress">0</div><div class="stat-sub">진행 중</div></div>
     <div class="stat-card" style="--sc:var(--green)"><div class="stat-label">조치완료</div><div class="stat-value" id="sDone">0</div><div class="stat-sub">완료</div></div>
-    <div class="stat-card" style="--sc:var(--red)"><div class="stat-label">기한초과</div><div class="stat-value" id="sOverdue">0</div><div class="stat-sub">오늘 기준</div></div>
+    
   </div>
 
   <div class="chart-row">
@@ -1753,7 +1753,7 @@ function renderTable(){
   document.getElementById('sPending').textContent=records.filter(r=>r.status==='미조치').length;
   document.getElementById('sProgress').textContent=records.filter(r=>r.status==='조치중').length;
   document.getElementById('sDone').textContent=records.filter(r=>r.status==='조치완료').length;
-  document.getElementById('sOverdue').textContent=records.filter(r=>r.dueDate&&r.dueDate<td&&r.status!=='조치완료').length;
+  
   const f=getFiltered();
   document.getElementById('filteredCount').textContent=f.length;
   const tb=document.getElementById('tableBody');
