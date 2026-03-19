@@ -354,6 +354,10 @@ textarea:focus{border-color:var(--orange);}
 
 /* 인쇄 */
 @media print{
+  /* 부적합 리스트(테이블)를 2페이지부터 시작 */
+  .table-card{
+    page-break-before:always!important;
+  }
   body::after,nav,.mobile-drawer,.filter-bar,
   .header-actions,.overlay,.lightbox,.toast{display:none!important;}
   .page{padding:0;max-width:100%;}
@@ -940,12 +944,26 @@ nav {
           <th style="cursor:pointer;user-select:none;" onclick="sortRecords('id')" title="클릭하여 정렬">
             관리번호 <span id="sortIconId" style="font-size:10px;opacity:0.5;"></span>
           </th>
-          <th>협력업체</th><th>위치</th><th>작성자</th>
-          <th style="min-width:220px;">내용</th><th>카테고리</th>
+          <th style="cursor:pointer;user-select:none;" onclick="sortRecords('company')" title="클릭하여 정렬">
+            협력업체 <span id="sortIconCompany" style="font-size:10px;opacity:0.5;"></span>
+          </th><th style="cursor:pointer;user-select:none;" onclick="sortRecords('location')" title="클릭하여 정렬">
+            위치 <span id="sortIconLocation" style="font-size:10px;opacity:0.5;"></span>
+          </th><th style="cursor:pointer;user-select:none;" onclick="sortRecords('writer')" title="클릭하여 정렬">
+            작성자 <span id="sortIconWriter" style="font-size:10px;opacity:0.5;"></span>
+          </th>
+          <th style="min-width:220px;cursor:pointer;user-select:none;" onclick="sortRecords('description')" title="클릭하여 정렬">
+            내용 <span id="sortIconDescription" style="font-size:10px;opacity:0.5;"></span>
+          </th><th style="cursor:pointer;user-select:none;" onclick="sortRecords('category')" title="클릭하여 정렬">
+            카테고리 <span id="sortIconCategory" style="font-size:10px;opacity:0.5;"></span>
+          </th>
           <th style="cursor:pointer;user-select:none;" onclick="sortRecords('reportDate')" title="클릭하여 정렬">
             지적일 <span id="sortIconDate" style="font-size:10px;opacity:0.5;"></span>
           </th>
-          <th>조치완료일</th><th>상태</th><th>사진</th><th></th>
+          <th style="cursor:pointer;user-select:none;" onclick="sortRecords('dueDate')" title="클릭하여 정렬">
+            조치완료일 <span id="sortIconDueDate" style="font-size:10px;opacity:0.5;"></span>
+          </th><th style="cursor:pointer;user-select:none;" onclick="sortRecords('status')" title="클릭하여 정렬">
+            상태 <span id="sortIconStatus" style="font-size:10px;opacity:0.5;"></span>
+          </th><th>사진</th><th></th>
         </tr></thead>
         <tbody id="tableBody"></tbody>
       </table>
@@ -1743,20 +1761,35 @@ function renderTable(){
   const cc={'개인보호구':'badge-blue','추락방지':'badge-red','정리정돈':'badge-yellow','화재예방':'badge-red','장비/기계':'badge-yellow','안전표지':'badge-green','기타':'badge-teal'};
   const sb=s=>({'미조치':'<span class="badge badge-red">미조치</span>','조치중':'<span class="badge badge-yellow">조치중</span>','조치완료':'<span class="badge badge-green">완료</span>'}[s]||s);
   // 정렬 아이콘 업데이트
-  document.getElementById('sortIconId').textContent = sortField === 'id' ? (sortOrder === 'asc' ? '▲' : '▼') : '';
-  document.getElementById('sortIconDate').textContent = sortField === 'reportDate' ? (sortOrder === 'asc' ? '▲' : '▼') : '';
+  ['Id', 'Company', 'Location', 'Writer', 'Description', 'Category', 'Date', 'DueDate', 'Status'].forEach(field => {
+    const elem = document.getElementById('sortIcon' + field);
+    if (elem) {
+      const fieldName = field === 'Date' ? 'reportDate' : field === 'DueDate' ? 'dueDate' : field.toLowerCase();
+      elem.textContent = sortField === fieldName ? (sortOrder === 'asc' ? '▲' : '▼') : '';
+    }
+  });
   
   // 동적 정렬
   const sorted = [...f].sort((a, b) => {
-    if (sortField === 'id') {
+    let aVal = a[sortField] || '';
+    let bVal = b[sortField] || '';
+    
+    // 날짜 필드 처리
+    if (sortField === 'reportDate' || sortField === 'dueDate') {
+      aVal = a[sortField] || '9999-12-31';
+      bVal = b[sortField] || '9999-12-31';
       return sortOrder === 'asc' 
-        ? a.id.localeCompare(b.id) 
-        : b.id.localeCompare(a.id);
-    } else if (sortField === 'reportDate') {
-      return sortOrder === 'asc'
-        ? a.reportDate.localeCompare(b.reportDate)
-        : b.reportDate.localeCompare(a.reportDate);
+        ? aVal.localeCompare(bVal) 
+        : bVal.localeCompare(aVal);
     }
+    
+    // 문자열 필드 처리
+    if (typeof aVal === 'string' && typeof bVal === 'string') {
+      return sortOrder === 'asc' 
+        ? aVal.localeCompare(bVal, 'ko') 
+        : bVal.localeCompare(aVal, 'ko');
+    }
+    
     return 0;
   });
   
@@ -1767,7 +1800,7 @@ function renderTable(){
       <td class="id-mono">${r.id}</td>
       <td style="font-weight:700;">${r.company}</td>
       <td>${r.location}</td>
-      <td style="font-size:12px;color:var(--muted2);">${r.writer||'—'}</td>
+      <td style="font-size:12px;color:var(--muted2);white-space:nowrap;">${r.writer||'—'}</td>
       <td><div style="max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${r.description}">${r.description}</div></td>
       <td><span class="badge ${cc[r.category]||'badge-blue'}">${r.category}</span></td>
       <td style="font-size:12px;">${r.reportDate}</td>
@@ -2114,7 +2147,11 @@ async function printReport(id){
   .pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;}.pgrid img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:4px;border:1px solid #ddd;display:block;}
   .nophoto{color:#aaa;font-size:12px;padding:12px;background:#f8f8f8;border:1px solid #eee;border-radius:5px;text-align:center;}
   .foot{margin-top:24px;color:#aaa;font-size:10px;text-align:right;border-top:1px solid #eee;padding-top:8px;}
-  @media print{body{padding:10mm 15mm;}}</style>
+  @media print{
+  /* 부적합 리스트(테이블)를 2페이지부터 시작 */
+  .table-card{
+    page-break-before:always!important;
+  }body{padding:10mm 15mm;}}</style>
   <style>
 /* ════════════════════════════════════════
    THEME OVERRIDE — watch2.co.kr/gw-intro 팔레트
