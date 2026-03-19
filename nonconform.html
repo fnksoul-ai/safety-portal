@@ -447,6 +447,27 @@ textarea:focus{border-color:var(--orange);}
   .stat-row{display:grid!important;grid-template-columns:repeat(4,1fr);}
   .table-card{border:1px solid #ccc!important;}
   table{font-size:10pt;}
+  /* 테이블 셀 정렬 */
+  tbody td{
+    vertical-align:middle!important;
+  }
+  /* 카테고리 배지 중앙 정렬 */
+  tbody td:nth-child(6){
+    text-align:center!important;
+  }
+  /* 상태 배지 중앙 정렬 */
+  tbody td:nth-child(9){
+    text-align:center!important;
+  }
+  /* 사진 갯수 중앙 정렬 */
+  tbody td:nth-child(10){
+    text-align:center!important;
+  }
+  /* 배지 내부 텍스트 중앙 정렬 */
+  .badge{
+    display:inline-block!important;
+    text-align:center!important;
+  }
   thead th{background:#f0f0f0!important;color:#333!important;}
   canvas{max-width:100%!important;}
   img{max-width:100%!important;}
