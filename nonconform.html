@@ -2046,7 +2046,7 @@ window.addEventListener('beforeprint',()=>{
     if(chartCo.options.scales&&chartCo.options.scales.x) chartCo.options.scales.x.ticks.font={size:12,weight:'600'};
     if(chartCo.options.scales&&chartCo.options.scales.y) chartCo.options.scales.y.ticks.font={size:11};
     if(chartCo.options.plugins.datalabels) chartCo.options.plugins.datalabels.font={size:13,weight:'700'};
-    chartCo.resize();
+    chartCo.update();
   }
   if(chartCa){
     chartCa.options.maintainAspectRatio=true;
@@ -2061,7 +2061,7 @@ window.addEventListener('beforeprint',()=>{
     }
     chartCa.options.layout={padding:{left:0,right:50,top:5,bottom:5}};
     if(chartCa.options.plugins.datalabels) chartCa.options.plugins.datalabels.font={size:11,weight:'700'};
-    chartCa.resize();
+    chartCa.update();
   }
 });
 window.addEventListener('afterprint',()=>{
@@ -2072,7 +2072,7 @@ window.addEventListener('afterprint',()=>{
     if(chartCo.options.scales&&chartCo.options.scales.x) chartCo.options.scales.x.ticks.font={size:11};
     if(chartCo.options.scales&&chartCo.options.scales.y) chartCo.options.scales.y.ticks.font={size:11};
     if(chartCo.options.plugins.datalabels) chartCo.options.plugins.datalabels.font={size:11,weight:'600'};
-    chartCo.resize();
+    chartCo.update();
   }
   if(chartCa){
     chartCa.options.maintainAspectRatio=false;
@@ -2087,7 +2087,7 @@ window.addEventListener('afterprint',()=>{
     }
     chartCa.options.layout={padding:0};
     if(chartCa.options.plugins.datalabels) chartCa.options.plugins.datalabels.font={size:12,weight:'700'};
-    chartCa.resize();
+    chartCa.update();
   }
 });
 
