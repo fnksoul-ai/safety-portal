@@ -1958,7 +1958,7 @@ function renderCharts(){
       {label:'조치중',data:cl.map(k=>cm[k].pr),backgroundColor:'rgba(234,179,8,.75)',borderRadius:3},
       {label:'완료',data:cl.map(k=>cm[k].d),backgroundColor:'rgba(34,197,94,.75)',borderRadius:3}
     ]},
-    options:{responsive:true,maintainAspectRatio:false,
+    options:{responsive:true,maintainAspectRatio:false,cutout:\'50%\',
       layout:{padding:0},
       plugins:{
         legend:{position:'top',align:'end',labels:{color:'#8888a0',font:{size:11},padding:12,boxWidth:10}},
@@ -1968,7 +1968,7 @@ function renderCharts(){
         }
       },
       scales:{
-        x:{stacked:true,ticks:{color:'#8888a0',font:{size:11}},grid:{display:false},border:{display:false}},
+        x:{stacked:true,ticks:{color:'#8888a0',font:{size:9},padding:2},grid:{display:false},border:{display:false}},
         y:{stacked:true,ticks:{color:'#8888a0',font:{size:11},stepSize:1},grid:{color:'rgba(136,136,160,.15)',drawTicks:false},border:{display:false},
           afterDataLimits:axis=>{axis.max=Math.max(axis.max*1.05,2);}}
       }
@@ -1987,7 +1987,7 @@ function renderCharts(){
       borderWidth:1,borderColor:'#fff',
       hoverOffset:6
     }]},
-    options:{responsive:true,maintainAspectRatio:false,
+    options:{responsive:true,maintainAspectRatio:false,cutout:\'50%\',
       layout:{padding:0},
       plugins:{
         legend:{display:true,position:'right',align:'center',
