@@ -389,11 +389,11 @@ textarea:focus{border-color:var(--orange);}
   .stat-value{font-size:32pt!important;line-height:1!important;}
   .stat-sub{font-size:9pt!important;margin-top:2mm!important;}
   
-  /* 차트 영역 */
+  /* 차트 영역 — 1단 배치로 가로 넓게 */
   .chart-row{
     display:grid!important;
-    grid-template-columns:1fr 1fr!important;
-    gap:5mm!important;
+    grid-template-columns:1fr!important;
+    gap:4mm!important;
     margin-bottom:0!important;
   }
   .chart-card{
@@ -401,7 +401,9 @@ textarea:focus{border-color:var(--orange);}
     break-inside:avoid;
     display:flex;
     flex-direction:column;
-    height:105mm!important;
+    height:auto!important;
+    min-height:60mm!important;
+    max-height:90mm!important;
   }
   .chart-title{
     padding:1.5mm 2mm!important;
@@ -411,18 +413,21 @@ textarea:focus{border-color:var(--orange);}
   }
   .chart-title::before{width:3px!important;height:14px!important;}
   .chart-wrap{
-    height:100%!important;
+    height:auto!important;
     flex:1;
     display:flex;
     align-items:center;
     justify-content:center;
-    padding:0!important;
+    padding:2mm!important;
+    min-height:55mm!important;
+    max-height:80mm!important;
   }
   .chart-wrap canvas{
     max-width:100%!important;
     max-height:100%!important;
-    width:100%!important;
-    height:100%!important;
+    width:auto!important;
+    height:auto!important;
+    object-fit:contain!important;
   }
   
   /* 테이블 */
@@ -2028,6 +2033,24 @@ function renderCharts(){
     plugins:[ChartDataLabels]
   });
 }
+
+/* ── 인쇄 시 차트 리사이즈 ── */
+window.addEventListener('beforeprint',()=>{
+  [chartCo,chartCa].forEach(c=>{
+    if(!c)return;
+    c.options.maintainAspectRatio=true;
+    c.options.aspectRatio=2.2;
+    c.resize();
+  });
+});
+window.addEventListener('afterprint',()=>{
+  [chartCo,chartCa].forEach(c=>{
+    if(!c)return;
+    c.options.maintainAspectRatio=false;
+    delete c.options.aspectRatio;
+    c.resize();
+  });
+});
 
 function openAdd(){
   editId=null;tmpB=[];tmpA=[];exB=[];exA=[];
