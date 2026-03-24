@@ -2050,16 +2050,17 @@ window.addEventListener('beforeprint',()=>{
   }
   if(chartCa){
     chartCa.options.maintainAspectRatio=true;
-    chartCa.options.aspectRatio=1.2;
+    chartCa.options.aspectRatio=1.0;
+    chartCa.options.cutout='40%';
     if(chartCa.options.plugins.legend){
-      chartCa.options.plugins.legend.position='bottom';
+      chartCa.options.plugins.legend.position='right';
       chartCa.options.plugins.legend.align='center';
       chartCa.options.plugins.legend.labels.font={size:11,weight:'600'};
       chartCa.options.plugins.legend.labels.padding=5;
       chartCa.options.plugins.legend.labels.boxWidth=10;
     }
-    chartCa.options.layout={padding:{top:5}};
-    if(chartCa.options.plugins.datalabels) chartCa.options.plugins.datalabels.font={size:13,weight:'700'};
+    chartCa.options.layout={padding:{left:0,right:8,top:5,bottom:5}};
+    if(chartCa.options.plugins.datalabels) chartCa.options.plugins.datalabels.font={size:11,weight:'700'};
     chartCa.resize();
   }
 });
@@ -2076,6 +2077,7 @@ window.addEventListener('afterprint',()=>{
   if(chartCa){
     chartCa.options.maintainAspectRatio=false;
     delete chartCa.options.aspectRatio;
+    chartCa.options.cutout='50%';
     if(chartCa.options.plugins.legend){
       chartCa.options.plugins.legend.position='right';
       chartCa.options.plugins.legend.align='center';
