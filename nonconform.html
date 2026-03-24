@@ -437,18 +437,20 @@ textarea:focus{border-color:var(--orange);}
     width:3px!important;
     height:14px!important;
   }
-  .chart-wrap{
+  \.chart-wrap{
     height:100%!important;
     flex:1;
     display:flex;
     align-items:center;
     justify-content:center;
     padding:4mm!important;
+    position:relative!important;
   }
-  .chart-wrap canvas{
-    width:100%!important;
-    height:100%!important;
+  \.chart-wrap canvas{
+    max-width:90mm!important;
     max-height:90mm!important;
+    width:auto!important;
+    height:auto!important;
   }
   /* 차트 범례 스타일 */
   .chart-wrap .chartjs-legend,
@@ -2005,7 +2007,7 @@ function renderCharts(){
       borderWidth:2,borderColor:'#fff',
       hoverOffset:6
     }]},
-    options:{responsive:true,maintainAspectRatio:false,
+    options:{responsive:true,maintainAspectRatio:true,aspectRatio:1,
       layout:{padding:{top:10,bottom:10,left:10,right:10}},
       plugins:{
         legend:{
