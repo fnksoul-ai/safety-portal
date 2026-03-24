@@ -389,10 +389,10 @@ textarea:focus{border-color:var(--orange);}
   .stat-value{font-size:32pt!important;line-height:1!important;}
   .stat-sub{font-size:9pt!important;margin-top:2mm!important;}
   
-  /* 차트 영역 — 1단 배치로 가로 넓게 */
+  /* 차트 영역 — 2단 배치, 1페이지에 모두 표시 */
   .chart-row{
     display:grid!important;
-    grid-template-columns:1fr!important;
+    grid-template-columns:1fr 1fr!important;
     gap:4mm!important;
     margin-bottom:0!important;
   }
@@ -401,26 +401,25 @@ textarea:focus{border-color:var(--orange);}
     break-inside:avoid;
     display:flex;
     flex-direction:column;
-    height:auto!important;
-    min-height:60mm!important;
-    max-height:90mm!important;
+    height:70mm!important;
+    overflow:hidden!important;
   }
   .chart-title{
     padding:1.5mm 2mm!important;
     border-bottom:1px solid #ddd!important;
-    font-size:11pt!important;
+    font-size:10pt!important;
     font-weight:700!important;
   }
-  .chart-title::before{width:3px!important;height:14px!important;}
+  .chart-title::before{width:3px!important;height:12px!important;}
   .chart-wrap{
-    height:auto!important;
-    flex:1;
+    flex:1!important;
+    height:0!important;
+    min-height:0!important;
     display:flex;
     align-items:center;
     justify-content:center;
-    padding:2mm!important;
-    min-height:55mm!important;
-    max-height:80mm!important;
+    padding:1mm!important;
+    overflow:hidden!important;
   }
   .chart-wrap canvas{
     max-width:100%!important;
@@ -2039,7 +2038,7 @@ window.addEventListener('beforeprint',()=>{
   [chartCo,chartCa].forEach(c=>{
     if(!c)return;
     c.options.maintainAspectRatio=true;
-    c.options.aspectRatio=2.2;
+    c.options.aspectRatio=1.4;
     c.resize();
   });
 });
