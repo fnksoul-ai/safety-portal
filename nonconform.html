@@ -402,7 +402,7 @@ textarea:focus{border-color:var(--orange);}
     break-inside:avoid;
     display:flex;
     flex-direction:column;
-    height:85mm!important;
+    height:130mm!important;
     overflow:hidden!important;
   }
   .chart-title{
@@ -2036,46 +2036,53 @@ function renderCharts(){
 
 /* ── 인쇄 시 차트 리사이즈 + 범례 텍스트 확대 ── */
 window.addEventListener('beforeprint',()=>{
-  [chartCo,chartCa].forEach(c=>{
-    if(!c)return;
-    c.options.maintainAspectRatio=true;
-    c.options.aspectRatio=1.3;
-    if(c.options.plugins&&c.options.plugins.legend){
-      c.options.plugins.legend.labels.font={size:13,weight:'600'};
-      c.options.plugins.legend.labels.padding=6;
+  if(chartCo){
+    chartCo.options.maintainAspectRatio=true;
+    chartCo.options.aspectRatio=1.8;
+    if(chartCo.options.plugins.legend){
+      chartCo.options.plugins.legend.labels.font={size:13,weight:'600'};
+      chartCo.options.plugins.legend.labels.padding=8;
     }
-    if(c.options.scales&&c.options.scales.x){
-      c.options.scales.x.ticks.font={size:12,weight:'600'};
+    if(chartCo.options.scales&&chartCo.options.scales.x) chartCo.options.scales.x.ticks.font={size:12,weight:'600'};
+    if(chartCo.options.scales&&chartCo.options.scales.y) chartCo.options.scales.y.ticks.font={size:11};
+    if(chartCo.options.plugins.datalabels) chartCo.options.plugins.datalabels.font={size:13,weight:'700'};
+    chartCo.resize();
+  }
+  if(chartCa){
+    chartCa.options.maintainAspectRatio=true;
+    chartCa.options.aspectRatio=1.2;
+    if(chartCa.options.plugins.legend){
+      chartCa.options.plugins.legend.labels.font={size:12,weight:'600'};
+      chartCa.options.plugins.legend.labels.padding=7;
+      chartCa.options.plugins.legend.labels.boxWidth=12;
     }
-    if(c.options.scales&&c.options.scales.y){
-      c.options.scales.y.ticks.font={size:11};
-    }
-    if(c.options.plugins&&c.options.plugins.datalabels){
-      c.options.plugins.datalabels.font={size:13,weight:'700'};
-    }
-    c.resize();
-  });
+    chartCa.options.layout={padding:{right:10}};
+    if(chartCa.options.plugins.datalabels) chartCa.options.plugins.datalabels.font={size:13,weight:'700'};
+    chartCa.resize();
+  }
 });
 window.addEventListener('afterprint',()=>{
-  [chartCo,chartCa].forEach(c=>{
-    if(!c)return;
-    c.options.maintainAspectRatio=false;
-    delete c.options.aspectRatio;
-    if(c.options.plugins&&c.options.plugins.legend){
-      c.options.plugins.legend.labels.font={size:10};
-      c.options.plugins.legend.labels.padding=4;
+  if(chartCo){
+    chartCo.options.maintainAspectRatio=false;
+    delete chartCo.options.aspectRatio;
+    if(chartCo.options.plugins.legend) chartCo.options.plugins.legend.labels.font={size:10};
+    if(chartCo.options.scales&&chartCo.options.scales.x) chartCo.options.scales.x.ticks.font={size:11};
+    if(chartCo.options.scales&&chartCo.options.scales.y) chartCo.options.scales.y.ticks.font={size:11};
+    if(chartCo.options.plugins.datalabels) chartCo.options.plugins.datalabels.font={size:11,weight:'600'};
+    chartCo.resize();
+  }
+  if(chartCa){
+    chartCa.options.maintainAspectRatio=false;
+    delete chartCa.options.aspectRatio;
+    if(chartCa.options.plugins.legend){
+      chartCa.options.plugins.legend.labels.font={size:10};
+      chartCa.options.plugins.legend.labels.padding=4;
+      chartCa.options.plugins.legend.labels.boxWidth=10;
     }
-    if(c.options.scales&&c.options.scales.x){
-      c.options.scales.x.ticks.font={size:11};
-    }
-    if(c.options.scales&&c.options.scales.y){
-      c.options.scales.y.ticks.font={size:11};
-    }
-    if(c.options.plugins&&c.options.plugins.datalabels){
-      c.options.plugins.datalabels.font={size:11,weight:'600'};
-    }
-    c.resize();
-  });
+    chartCa.options.layout={padding:0};
+    if(chartCa.options.plugins.datalabels) chartCa.options.plugins.datalabels.font={size:12,weight:'700'};
+    chartCa.resize();
+  }
 });
 
 function openAdd(){
