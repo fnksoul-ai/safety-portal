@@ -429,6 +429,7 @@ textarea:focus{border-color:var(--orange);}
     height:auto!important;
     object-fit:contain!important;
   }
+  #printLegend{display:flex!important;}
   
   /* 테이블 */
   table{
@@ -2034,7 +2035,7 @@ function renderCharts(){
   });
 }
 
-/* ── 인쇄 시 차트 리사이즈 + 범례 텍스트 확대 ── */
+/* ── 인쇄 시 차트 리사이즈 + 도넛 커스텀 범례 ── */
 window.addEventListener('beforeprint',()=>{
   if(chartCo){
     chartCo.options.maintainAspectRatio=true;
@@ -2049,19 +2050,31 @@ window.addEventListener('beforeprint',()=>{
     chartCo.update();
   }
   if(chartCa){
-    chartCa.options.maintainAspectRatio=true;
-    chartCa.options.aspectRatio=1.0;
-    chartCa.options.cutout='40%';
-    if(chartCa.options.plugins.legend){
-      chartCa.options.plugins.legend.position='right';
-      chartCa.options.plugins.legend.align='center';
-      chartCa.options.plugins.legend.labels.font={size:11,weight:'600'};
-      chartCa.options.plugins.legend.labels.padding=5;
-      chartCa.options.plugins.legend.labels.boxWidth=10;
-    }
-    chartCa.options.layout={padding:{left:0,right:50,top:5,bottom:5}};
-    if(chartCa.options.plugins.datalabels) chartCa.options.plugins.datalabels.font={size:11,weight:'700'};
+    /* 내장 범례 숨기고 도넛 크게 */
+    chartCa.options.plugins.legend.display=false;
+    chartCa.options.maintainAspectRatio=false;
+    chartCa.options.layout={padding:0};
+    if(chartCa.options.plugins.datalabels) chartCa.options.plugins.datalabels.font={size:13,weight:'700'};
     chartCa.update();
+
+    /* 커스텀 HTML 범례 생성 */
+    const card=document.getElementById('categoryChart').closest('.chart-card');
+    let leg=document.getElementById('printLegend');
+    if(leg) leg.remove();
+    leg=document.createElement('div');
+    leg.id='printLegend';
+    leg.style.cssText='position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:3px;font-size:10px;font-weight:600;color:#333;z-index:10;';
+    const ds=chartCa.data.datasets[0];
+    const total=ds.data.reduce((a,b)=>a+b,0)||1;
+    chartCa.data.labels.forEach((label,i)=>{
+      const pct=Math.round(ds.data[i]/total*100);
+      const row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:4px;white-space:nowrap;';
+      row.innerHTML=`<span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${ds.backgroundColor[i]};flex-shrink:0;"></span>${label} (${pct}%)`;
+      leg.appendChild(row);
+    });
+    card.style.position='relative';
+    card.appendChild(leg);
   }
 });
 window.addEventListener('afterprint',()=>{
@@ -2075,19 +2088,16 @@ window.addEventListener('afterprint',()=>{
     chartCo.update();
   }
   if(chartCa){
+    /* 내장 범례 복원 */
+    chartCa.options.plugins.legend.display=true;
     chartCa.options.maintainAspectRatio=false;
-    delete chartCa.options.aspectRatio;
-    chartCa.options.cutout='50%';
-    if(chartCa.options.plugins.legend){
-      chartCa.options.plugins.legend.position='right';
-      chartCa.options.plugins.legend.align='center';
-      chartCa.options.plugins.legend.labels.font={size:10};
-      chartCa.options.plugins.legend.labels.padding=4;
-      chartCa.options.plugins.legend.labels.boxWidth=10;
-    }
     chartCa.options.layout={padding:0};
+    chartCa.options.cutout='50%';
     if(chartCa.options.plugins.datalabels) chartCa.options.plugins.datalabels.font={size:12,weight:'700'};
     chartCa.update();
+    /* 커스텀 범례 제거 */
+    const leg=document.getElementById('printLegend');
+    if(leg) leg.remove();
   }
 });
 
