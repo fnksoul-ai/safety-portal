@@ -371,7 +371,7 @@ textarea:focus{border-color:var(--orange);}
   .page{padding:8mm;max-width:100%;}
   
   /* 페이지 헤더 */
-  .page-header{margin-bottom:6mm!important;}
+  .page-header{margin-bottom:4mm!important;}
   .page-eyebrow{
     font-size:9pt!important;
     padding:3px 12px!important;
@@ -389,8 +389,8 @@ textarea:focus{border-color:var(--orange);}
   .stat-row{
     display:grid!important;
     grid-template-columns:repeat(4,1fr)!important;
-    gap:5mm!important;
-    margin-bottom:6mm!important;
+    gap:4mm!important;
+    margin-bottom:5mm!important;
   }
   .stat-card{
     padding:6mm 5mm!important;
@@ -425,7 +425,7 @@ textarea:focus{border-color:var(--orange);}
     break-inside:avoid;
     display:flex;
     flex-direction:column;
-    height:85mm!important;
+    height:100mm!important;
   }
   .chart-title{
     padding:4mm 5mm!important;
@@ -443,12 +443,12 @@ textarea:focus{border-color:var(--orange);}
     display:flex;
     align-items:center;
     justify-content:center;
-    padding:3mm!important;
+    padding:4mm!important;
   }
   .chart-wrap canvas{
     width:100%!important;
     height:100%!important;
-    max-height:75mm!important;
+    max-height:90mm!important;
   }
   .stat-row{display:grid!important;grid-template-columns:repeat(4,1fr);}
   .table-card{border:1px solid #ccc!important;}
@@ -2006,15 +2006,16 @@ function renderCharts(){
         legend:{display:false},
         tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.parsed}건 (${Math.round(ctx.parsed/total*100)}%)`}},
         datalabels:{
-          anchor:'end',align:'end',offset:8,
-          color:'#222',font:{size:11,weight:'600'},
+          anchor:'end',align:'end',offset:10,
+          color:'#222',font:{size:11,weight:'700'},
           formatter:(v,ctx)=>{
             const pct=Math.round(v/total*100);
-            return pct>=4?`${ctx.chart.data.labels[ctx.dataIndex]} (${pct}%)`:'';
+            // 1% 이상인 모든 항목 표시
+            return pct>=1?`${ctx.chart.data.labels[ctx.dataIndex]} (${pct}%)`:'';
           },
-          /* 연결선 효과 — 텍스트에 배경 추가 */
-          backgroundColor:null,
-          padding:2
+          backgroundColor:'rgba(255,255,255,0.8)',
+          borderRadius:4,
+          padding:3
         }
       }
     },
