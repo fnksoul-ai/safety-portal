@@ -367,9 +367,9 @@ textarea:focus{border-color:var(--orange);}
   body::after,nav,.mobile-drawer,.filter-bar,
   .header-actions,.overlay,.lightbox,.toast{display:none!important;}
   
-  /* 페이지 여백 — 상단 여유로 하단 여백 최소화 */
+  /* 페이지 여백 */
   @page{margin:3mm 4mm;}
-  .page{padding:22mm 2mm 1mm 2mm;max-width:100%;margin:0 auto;}
+  .page{padding:8mm 2mm 1mm 2mm;max-width:100%;margin:0 auto;}
   
   /* 페이지 헤더 — 컴팩트 */
   .page-header{margin-bottom:2mm!important;}
@@ -377,18 +377,19 @@ textarea:focus{border-color:var(--orange);}
   .page-title{font-size:14pt!important;margin-bottom:1mm!important;}
   .page-sub{font-size:8pt!important;}
   
-  /* 통계 카드 — 컴팩트 */
+  /* 통계 카드 — 헤더 아래로 띄우고 크기 확대 */
   .stat-row{
     display:grid!important;
     grid-template-columns:repeat(4,1fr)!important;
     gap:3mm!important;
-    margin-bottom:3mm!important;
+    margin-top:12mm!important;
+    margin-bottom:4mm!important;
   }
-  .stat-card{padding:3mm 3mm!important;}
+  .stat-card{padding:5mm 4mm!important;}
   .stat-card::before{height:2px!important;}
-  .stat-label{font-size:10pt!important;margin-bottom:2mm!important;font-weight:700!important;}
-  .stat-value{font-size:28pt!important;line-height:1!important;}
-  .stat-sub{font-size:8pt!important;margin-top:1mm!important;}
+  .stat-label{font-size:12pt!important;margin-bottom:3mm!important;font-weight:700!important;}
+  .stat-value{font-size:36pt!important;line-height:1!important;}
+  .stat-sub{font-size:9pt!important;margin-top:2mm!important;}
   
   /* 차트 영역 — 2단, 여백 줄인만큼 높이 확대 */
   .chart-row{
