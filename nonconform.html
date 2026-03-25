@@ -1829,11 +1829,46 @@ function closeCatMgr(){document.getElementById('catMgrOverlay').style.display='n
 function renderCatList(){
   const cats=getCategories();
   document.getElementById('catList').innerHTML=cats.map((c,i)=>
-    `<div style="display:flex;align-items:center;gap:8px;padding:4px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);">
-      <span style="flex:1;font-size:13px;">${c}</span>
-      <button class="btn btn-ghost btn-sm" style="padding:2px 8px;color:var(--red);" onclick="deleteCategory(${i})">삭제</button>
+    `<div id="catRow_${i}" style="display:flex;align-items:center;gap:6px;padding:4px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border2);">
+      <span id="catLabel_${i}" style="flex:1;font-size:13px;">${c}</span>
+      <input id="catInput_${i}" type="text" value="${c}" style="flex:1;font-size:13px;display:none;padding:2px 6px;border:1px solid var(--primary);border-radius:6px;background:var(--bg);color:var(--text);"
+        onkeydown="if(event.key==='Enter')saveCategory(${i});if(event.key==='Escape')cancelEditCategory(${i})">
+      <button id="catBtnEdit_${i}" class="btn btn-ghost btn-sm" style="padding:2px 8px;color:var(--primary);" onclick="editCategory(${i})">수정</button>
+      <button id="catBtnSave_${i}" class="btn btn-ghost btn-sm" style="padding:2px 8px;color:var(--primary);display:none;" onclick="saveCategory(${i})">확인</button>
+      <button id="catBtnCancel_${i}" class="btn btn-ghost btn-sm" style="padding:2px 8px;display:none;" onclick="cancelEditCategory(${i})">취소</button>
+      <button id="catBtnDel_${i}" class="btn btn-ghost btn-sm" style="padding:2px 8px;color:var(--red);" onclick="deleteCategory(${i})">삭제</button>
     </div>`
   ).join('');
+}
+function editCategory(i){
+  document.getElementById(`catLabel_${i}`).style.display='none';
+  document.getElementById(`catInput_${i}`).style.display='';
+  document.getElementById(`catBtnEdit_${i}`).style.display='none';
+  document.getElementById(`catBtnDel_${i}`).style.display='none';
+  document.getElementById(`catBtnSave_${i}`).style.display='';
+  document.getElementById(`catBtnCancel_${i}`).style.display='';
+  const inp=document.getElementById(`catInput_${i}`);inp.focus();inp.select();
+}
+function cancelEditCategory(i){
+  document.getElementById(`catLabel_${i}`).style.display='';
+  document.getElementById(`catInput_${i}`).style.display='none';
+  document.getElementById(`catBtnEdit_${i}`).style.display='';
+  document.getElementById(`catBtnDel_${i}`).style.display='';
+  document.getElementById(`catBtnSave_${i}`).style.display='none';
+  document.getElementById(`catBtnCancel_${i}`).style.display='none';
+}
+function saveCategory(i){
+  const val=document.getElementById(`catInput_${i}`).value.trim();
+  if(!val){toast('카테고리 이름을 입력하세요',2500);return;}
+  const cats=getCategories();
+  const old=cats[i];
+  if(val===old){cancelEditCategory(i);return;}
+  if(cats.some((c,j)=>j!==i&&c===val)){toast('이미 존재하는 카테고리입니다',2500);return;}
+  /* 기존 레코드의 카테고리명도 일괄 변경 */
+  records.forEach(r=>{if(r.category===old)r.category=val;});
+  cats[i]=val;saveCategories(cats);
+  renderCatList();renderCatSelect();renderFilterCategory();renderTable();renderCharts();
+  toast(`✅ "${old}" → "${val}" 변경됨`,2500);
 }
 function addCategory(){
   const val=document.getElementById('catNewInput').value.trim();
