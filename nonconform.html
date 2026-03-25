@@ -1923,12 +1923,11 @@ function getFiltered(){
 
 function renderTable(){
   const td=today();
-  document.getElementById('sTotal').textContent=records.length;
-  document.getElementById('sPending').textContent=records.filter(r=>r.status==='미조치').length;
-  document.getElementById('sProgress').textContent=records.filter(r=>r.status==='조치중').length;
-  document.getElementById('sDone').textContent=records.filter(r=>r.status==='조치완료').length;
-  
   const f=getFiltered();
+  document.getElementById('sTotal').textContent=f.length;
+  document.getElementById('sPending').textContent=f.filter(r=>r.status==='미조치').length;
+  document.getElementById('sProgress').textContent=f.filter(r=>r.status==='조치중').length;
+  document.getElementById('sDone').textContent=f.filter(r=>r.status==='조치완료').length;
   document.getElementById('filteredCount').textContent=f.length;
   const tb=document.getElementById('tableBody');
   if(!f.length){tb.innerHTML=`<tr><td colspan="10"><div class="empty-state"><div class="empty-icon">📋</div><p>등록된 부적합사항이 없습니다</p></div></td></tr>`;return;}
@@ -2007,7 +2006,8 @@ function getCatColor(cat){
 }
 
 function renderCharts(){
-  const cm={};records.forEach(r=>{if(!cm[r.company])cm[r.company]={p:0,pr:0,d:0};if(r.status==='미조치')cm[r.company].p++;else if(r.status==='조치중')cm[r.company].pr++;else cm[r.company].d++;});
+  const f=getFiltered();
+  const cm={};f.forEach(r=>{if(!cm[r.company])cm[r.company]={p:0,pr:0,d:0};if(r.status==='미조치')cm[r.company].p++;else if(r.status==='조치중')cm[r.company].pr++;else cm[r.company].d++;});
   const cl=Object.keys(cm);
   if(chartCo)chartCo.destroy();
   chartCo=new Chart(document.getElementById('companyChart').getContext('2d'),{type:'bar',
@@ -2034,7 +2034,7 @@ function renderCharts(){
     plugins:[ChartDataLabels]
   });
 
-  const kam={};records.forEach(r=>{kam[r.category]=(kam[r.category]||0)+1;});
+  const kam={};f.forEach(r=>{kam[r.category]=(kam[r.category]||0)+1;});
   const kl=Object.keys(kam);
   const total=kl.reduce((s,k)=>s+kam[k],0)||1;
   if(chartCa)chartCa.destroy();
