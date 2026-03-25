@@ -402,7 +402,8 @@ textarea:focus{border-color:var(--orange);}
     break-inside:avoid;
     display:flex;
     flex-direction:column;
-    height:130mm!important;
+    height:auto!important;
+    max-height:110mm!important;
     overflow:hidden!important;
   }
   .chart-title{
@@ -417,14 +418,14 @@ textarea:focus{border-color:var(--orange);}
     height:0!important;
     min-height:0!important;
     display:flex;
-    align-items:stretch;
+    align-items:center;
     justify-content:center;
     padding:2mm!important;
     overflow:hidden!important;
   }
   .chart-wrap canvas{
-    width:100%!important;
-    height:100%!important;
+    max-width:100%!important;
+    max-height:100%!important;
   }
   #printLegend{display:flex!important;}
   
@@ -2038,7 +2039,8 @@ function doPrint(){
 
   /* 바 차트 */
   if(chartCo){
-    chartCo.options.maintainAspectRatio=false;
+    chartCo.options.maintainAspectRatio=true;
+    chartCo.options.aspectRatio=1.6;
     if(chartCo.options.plugins.legend){
       chartCo.options.plugins.legend.labels.font={size:13,weight:'600'};
       chartCo.options.plugins.legend.labels.padding=8;
@@ -2052,7 +2054,8 @@ function doPrint(){
   /* 도넛 차트: 내장 범례 끄고 캔버스 꽉 채움 */
   if(chartCa){
     chartCa.options.plugins.legend.display=false;
-    chartCa.options.maintainAspectRatio=false;
+    chartCa.options.maintainAspectRatio=true;
+    chartCa.options.aspectRatio=1;
     chartCa.options.layout={padding:0};
     if(chartCa.options.plugins.datalabels) chartCa.options.plugins.datalabels.font={size:14,weight:'700'};
     chartCa.update();
