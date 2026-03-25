@@ -1953,6 +1953,24 @@ function renderTable(){
   }).join('');
 }
 
+/* ── 카테고리별 고정 색상 매핑 ── */
+const CAT_PALETTE=[
+  '#3b82f6','#ef4444','#eab308','#22c55e','#f97316',
+  '#a855f7','#2dd4bf','#e11d48','#8b5cf6','#14b8a6',
+  '#d97706','#6366f1','#ec4899','#10b981','#f43f5e',
+  '#0ea5e9','#84cc16','#7c3aed','#fb923c','#06b6d4',
+  '#be185d','#65a30d','#4f46e5','#fbbf24','#059669'
+];
+const catColorMap={};
+let catColorIdx=0;
+function getCatColor(cat){
+  if(!catColorMap[cat]){
+    catColorMap[cat]=CAT_PALETTE[catColorIdx % CAT_PALETTE.length];
+    catColorIdx++;
+  }
+  return catColorMap[cat];
+}
+
 function renderCharts(){
   const cm={};records.forEach(r=>{if(!cm[r.company])cm[r.company]={p:0,pr:0,d:0};if(r.status==='미조치')cm[r.company].p++;else if(r.status==='조치중')cm[r.company].pr++;else cm[r.company].d++;});
   const cl=Object.keys(cm);
@@ -1988,7 +2006,7 @@ function renderCharts(){
   chartCa=new Chart(document.getElementById('categoryChart').getContext('2d'),{type:'doughnut',
     data:{labels:kl.length?kl:['없음'],datasets:[{
       data:kl.length?kl.map(k=>kam[k]):[1],
-      backgroundColor:['#3b82f6','#ef4444','#eab308','#22c55e','#f97316','#a855f7','#2dd4bf'],
+      backgroundColor:kl.length?kl.map(k=>getCatColor(k)):['#ccc'],
       borderWidth:1,borderColor:'#fff',
       hoverOffset:6
     }]},
