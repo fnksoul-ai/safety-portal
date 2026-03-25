@@ -1055,20 +1055,20 @@ nav {
     <div class="fsep"></div>
     <div class="filter-inputs">
       <div style="display:flex;align-items:center;gap:6px;"><span class="filter-label">상태</span>
-        <select id="fStatus" onchange="renderTable()">
+        <select id="fStatus" onchange="renderTable();renderCharts()">
           <option value="">전체</option><option>미조치</option><option>조치중</option><option>조치완료</option>
         </select></div>
       <div style="display:flex;align-items:center;gap:6px;"><span class="filter-label">카테고리</span>
-        <select id="fCategory" onchange="renderTable()">
+        <select id="fCategory" onchange="renderTable();renderCharts()">
           <option value="">전체</option><option>개인보호구</option><option>추락방지</option>
           <option>정리정돈</option><option>화재예방</option><option>장비/기계</option>
           <option>안전표지</option><option>기타</option>
         </select></div>
       <div style="display:flex;align-items:center;gap:6px;"><span class="filter-label">기간</span>
-        <input type="date" id="fFrom" onchange="renderTable()">
+        <input type="date" id="fFrom" onchange="renderTable();renderCharts()">
         <span style="color:var(--muted);font-size:11px;">~</span>
-        <input type="date" id="fTo" onchange="renderTable()"></div>
-      <input type="text" id="fSearch" placeholder="🔍 검색..." oninput="renderTable()">
+        <input type="date" id="fTo" onchange="renderTable();renderCharts()"></div>
+      <input type="text" id="fSearch" placeholder="🔍 검색..." oninput="renderTable();renderCharts()">
     </div>
   </div>
 
@@ -1892,7 +1892,7 @@ function renderTabs(){
   const dl=document.getElementById('companyDL');
   if(dl)dl.innerHTML=cos.map(c=>`<option value="${c}">`).join('');
 }
-function setTab(b){curCo=b.dataset.company;document.querySelectorAll('#companyTabs .ftab').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderTable();}
+function setTab(b){curCo=b.dataset.company;document.querySelectorAll('#companyTabs .ftab').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderTable();renderCharts();}
 
 function sortRecords(field) {
   if (sortField === field) {
