@@ -1418,8 +1418,14 @@ async function fetchGoogleEvents(year, month) {
   const apiKey = CONFIG.GOOGLE_API_KEY;
   const calId = CONFIG.GOOGLE_CAL_ID;
 
-  const timeMin = new Date(year, month, 1).toISOString();
-  const timeMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+  // 달력 그리드는 6주 × 7일 = 42칸이며, 첫 주에는 이전 달 말일, 마지막 주에는
+  // 다음 달 초일이 함께 표시된다. 그 셀들의 일정도 함께 표시되도록 조회 범위를
+  // 그리드 전체로 확장한다 (예: 2026-05 뷰 → 2026-04-26 ~ 2026-06-06)
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const trailing = 42 - firstDay - daysInMonth;
+  const timeMin = new Date(year, month, 1 - firstDay).toISOString();
+  const timeMax = new Date(year, month, daysInMonth + trailing, 23, 59, 59).toISOString();
   const url = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calId)}/events?` +
     `key=${apiKey}&timeMin=${timeMin}&timeMax=${timeMax}&singleEvents=true&orderBy=startTime&maxResults=250`;
 
