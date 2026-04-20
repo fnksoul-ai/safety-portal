@@ -2588,7 +2588,7 @@ function setZoom(v) {
 }
 function zIn()  { setZoom(Math.round((zoom+0.1)*10)/10); }
 function zOut() { setZoom(Math.round((zoom-0.1)*10)/10); }
-function zFit() { const aw=window.innerWidth-80,ah=window.innerHeight-220; setZoom(Math.min(1,aw/794,ah/1123)); }
+function zFit() { const vw=document.documentElement.clientWidth,vh=window.innerHeight; const isMob=matchMedia('(max-width: 768px)').matches; const aw=vw-(isMob?20:80),ah=vh-(isMob?200:220); setZoom(Math.min(1,aw/794,ah/1123)); }
 
 // ══════════════════════════════════════════════
 //  토스트
@@ -2987,7 +2987,7 @@ function closeMobSheets() {
 }
 
 function mobToggleSheet(which) {
-  const isMob = window.innerWidth <= 768;
+  const isMob = matchMedia('(max-width: 768px)').matches;
   if (!isMob) return;
   const sp = document.getElementById('sidepanel');
   const sv = document.getElementById('savePanel');
@@ -3014,7 +3014,7 @@ function mobToggleSheet(which) {
 
 function mobToggleFmt() {
   const fb = document.querySelector('.fmtbar');
-  const isMob = window.innerWidth <= 768;
+  const isMob = matchMedia('(max-width: 768px)').matches;
   if (!isMob) return;
   const open = fb.classList.contains('mob-open');
   fb.classList.toggle('mob-open');
@@ -3022,7 +3022,7 @@ function mobToggleFmt() {
 }
 
 function mobToggleSettings() {
-  const isMob = window.innerWidth <= 768;
+  const isMob = matchMedia('(max-width: 768px)').matches;
   if (!isMob) return;
   const st = document.querySelector('.settings');
   const isHidden = st.style.display === 'none';
@@ -3032,7 +3032,7 @@ function mobToggleSettings() {
 
 // 모바일에서 바텀시트 클래스 초기화
 function initMobileSheets() {
-  if (window.innerWidth > 768) return;
+  if (!matchMedia('(max-width: 768px)').matches) return;
   const sp = document.getElementById('sidepanel');
   const sv = document.getElementById('savePanel');
   sp.classList.add('mob-sheet');
@@ -3070,7 +3070,7 @@ window.addEventListener('DOMContentLoaded', () => { initMobileSheets(); });
 window.addEventListener('resize', () => {
   const sp = document.getElementById('sidepanel');
   const sv = document.getElementById('savePanel');
-  if (window.innerWidth > 768) {
+  if (!matchMedia('(max-width: 768px)').matches) {
     sp.classList.remove('mob-sheet','mob-open');
     sv.classList.remove('mob-sheet','mob-open');
     document.getElementById('mobOverlay').classList.remove('on');
