@@ -2582,13 +2582,19 @@ function toggleSite() {
 function setZoom(v) {
   zoom = Math.max(0.3, Math.min(2, v));
   const w = document.getElementById('scalewrap');
+  const isLandscape = pageOrientation === 'landscape';
+  const baseW = isLandscape ? 1123 : 794;
+  const baseH = isLandscape ? 794 : 1123;
   w.style.transform = `scale(${zoom})`;
-  w.style.transformOrigin = 'top center';
+  w.style.transformOrigin = 'top left';
+  // 레이아웃 박스도 같이 줄여서 body/preview가 뷰포트 밖으로 넘치지 않게 함 (모바일에서 중요)
+  w.style.width  = (baseW * zoom) + 'px';
+  w.style.height = (baseH * zoom) + 'px';
   document.getElementById('zdisp').textContent = Math.round(zoom*100)+'%';
 }
 function zIn()  { setZoom(Math.round((zoom+0.1)*10)/10); }
 function zOut() { setZoom(Math.round((zoom-0.1)*10)/10); }
-function zFit() { const vw=document.documentElement.clientWidth,vh=window.innerHeight; const isMob=matchMedia('(max-width: 768px)').matches; const aw=vw-(isMob?20:80),ah=vh-(isMob?200:220); setZoom(Math.min(1,aw/794,ah/1123)); }
+function zFit() { const vw=document.documentElement.clientWidth,vh=window.innerHeight; const isMob=matchMedia('(max-width: 768px)').matches; const aw=vw-(isMob?20:80),ah=vh-(isMob?200:220); const isL=pageOrientation==='landscape'; const bW=isL?1123:794,bH=isL?794:1123; setZoom(Math.min(1,aw/bW,ah/bH)); }
 
 // ══════════════════════════════════════════════
 //  토스트
