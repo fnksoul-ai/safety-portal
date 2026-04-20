@@ -1023,7 +1023,7 @@ footer span, .footer-brand { color: #1E293B !important; }
 </div>
 </div>
 <!-- Side Panel -->
-<div class="sidepanel">
+<div class="sidepanel" id="sidepanel">
   <div class="sp-section">
     <div class="sp-title">현황</div>
     <div class="sp-stat"><span>총 칸</span><span id="stat-total">0</span></div>
@@ -3053,8 +3053,8 @@ function initMobileSheets() {
     sv.insertBefore(h, sv.firstChild);
   }
 
-  // 모바일: settings 초기 표시
-  document.querySelector('.settings').style.display = '';
+  // 모바일: settings 초기 숨김 (하단바 "설정" 버튼으로 토글)
+  document.querySelector('.settings').style.display = 'none';
   
   // 모바일: toolbar 불필요 버튼 숨김 (초기화, 되돌리기만 남김)
   const addSlot = document.getElementById('addSlotBtn');
