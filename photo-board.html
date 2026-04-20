@@ -2582,14 +2582,21 @@ function toggleSite() {
 function setZoom(v) {
   zoom = Math.max(0.3, Math.min(2, v));
   const w = document.getElementById('scalewrap');
-  const isLandscape = pageOrientation === 'landscape';
-  const baseW = isLandscape ? 1123 : 794;
-  const baseH = isLandscape ? 794 : 1123;
-  w.style.transform = `scale(${zoom})`;
-  w.style.transformOrigin = 'top left';
-  // 레이아웃 박스도 같이 줄여서 body/preview가 뷰포트 밖으로 넘치지 않게 함 (모바일에서 중요)
-  w.style.width  = (baseW * zoom) + 'px';
-  w.style.height = (baseH * zoom) + 'px';
+  // 모바일: CSS zoom 사용 — 레이아웃 박스가 실제로 줄어 body/뷰포트가 넘치지 않음
+  // 데스크탑: 기존 transform scale 유지 (동작 검증된 경로)
+  if (matchMedia('(max-width: 768px)').matches) {
+    w.style.transform = '';
+    w.style.transformOrigin = '';
+    w.style.width = '';
+    w.style.height = '';
+    w.style.zoom = zoom;
+  } else {
+    w.style.zoom = '';
+    w.style.transform = `scale(${zoom})`;
+    w.style.transformOrigin = 'top center';
+    w.style.width = '';
+    w.style.height = '';
+  }
   document.getElementById('zdisp').textContent = Math.round(zoom*100)+'%';
 }
 function zIn()  { setZoom(Math.round((zoom+0.1)*10)/10); }
