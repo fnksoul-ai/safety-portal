@@ -1176,6 +1176,12 @@ function saveUndo() {
   if (hist.length > 50) hist.shift();
   document.getElementById('undoBtn').disabled = false;
 }
+// 텍스트 입력용 디바운스 undo — 사진(base64)까지 포함한 스냅샷을 매 keystroke마다 찍지 않도록
+let _undoDebounceTimer = null;
+function saveUndoDebounced() {
+  if (_undoDebounceTimer) clearTimeout(_undoDebounceTimer);
+  _undoDebounceTimer = setTimeout(() => { saveUndo(); _undoDebounceTimer = null; }, 400);
+}
 function applyColor(value) {
   document.getElementById('colorBar').style.background = value;
   applyFmt('color', value);
@@ -1738,7 +1744,7 @@ renderSavePanel(); }
     lbl.style.cssText = cStyle(d.cells[ct], true);
     const inp = document.createElement('input'); inp.type='text'; inp.value=d[txtKey]||'';
     inp.style.cssText = `background:none;border:none;outline:none;padding:0;margin:0;font:inherit;color:inherit;text-align:${d.cells[ct]?.align||'center'};width:100%;min-width:0;cursor:text;letter-spacing:inherit;text-indent:${d.cells[ct]?.spacing||'0px'}`;
-    inp.oninput = ev => { saveUndo(); d[txtKey]=ev.target.value; };
+    inp.oninput = ev => { saveUndoDebounced(); d[txtKey]=ev.target.value; };
     inp.onfocus = ev => { ev.stopPropagation(); selCell(pi,si,ct,false); };
     lbl.appendChild(inp);
     lbl.addEventListener('click', e=>{ if(e.target===lbl)inp.focus(); e.stopPropagation(); selCell(pi,si,ct,e.ctrlKey||e.metaKey); });
@@ -1749,7 +1755,7 @@ renderSavePanel(); }
     inp.className = 'minp sel'; inp.dataset.ct = ct;
     if (sel.has(`${pi}:${si}:${ct}`)) inp.classList.add('on');
     inp.value=val; inp.placeholder=''; inp.style.cssText=cStyle(d.cells[ct],false);
-    inp.oninput = ev => { saveUndo(); d[ct==='loc'?'loc':'date']=ev.target.value; };
+    inp.oninput = ev => { saveUndoDebounced(); d[ct==='loc'?'loc':'date']=ev.target.value; };
     inp.addEventListener('click', e=>{ e.stopPropagation(); selCell(pi,si,ct,e.ctrlKey||e.metaKey); });
     return inp;
   }
@@ -1771,7 +1777,7 @@ renderSavePanel(); }
   dlbl.style.width=ew; dlbl.style.minWidth=ew; dlbl.style.maxWidth=ew;
   const dinpLbl = document.createElement('input'); dinpLbl.type='text'; dinpLbl.value=d.descLbl||'내용';
   dinpLbl.style.cssText = `background:none;border:none;outline:none;padding:0;margin:0;font:inherit;color:inherit;text-align:${d.cells.descLabel?.align||'center'};width:100%;min-width:0;cursor:text`;
-  dinpLbl.oninput = e=>{ saveUndo(); d.descLbl=e.target.value; };
+  dinpLbl.oninput = e=>{ saveUndoDebounced(); d.descLbl=e.target.value; };
   dinpLbl.onfocus = e=>{ e.stopPropagation(); selCell(pi,si,'descLabel',false); };
   dlbl.appendChild(dinpLbl);
   dlbl.addEventListener('click', e=>{ if(e.target===dlbl)dinpLbl.focus(); e.stopPropagation(); selCell(pi,si,'descLabel',e.ctrlKey||e.metaKey); });
@@ -1780,7 +1786,7 @@ renderSavePanel(); }
   if (sel.has(`${pi}:${si}:desc`)) ta.classList.add('on');
   ta.rows=2; ta.placeholder=''; ta.value=d.desc;
   ta.style.cssText = cStyle(d.cells.desc, false);
-  ta.oninput = e=>{ saveUndo(); d.desc=e.target.value; };
+  ta.oninput = e=>{ saveUndoDebounced(); d.desc=e.target.value; };
   ta.addEventListener('click', e=>{ e.stopPropagation(); selCell(pi,si,'desc',e.ctrlKey||e.metaKey); });
   dr.append(dlbl, ta);
   div.appendChild(dr);
